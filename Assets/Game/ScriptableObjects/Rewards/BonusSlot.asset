@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 747a84e12974395408204830c726ae1c, type: 3}
+  m_Name: BonusSlot
+  m_EditorClassIdentifier: 
+  displayName: L Foundation
+  description: L blocks add one safe adjacent tower platform
+  effectText: 'L: EXTRA PLATFORM'
+  effect: 10
+  amount: 1
+  blockShape: {fileID: 11400000, guid: d47a7dd1353782143a328190487c791c, type: 2}

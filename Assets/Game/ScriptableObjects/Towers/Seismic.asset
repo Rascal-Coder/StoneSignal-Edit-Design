@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 748c5553e075d5d40a5411fb592bc497, type: 3}
+  m_Name: Seismic
+  m_EditorClassIdentifier: 
+  visualPrefab: {fileID: 6235269050869083793, guid: 702a8eb0baa0e2b4eb8ad667658f1b2d, type: 3}
+  icon: {fileID: 21300000, guid: 75106159361f442498c788de2a53847c, type: 3}
+  displayName: Seismic Beacon
+  role: Heavy area burst. Pair with Chill.
+  slowFraction: 0
+  slowDuration: 0
+  kind: 2
+  cost: 100
+  range: 4.6
+  attacksPerSecond: 0.55
+  damage: 30
+  projectileSpeed: 9
+  splashRadius: 1.35

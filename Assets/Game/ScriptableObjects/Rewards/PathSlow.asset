@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 747a84e12974395408204830c726ae1c, type: 3}
+  m_Name: PathSlow
+  m_EditorClassIdentifier: 
+  displayName: Heavy Footsteps
+  description: All path enemies move 8% slower
+  effectText: 'PATH SPEED -8%'
+  effect: 9
+  amount: 0.08
+  blockShape: {fileID: 0}

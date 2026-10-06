@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb2549f3647c84c4a87d98cc79c8ca93, type: 3}
+  m_Name: ArtCatalog
+  m_EditorClassIdentifier: 
+  tileA: {fileID: 1875399489584741579, guid: d08b43774720b27458529d6537df7ab3, type: 3}
+  tileB: {fileID: 1973710087900989336, guid: 6d32e6267f798ac498d39f1b91a02bc8, type: 3}
+  wall: {fileID: 827150039674737515, guid: ce1a74fa7993deb43907c396d5c15d20, type: 3}
+  cliff: {fileID: 5368564593584043687, guid: 5b6c9bef0064ba8458a15b4f490f0539, type: 3}
+  foliage: {fileID: 7541297169024317774, guid: 83beaa9599c323a4999e05c6d1453dcf, type: 3}
+  ruinPillar: {fileID: 2575967345952809726, guid: 3908b9dd060a83541b7ee1b93c1eb4fa, type: 3}
+  brazier: {fileID: 113816372607258865, guid: cefcc309d621db14588fb648f784e94b, type: 3}
+  spawnPortal: {fileID: 4264166300545026407, guid: fe94e7b1ee843e7449e5cf26986e4658, type: 3}
+  signalCore: {fileID: 7282888382798964424, guid: 862d18fcdb72e0c4b947005181dddc34, type: 3}
+  backdrop: {fileID: 2100000, guid: d45a2c1e443d96f4db865de735f3f6fa, type: 2}

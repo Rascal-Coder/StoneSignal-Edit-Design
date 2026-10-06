@@ -1,0 +1,591 @@
+{
+  "materials": [
+    {
+      "name": "SST_Earth",
+      "color": [
+        0.63,
+        0.32,
+        0.14
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_EarthLight",
+      "color": [
+        0.72,
+        0.4,
+        0.2
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_EarthEdge",
+      "color": [
+        0.38,
+        0.19,
+        0.095
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Wood",
+      "color": [
+        0.45,
+        0.245,
+        0.12
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Sand",
+      "color": [
+        0.88,
+        0.65,
+        0.34
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Stone",
+      "color": [
+        0.46,
+        0.53,
+        0.39
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_StoneLight",
+      "color": [
+        0.65,
+        0.69,
+        0.56
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_StoneDark",
+      "color": [
+        0.29,
+        0.36,
+        0.32
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Navy",
+      "color": [
+        0.085,
+        0.17,
+        0.25
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Blue",
+      "color": [
+        0.035,
+        0.48,
+        0.88
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_BlueLight",
+      "color": [
+        0.21,
+        0.74,
+        0.96
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Yellow",
+      "color": [
+        0.98,
+        0.65,
+        0.09
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_YellowLight",
+      "color": [
+        1,
+        0.85,
+        0.35
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Leaf",
+      "color": [
+        0.25,
+        0.46,
+        0.21
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_LeafLight",
+      "color": [
+        0.43,
+        0.63,
+        0.31
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Purple",
+      "color": [
+        0.48,
+        0.22,
+        0.7
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Lilac",
+      "color": [
+        0.67,
+        0.37,
+        0.86
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Plum",
+      "color": [
+        0.31,
+        0.13,
+        0.49
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Cream",
+      "color": [
+        0.99,
+        0.91,
+        0.74
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Void",
+      "color": [
+        0.045,
+        0.06,
+        0.09
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Skin",
+      "color": [
+        0.91,
+        0.63,
+        0.39
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Cape",
+      "color": [
+        0.04,
+        0.33,
+        0.63
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0
+    },
+    {
+      "name": "SST_Ice",
+      "color": [
+        0.28,
+        0.8,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 0.45
+    },
+    {
+      "name": "SST_Amber",
+      "color": [
+        1,
+        0.31,
+        0.015
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 1.3
+    },
+    {
+      "name": "SST_FlameYellow",
+      "color": [
+        1,
+        0.77,
+        0.11
+      ],
+      "metallic": 0,
+      "roughness": 0.78,
+      "emission": 1.5
+    }
+  ],
+  "models": [
+    {
+      "name": "TileA",
+      "triangles": 132,
+      "materials": [
+        "SST_Earth"
+      ],
+      "bounds": [
+        0.9750000238418579,
+        0.9750000238418579,
+        0.2654999792575836
+      ]
+    },
+    {
+      "name": "TileB",
+      "triangles": 132,
+      "materials": [
+        "SST_Earth",
+        "SST_EarthLight"
+      ],
+      "bounds": [
+        0.9750000238418579,
+        0.9750000238418579,
+        0.2654999792575836
+      ]
+    },
+    {
+      "name": "Wall",
+      "triangles": 444,
+      "materials": [
+        "SST_Stone",
+        "SST_StoneLight",
+        "SST_StoneDark",
+        "SST_BlueLight"
+      ],
+      "bounds": [
+        0.9200000166893005,
+        0.9340000152587891,
+        0.6299999952316284
+      ]
+    },
+    {
+      "name": "Cliff",
+      "triangles": 108,
+      "materials": [
+        "SST_EarthEdge"
+      ],
+      "bounds": [
+        1.0,
+        1.0,
+        0.5799999833106995
+      ]
+    },
+    {
+      "name": "BoardBase",
+      "triangles": 108,
+      "materials": [
+        "SST_Wood"
+      ],
+      "bounds": [
+        1.0,
+        1.0,
+        0.5500000715255737
+      ]
+    },
+    {
+      "name": "Foliage",
+      "triangles": 60,
+      "materials": [
+        "SST_Leaf",
+        "SST_LeafLight"
+      ],
+      "bounds": [
+        0.8193240165710449,
+        0.5753200054168701,
+        0.38999998569488525
+      ]
+    },
+    {
+      "name": "RuinPillar",
+      "triangles": 188,
+      "materials": [
+        "SST_Wood",
+        "SST_Leaf",
+        "SST_LeafLight"
+      ],
+      "bounds": [
+        0.8948814868927002,
+        0.8500000238418579,
+        1.4700000286102295
+      ]
+    },
+    {
+      "name": "Brazier",
+      "triangles": 480,
+      "materials": [
+        "SST_Stone",
+        "SST_Yellow",
+        "SST_Amber",
+        "SST_FlameYellow"
+      ],
+      "bounds": [
+        0.47999998927116394,
+        0.47999998927116394,
+        0.7699999809265137
+      ]
+    },
+    {
+      "name": "SpawnPortal",
+      "triangles": 948,
+      "materials": [
+        "SST_StoneLight",
+        "SST_Stone",
+        "SST_BlueLight",
+        "SST_Lilac",
+        "SST_Yellow"
+      ],
+      "bounds": [
+        0.9800000190734863,
+        0.7450000047683716,
+        1.3849999904632568
+      ]
+    },
+    {
+      "name": "SignalCore",
+      "triangles": 780,
+      "materials": [
+        "SST_StoneLight",
+        "SST_Yellow",
+        "SST_Wood",
+        "SST_Amber",
+        "SST_FlameYellow"
+      ],
+      "bounds": [
+        0.9399999976158142,
+        0.9399999976158142,
+        1.5700000524520874
+      ]
+    },
+    {
+      "name": "NeedleBeacon",
+      "triangles": 1394,
+      "materials": [
+        "SST_Stone",
+        "SST_StoneLight",
+        "SST_Blue",
+        "SST_Yellow",
+        "SST_Navy",
+        "SST_BlueLight"
+      ],
+      "bounds": [
+        0.8700000047683716,
+        0.8700000047683716,
+        1.4800000190734863
+      ]
+    },
+    {
+      "name": "PulseBeacon",
+      "triangles": 2174,
+      "materials": [
+        "SST_Stone",
+        "SST_StoneLight",
+        "SST_Blue",
+        "SST_Yellow",
+        "SST_Navy",
+        "SST_BlueLight",
+        "SST_Cream"
+      ],
+      "bounds": [
+        0.8799999952316284,
+        0.8700000047683716,
+        1.21999990940094
+      ]
+    },
+    {
+      "name": "SeismicBeacon",
+      "triangles": 2466,
+      "materials": [
+        "SST_Stone",
+        "SST_StoneLight",
+        "SST_Blue",
+        "SST_Yellow",
+        "SST_Navy",
+        "SST_BlueLight",
+        "SST_YellowLight",
+        "SST_Void",
+        "SST_Amber"
+      ],
+      "bounds": [
+        0.8700000047683716,
+        1.057344913482666,
+        1.4331002235412598
+      ]
+    },
+    {
+      "name": "ChillBeacon",
+      "triangles": 1794,
+      "materials": [
+        "SST_Stone",
+        "SST_StoneLight",
+        "SST_Blue",
+        "SST_Yellow",
+        "SST_Navy",
+        "SST_BlueLight",
+        "SST_Ice",
+        "SST_Cream"
+      ],
+      "bounds": [
+        0.8700000047683716,
+        0.8700000047683716,
+        1.4900001287460327
+      ]
+    },
+    {
+      "name": "Drifter",
+      "triangles": 352,
+      "materials": [
+        "SST_Purple",
+        "SST_Cream",
+        "SST_Void",
+        "SST_Plum",
+        "SST_Lilac"
+      ],
+      "bounds": [
+        0.589655876159668,
+        0.5513659715652466,
+        0.7150000333786011
+      ]
+    },
+    {
+      "name": "Skimmer",
+      "triangles": 352,
+      "materials": [
+        "SST_Lilac",
+        "SST_Cream",
+        "SST_Void",
+        "SST_Plum"
+      ],
+      "bounds": [
+        0.8725881576538086,
+        0.5513659715652466,
+        0.6549999713897705
+      ]
+    },
+    {
+      "name": "Bulwark",
+      "triangles": 468,
+      "materials": [
+        "SST_Plum",
+        "SST_Cream",
+        "SST_Void",
+        "SST_Purple",
+        "SST_Lilac"
+      ],
+      "bounds": [
+        0.9925504922866821,
+        0.6881659626960754,
+        0.7949999570846558
+      ]
+    },
+    {
+      "name": "Splitter",
+      "triangles": 460,
+      "materials": [
+        "SST_Purple",
+        "SST_Cream",
+        "SST_Void",
+        "SST_Plum",
+        "SST_Lilac"
+      ],
+      "bounds": [
+        0.589655876159668,
+        0.5513659715652466,
+        0.8349999785423279
+      ]
+    },
+    {
+      "name": "Shard",
+      "triangles": 352,
+      "materials": [
+        "SST_Purple",
+        "SST_Cream",
+        "SST_Void",
+        "SST_Plum",
+        "SST_Lilac"
+      ],
+      "bounds": [
+        0.589655876159668,
+        0.5513659715652466,
+        0.7150000333786011
+      ]
+    },
+    {
+      "name": "Adventurer",
+      "triangles": 880,
+      "materials": [
+        "SST_Wood",
+        "SST_Cape",
+        "SST_Yellow",
+        "SST_Skin",
+        "SST_Void",
+        "SST_Cream",
+        "SST_Blue",
+        "SST_YellowLight"
+      ],
+      "bounds": [
+        0.6970818638801575,
+        0.5799999833106995,
+        1.159999966621399
+      ]
+    }
+  ]
+}

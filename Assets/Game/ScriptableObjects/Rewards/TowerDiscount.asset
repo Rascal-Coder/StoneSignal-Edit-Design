@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 747a84e12974395408204830c726ae1c, type: 3}
+  m_Name: TowerDiscount
+  m_EditorClassIdentifier: 
+  displayName: Efficient Beacons
+  description: Tower costs -10%
+  effectText: 'TOWER COST -10%'
+  effect: 13
+  amount: 0.1
+  blockShape: {fileID: 0}

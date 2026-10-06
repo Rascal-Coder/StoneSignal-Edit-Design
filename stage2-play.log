@@ -1,0 +1,834 @@
+Mono path[0] = 'C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal-PC/StoneSignal_Data/Managed'
+Mono config path = 'C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal-PC/MonoBleedingEdge/etc'
+Found 3 interfaces on host : 0) 192.168.1.249 1) 169.254.89.148 2) 169.254.195.37
+Player connection [31896]  Target information:
+
+Player connection [31896]  * "[IP] 192.168.1.249 [Port] 55001 [Flags] 2 [Guid] 1932975936 [EditorId] 836535577 [Version] 1048832 [Id] WindowsPlayer(2,DESKTOP-OI8J0E1) [Debug] 0 [PackageName] WindowsPlayer [ProjectName] StoneSignal" 
+
+Player connection [31896]  * "[IP] 169.254.89.148 [Port] 55001 [Flags] 2 [Guid] 1932975936 [EditorId] 836535577 [Version] 1048832 [Id] WindowsPlayer(2,DESKTOP-OI8J0E1) [Debug] 0 [PackageName] WindowsPlayer [ProjectName] StoneSignal" 
+
+Player connection [31896]  * "[IP] 169.254.195.37 [Port] 55001 [Flags] 2 [Guid] 1932975936 [EditorId] 836535577 [Version] 1048832 [Id] WindowsPlayer(2,DESKTOP-OI8J0E1) [Debug] 0 [PackageName] WindowsPlayer [ProjectName] StoneSignal" 
+
+Player connection [31896] Started UDP target info broadcast (1) on [225.0.0.222:54997].
+
+Input System module state changed to: Initialized.
+AS: AutoStreaming module initializing.
+InitScreenManager.Initialize engine version: 2022.3.62t16 (ab17684acf1d)
+THR RenderingThread disabled!
+[Subsystems] Discovering subsystems at path C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal-PC/StoneSignal_Data/UnitySubsystems
+GfxDevice: creating device client; threaded=0; jobified=0
+CreateRealGfxDevice: 2Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3060 (ID=0x2504)
+    Vendor:   NVIDIA
+    VRAM:     12113 MB
+    Driver:   32.0.15.9186
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.108 seconds
+- Finished resetting the current domain, in  0.002 seconds
+UnloadTime: 0.524800 ms
+SMOKE PASS: Initial scene, route and Build state
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:65)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Configured 5 / 8 / 12 initial enemies
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:68)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Four towers and thirteen reward assets
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:69)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: L cannot seal the last three-cell passage
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:76)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Failed placement is side-effect free
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:77)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Out-of-bounds ghost invalid
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:81)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Rotated L ghost valid
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:83)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Legal L placement creates detour
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:85)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Arrow beacon built
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:86)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Rapid beacon built
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:87)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Tower costs deducted exactly once
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:88)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Protected tower placement does not spend gold
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:89)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave starts once from Build
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:108)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Live movement edge protected
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:112)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Live wall placement repaths without teleport
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:120)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 1 completed through real combat
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:128)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 1 exact spawn count
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:129)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 1 kills earn gold
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:130)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Three unique reward cards
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:131)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Combat cannot start during Reward
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:132)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Only one reward can be selected
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:134)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Next Build refills blocks
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:135)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Cannon built with earned gold
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:100)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave starts once from Build
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:108)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 2 completed through real combat
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:128)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 2 exact spawn count
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:129)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 2 kills earn gold
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:130)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Three unique reward cards
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:131)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Combat cannot start during Reward
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:132)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Only one reward can be selected
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:134)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Next Build refills blocks
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:135)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Chill beacon built for third wave
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:104)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave starts once from Build
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:108)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 3 completed through real combat
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:128)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 3 exact spawn count
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:129)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Wave 3 kills earn gold
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:130)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Three unique reward cards
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:131)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Combat cannot start during Reward
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:132)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Only one reward can be selected
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:134)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Next Build refills blocks
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:135)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Three waves survived with automatic tower combat
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:137)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: Base exhaustion reaches GameOver
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:142)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+SMOKE PASS: GameOver blocks gameplay actions
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Require (bool,string) (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:39)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:143)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 39)
+
+PROTOTYPE SMOKE PASSED
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/b/o/dev/tj/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StoneSignal.PrototypeSmokeTest:Finish () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:152)
+StoneSignal.PrototypeSmokeTest/<Run>d__9:MoveNext () (at C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs:145)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/b/o/dev/tj/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/Users/Admin/Documents/Codex/2026-10-06/unity-6-unity-emberward-3d-roguelite/outputs/StoneSignal/Assets/Game/Scripts/Diagnostics/PrototypeSmokeTest.cs Line: 152)
+
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+PlayerConnection::CleanupMemory Statistics:
+[ALLOC_TEMP_TLS] TLS Allocator
+  StackAllocators : 
+    [ALLOC_TEMP_MAIN]
+      Peak usage frame count: [4.0 KB-8.0 KB]: 681 frames, [8.0 KB-16.0 KB]: 5 frames, [16.0 KB-32.0 KB]: 4 frames, [256.0 KB-0.5 MB]: 8 frames, [1.0 MB-2.0 MB]: 1 frames
+      Initial Block Size 4.0 MB
+      Current Block Size 4.0 MB
+      Peak Allocated Bytes 1.5 MB
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 8]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 10]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 4]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 6]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 1]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 11]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 3]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_BatchDeleteObjects]
+      Initial Block Size 64.0 KB
+      Current Block Size 64.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 13]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 2]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 7]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 15]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 8]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 4.4 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 1]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 31.9 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 10]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 26.8 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 12]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Loading.PreloadManager]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 28.3 KB
+      Overflow Count 2
+    [ALLOC_TEMP_Profiler.Dispatcher]
+      Initial Block Size 64.0 KB
+      Current Block Size 64.0 KB
+      Peak Allocated Bytes 468 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 14]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 3]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 12]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_AssetGarbageCollectorHelper] x 15
+      Initial Block Size 64.0 KB
+      Current Block Size 64.0 KB
+      Peak Allocated Bytes 138 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 5]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 13]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 2]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 4.1 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 0]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_AUDIO_Audio Mixer Thread]
+      Initial Block Size 64.0 KB
+      Current Block Size 64.0 KB
+      Peak Allocated Bytes 40.0 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 11]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0.8 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 0]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 5]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0.8 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 14]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 6]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 4]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Background Job.Worker 9]
+      Initial Block Size 32.0 KB
+      Current Block Size 32.0 KB
+      Peak Allocated Bytes 54 B
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 9]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 4.2 KB
+      Overflow Count 0
+    [ALLOC_TEMP_Job.Worker 7]
+      Initial Block Size 256.0 KB
+      Current Block Size 256.0 KB
+      Peak Allocated Bytes 0 B
+      Overflow Count 0
+    [ALLOC_TEMP_Loading.AsyncRead]
+      Initial Block Size 64.0 KB
+      Current Block Size 64.0 KB
+      Peak Allocated Bytes 450 B
+      Overflow Count 0
+[ALLOC_MEMORYPROFILER]
+  Peak usage frame count: [64.0 KB-128.0 KB]: 3 frames, [128.0 KB-256.0 KB]: 696 frames
+  Requested Block Size 1.0 MB
+  Peak Block count 1
+  Peak Allocated memory 156.5 KB
+  Peak Large allocation bytes 0 B
+[ALLOC_DEFAULT] Dual Thread Allocator
+  Peak main deferred allocation count 1071
+    [ALLOC_BUCKET]
+      Large Block size 4.0 MB
+      Used Block count 1
+      Peak Allocated bytes 1.2 MB
+    [ALLOC_DEFAULT_MAIN]
+      Peak usage frame count: [32.0 MB-64.0 MB]: 699 frames
+      Requested Block Size 16.0 MB
+      Peak Block count 2
+      Peak Allocated memory 42.8 MB
+      Peak Large allocation bytes 16.0 MB
+    [ALLOC_DEFAULT_THREAD]
+      Peak usage frame count: [4.0 MB-8.0 MB]: 699 frames
+      Requested Block Size 16.0 MB
+      Peak Block count 1
+      Peak Allocated memory 5.1 MB
+      Peak Large allocation bytes 0 B
+[ALLOC_TEMP_JOB_1_FRAME]
+  Initial Block Size 2.0 MB
+  Used Block Count 0
+  Overflow Count (too large) 0
+  Overflow Count (full) 0
+[ALLOC_TEMP_JOB_2_FRAMES]
+  Initial Block Size 2.0 MB
+  Used Block Count 1
+  Overflow Count (too large) 0
+  Overflow Count (full) 0
+[ALLOC_TEMP_JOB_4_FRAMES (JobTemp)]
+  Initial Block Size 2.0 MB
+  Used Block Count 1
+  Overflow Count (too large) 0
+  Overflow Count (full) 0
+[ALLOC_TEMP_JOB_ASYNC (Background)]
+  Initial Block Size 1.0 MB
+  Used Block Count 1
+  Overflow Count (too large) 0
+  Overflow Count (full) 0
+[ALLOC_GFX] Dual Thread Allocator
+  Peak main deferred allocation count 0
+    [ALLOC_BUCKET]
+      Large Block size 4.0 MB
+      Used Block count 1
+      Peak Allocated bytes 1.2 MB
+    [ALLOC_GFX_MAIN]
+      Peak usage frame count: [256.0 KB-0.5 MB]: 691 frames, [0.5 MB-1.0 MB]: 1 frames, [8.0 MB-16.0 MB]: 7 frames
+      Requested Block Size 16.0 MB
+      Peak Block count 1
+      Peak Allocated memory 12.7 MB
+      Peak Large allocation bytes 0 B
+    [ALLOC_GFX_THREAD]
+      Peak usage frame count: [0-1.0 KB]: 2 frames, [1.0 KB-2.0 KB]: 641 frames, [2.0 KB-4.0 KB]: 56 frames
+      Requested Block Size 16.0 MB
+      Peak Block count 1
+      Peak Allocated memory 2.8 KB
+      Peak Large allocation bytes 0 B
+[ALLOC_CACHEOBJECTS] Dual Thread Allocator
+  Peak main deferred allocation count 2
+    [ALLOC_BUCKET]
+      Large Block size 4.0 MB
+      Used Block count 1
+      Peak Allocated bytes 1.2 MB
+    [ALLOC_CACHEOBJECTS_MAIN]
+      Peak usage frame count: [2.0 MB-4.0 MB]: 699 frames
+      Requested Block Size 4.0 MB
+      Peak Block count 1
+      Peak Allocated memory 2.6 MB
+      Peak Large allocation bytes 0 B
+    [ALLOC_CACHEOBJECTS_THREAD]
+      Peak usage frame count: [256.0 KB-0.5 MB]: 699 frames
+      Requested Block Size 4.0 MB
+      Peak Block count 1
+      Peak Allocated memory 409.9 KB
+      Peak Large allocation bytes 0 B
+[ALLOC_TYPETREE] Dual Thread Allocator
+  Peak main deferred allocation count 0
+    [ALLOC_BUCKET]
+      Large Block size 4.0 MB
+      Used Block count 1
+      Peak Allocated bytes 1.2 MB
+    [ALLOC_TYPETREE_MAIN]
+      Peak usage frame count: [4.0 KB-8.0 KB]: 699 frames
+      Requested Block Size 2.0 MB
+      Peak Block count 1
+      Peak Allocated memory 4.6 KB
+      Peak Large allocation bytes 0 B
+    [ALLOC_TYPETREE_THREAD]
+      Peak usage frame count: [0-1.0 KB]: 699 frames
+      Requested Block Size 2.0 MB
+      Peak Block count 1
+      Peak Allocated memory 496 B
+      Peak Large allocation bytes 0 B
+[ALLOC_RENDERING_THREAD]
+  Initial Block Size 2.0 MB
+  Used Block Count 0
+  Overflow Count (too large) 0
+  Overflow Count (full) 0
+[ALLOC_PROFILER]
+  Peak usage frame count: [0.5 MB-1.0 MB]: 698 frames, [32.0 MB-64.0 MB]: 1 frames
+  Requested Block Size 16.0 MB
+  Peak Block count 3
+  Peak Allocated memory 33.3 MB
+  Peak Large allocation bytes 0 B
+    [ALLOC_PROFILER_BUCKET]
+      Large Block size 4.0 MB
+      Used Block count 1
+      Peak Allocated bytes 66.1 KB
+[ Total Memory ] : 6.85MB ( 872 ) registered: 0.00MB ( 0 ) not-owned: 0.00MB ( 0 ) owned: 0.00MB ( 0 ) [acc: 0.00MB ( 0u )]
+[ ALLOC_FALLBACK ] : 53.51KB ( 167 ) registered: 0.00MB ( 0 ) (Requested:53.51KB, Overhead:6.36KB, Reserved:1.00MB)
+BucketAllocator is shared between allocators for fast small allocations
+[ ALLOC_BUCKET ] : 11.58KB ( 359 ) registered: [registered with original label] (Requested:11.58KB, Overhead:15.50KB, Reserved:4.00MB)
+[ ALLOC_MEMORYPROFILER ] : 156.87KB ( 183 ) registered: 0.00KB ( 0 ) not-owned: 156.87kB ( 183 ) owned: 0.00kB ( 0 ) [acc: 0.00MB ( 0 )] (Requested:156.87KB, Overhead:6.97KB, Reserved:1.00MB)
+[ ALLOC_DEFAULT ] : 6662.12KB ( 125 ) registered: 0.00KB ( 0 ) not-owned: 6662.12kB ( 125 ) owned: 0.00kB ( 0 ) [acc: 0.00MB ( 0 )] (Requested:6662.12KB, Overhead:4.76KB, Reserved:48.00MB)
+[ ALLOC_GFX ] : 0.09KB ( 1 ) registered: 0.00KB ( 0 ) not-owned: 0.09kB ( 1 ) owned: 0.00kB ( 0 ) [acc: 0.00MB ( 0 )] (Requested:0.09KB, Overhead:0.04KB, Reserved:32.00MB)
+[ ALLOC_CACHEOBJECTS ] : 15.85KB ( 22 ) registered: 0.00KB ( 0 ) not-owned: 15.85kB ( 22 ) owned: 0.00kB ( 0 ) [acc: 0.00MB ( 0 )] (Requested:15.85KB, Overhead:0.84KB, Reserved:8.00MB)
+[ ALLOC_TYPETREE ] : 0.09KB ( 1 ) registered: 0.00KB ( 0 ) not-owned: 0.09kB ( 1 ) owned: 0.00kB ( 0 ) [acc: 0.00MB ( 0 )] (Requested:0.09KB, Overhead:0.04KB, Reserved:4.00MB)
+[ ALLOC_PROFILER ] : 115.28KB ( 7 ) registered: 0.00KB ( 0 ) not-owned: 115.28kB ( 7 ) owned: 0.00kB ( 0 ) [acc: 0.00MB ( 0 )] (Requested:115.28KB, Overhead:0.27KB, Reserved:48.00MB)
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1791291234141,"processId":32732,"allocatedMemory":6710384,"memoryLabels":[{"Default":3159132},{"Permanent":1292},{"NewDelete":536},{"MallocFree":12},{"Thread":12},{"PVS":12},{"Manager":9785},{"DynamicGeometry":12},{"VertexData":588},{"ImmediateGeometry":12},{"Geometry":12},{"BatchedGeometry":12},{"Particles":12},{"VFX":12},{"Infinity":12},{"Texture":12},{"Shader":4116},{"Material":12},{"TextureCache":12},{"GfxDevice":924},{"GfxThread":12},{"Animation":12},{"Audio":305713},{"MiniAudio":12},{"AudioData":12},{"AudioProcessing":12},{"AudioTemp":12},{"FMODOther":9276},{"FMODStreamFile":12},{"FMODStreamDecode":12},{"FMODSample":12},{"Font":12},{"FontEngine":12},{"AdvanceTextProcessor":12},{"Physics":12},{"Physics2D":12},{"Serialization":18948},{"Input":12},{"IO":12},{"IO2":12},{"ThreadStack":12},{"JobScheduler":34412},{"TextAsset":12},{"GarbageCollector":12},{"GLib":12},{"GLibImage":12},{"Mono":12},{"MonoCode":12},{"ScriptingNativeRuntime":12},{"BaseObject":12},{"Resource":12},{"Renderer":12},{"Transform":12},{"File":12},{"Network":12},{"WebCam":12},{"MemoryProfilerString":12},{"Culling":12},{"Skinning":12},{"Terrain":12},{"TerrainPhysics":12},{"Wind":12},{"Shadow":12},{"STL":8204},{"String":198},{"StaticString":12},{"DynamicArray":3020},{"HashMap":4620},{"Pair":12},{"UTF16String":12},{"Utility":60},{"Curl":12},{"PoolAlloc":124},{"AI":12},{"TypeTree":12},{"ScriptManager":12},{"RuntimeInitializeOnLoadManager":12},{"AncestorCache":12},{"Sprites":12},{"SpriteAtlas":12},{"GI":12},{"Unet":12},{"ClusterRenderer":12},{"ClusterInput":12},{"Director":12},{"GPUMemory":12},{"CloudService":12},{"WebRequest":12},{"VR":1796},{"AR":12},{"SceneManager":12},{"Video":12},{"LazyScriptCache":12},{"Tilemap":12},{"Speech":12},{"SceneLoad":12},{"ManagedAttributeManager":12},{"TextureStreaming":12},{"iOSReplayKit":12},{"NativeArray":12},{"ScreenCapture":12},{"Camera":12},{"Secure":12},{"Yoga":12},{"Image":12},{"CrashReporter":12},{"SerializationCache":12},{"APIUpdating":12},{"Subsystems":108},{"VirtualTexturing":12},{"StaticSafetyDebugInfo":12},{"AssetStore":12},{"Baselib":12},{"NativePlugin":12},{"RenderingWorker":3145900},{"Test":12},{"EditorGui":12},{"EditorUtility":12},{"VersionControl":12},{"UndoBuffer":12},{"Undo":12},{"AssetDatabase":12},{"AssetUsage":12},{"StreamingManager":12},{"PreviewImage":12},{"AssetImporter":12},{"RestService":12},{"EditorGi":12},{"ProgressiveLightmapper":12},{"Yaml":12},{"License":12},{"UnityConnect":12},{"WebViewCallback":12},{"Collab":12},{"Upm":12},{"UpmDiagnostics":12},{"DrivenProperties":12},{"HubClient":12},{"ChannelService":12},{"LocalIPC":12},{"ProfilerEditor":12},{"CoreBusinessMetrics":12},{"Gizmos":12},{"LiveLink":12},{"Bootstrap":12},{"ShaderUcode":12},{"TLS":12},{"XboxOneGpuOnionMemory":12},{"XboxOneGpuGarlicMemory":12},{"SwitchDynLibMemory":12},{"Licensing":12},{"AssetReference":12},{"CachingManager":12},{"IPCStream":12},{"PhysicalGPUMemory":12},{"TuanjieGI":12}]}

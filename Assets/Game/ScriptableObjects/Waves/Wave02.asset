@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e11f5ca46e841949a46a6775031424b, type: 3}
+  m_Name: Wave02
+  m_EditorClassIdentifier: 
+  groups:
+  - enemy: {fileID: 11400000, guid: e8760c04fd898384797175217a32b339, type: 2}
+    count: 5
+  - enemy: {fileID: 11400000, guid: a770321d8aa43a14d84b0459c12d606d, type: 2}
+    count: 3
+  spawnInterval: 0.7
+  hpScale: 1
+  speedScale: 1

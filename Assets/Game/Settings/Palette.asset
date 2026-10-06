@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 953fd977729ac7945bc946b9b5c0a5d4, type: 3}
+  m_Name: Palette
+  m_EditorClassIdentifier: 
+  art: {fileID: 11400000, guid: b6d292e35f536c9448a72c7447032234, type: 2}
+  tileA: {fileID: 2100000, guid: 7469dc5d7b77eac4c9e9326bc94c88fa, type: 2}
+  tileB: {fileID: 2100000, guid: a492a5ac31f7fa542a04bf66ee97ca02, type: 2}
+  wall: {fileID: 2100000, guid: 3751f3450b942294d82d069a62f6d0f1, type: 2}
+  spawn: {fileID: 2100000, guid: 9c249a0e71be65f40b44dbf254e4bff3, type: 2}
+  goal: {fileID: 2100000, guid: 9a7a5ca32b1b75c46bea48e0b0721b85, type: 2}
+  valid: {fileID: 2100000, guid: c273391aae3d03c43bf5bafd4abadbb1, type: 2}
+  invalid: {fileID: 2100000, guid: 29fc49da95d79434f828d7910951aa43, type: 2}
+  path: {fileID: 2100000, guid: c5ad94d899b2bc84f9fb2bed78c025d7, type: 2}
+  projectile: {fileID: 2100000, guid: d7af52d3fffa5524196cfb670584ff82, type: 2}
+  enemy: {fileID: 2100000, guid: 5a59c70345f3f414f9f09373d80ec18c, type: 2}
+  fastEnemy: {fileID: 2100000, guid: 15d39d85bd689a344809c2f37812d36c, type: 2}
+  towerBase: {fileID: 2100000, guid: 10cc5872f0abb5e4d9ef73db6a0251a3, type: 2}
+  arrow: {fileID: 2100000, guid: e841491bdf3ca9d43bc89e9d141e9d17, type: 2}
+  rapid: {fileID: 2100000, guid: 562825cef67e5fe428a4df4dc46c712d, type: 2}
+  cannon: {fileID: 2100000, guid: 5674fefefad6e764082debc1936d4f0d, type: 2}
+  particle: {fileID: 2100000, guid: 7da1c97201d8ad74a9c44fc431109221, type: 2}

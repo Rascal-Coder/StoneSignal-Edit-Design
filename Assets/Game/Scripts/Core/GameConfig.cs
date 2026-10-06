@@ -1,0 +1,18 @@
+using UnityEngine;
+
+namespace StoneSignal
+{
+    [CreateAssetMenu(menuName = "StoneSignal/Game Configuration")]
+    public sealed class GameConfig : ScriptableObject
+    {
+        [Min(1)] public int baseHP = 30;
+        [Min(0)] public int initialGold = 200;
+        [Min(1)] public int blocksPerBuild = 3;
+        public bool allowCombatBlocks = true;
+        public BlockShapeData[] blocks;
+        public TowerData[] towers;
+        public WaveData[] waves;
+        public RewardData[] rewards;
+        public VisualPalette palette;
+    }
+}
