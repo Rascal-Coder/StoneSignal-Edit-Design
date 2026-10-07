@@ -64,13 +64,14 @@ namespace StoneSignal
                     CoreFx.coreRenderers = cores.ToArray(); // smoke/sparks: none delivered yet (null-safe)
                 }
                 if (art.boardCliff != null || (grid.layout != null && grid.layout.levelDressing != null)) BuildIsland();
-                foreach (var kv in portalGos) if (kv.Value != null) kv.Value.transform.position = PortalPoint(kv.Key); // after the island probe
                 else
                 {
                     var environment = new GameObject("Board decoration");
                     environment.transform.SetParent(transform);
                     environment.AddComponent<BoardEnvironment>().Initialize(grid, art);
                 }
+                /* after the island probe (fix: this loop used to sit between the if and its else, capturing the else) */
+                foreach (var kv in portalGos) if (kv.Value != null) kv.Value.transform.position = PortalPoint(kv.Key);
             }
             else
             {

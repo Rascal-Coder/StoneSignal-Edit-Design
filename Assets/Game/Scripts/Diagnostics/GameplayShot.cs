@@ -86,7 +86,8 @@ namespace StoneSignal
             yield return Breakdown(r => stats += r);
             File.WriteAllText(Path.ChangeExtension(path, ".txt"), stats);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-portalcloseups") >= 0) yield return PortalCloseups();
-            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-flyershot") >= 0) yield return FlyerShot();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-groundshot") >= 0) yield return GroundShot();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-stepshots") >= 0) yield return StepShots();
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-rewardshot") >= 0) yield return RewardShots();
             Debug.Log("GAMEPLAY SHOT " + path + "\n" + stats);
             Application.Quit(0);
@@ -201,40 +202,141 @@ namespace StoneSignal
             yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_pick.png"));
             File.WriteAllText(Path.Combine(dir, "reward_glow.txt"), info); Debug.Log("REWARD SHOTS\n" + info);
         }
-        // -flyershot: step 1 (footprints + v17 flyer). A tanky flyer and a tanky walker from the first spawn; close-ups after they
-        // leave the portal (overlay UI hidden, world-space HP bars kept), heights logged (bar must ride FlyingMotion.CurrentHeight).
-        IEnumerator FlyerShot()
+        // -groundshot (v17.2): enemy ground pass. A Drifter on the bottom bridge (heading +z) and a Skimmer on the left bridge (heading +x)
+        // close-ups with UI hidden: one ground shadow, footprints under the feet and aligned to the heading (straight z vs x segment checks
+        // footprintYawOffset / footprintYawSign), HP bar above the model. Also logs Bloom (volume + camera post-processing).
+        IEnumerator GroundShot()
         {
             string dir = Path.GetDirectoryName(path), info = "";
-            EnemyData flyer = null, walker = null;
-            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) { if (d.flying) { if (flyer == null) flyer = d; } else if (walker == null && !d.name.Contains("Boss")) walker = d; }
-            if (s.config.waves.Length > 0 && s.config.waves[0].groups.Length > 0 && !s.config.waves[0].groups[0].enemy.flying) walker = s.config.waves[0].groups[0].enemy;
-            info += "flyer data=" + (flyer ? flyer.name : "NONE") + " walker data=" + (walker ? walker.name : "NONE") + "\n";
-            if (flyer == null) { File.WriteAllText(Path.Combine(dir, "flyer_shot.txt"), info); yield break; }
-            TimeController.ResetAll();
-            var ef = s.Enemies.Spawn(flyer, 30, 1, 0); yield return null; var ew = walker ? s.Enemies.Spawn(walker, 30, 1, 0) : null;
-            float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < 3.2f) yield return null;
-            captureNoUi = true; // HP bars are world cubes, unaffected
+            EnemyData skimmer = null, drifter = null;
+            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) { if (d.name == "Skimmer") skimmer = d; if (d.name == "Drifter") drifter = d; }
+            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) if (d.flying) info += "FLYING ENEMY DATA: " + d.name + " (expected none in this version)\n";
+            info += Bloom();
+            TimeController.ResetAll(); captureNoUi = true;
             var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
-            if (cam.orthographic) cam.orthographicSize = ortho * .4f; else cam.fieldOfView = fov * .45f; // real close-up (moving an ortho camera only re-centres)
-            foreach (var pair in new[] { ("flyer", ef), ("walker", ew) })
+            if (cam.orthographic) cam.orthographicSize = ortho * .38f; else cam.fieldOfView = fov * .42f;
+            int bottom = -1, left = -1;
+            for (int i = 0; i < s.grid.Spawns.Count; i++) { var e = s.grid.Spawns[i]; if (e.y == 0) bottom = i; else if (e.x == 0) left = i; }
+            foreach (var run in new[] { ("drifter_bottom_bridge", drifter, bottom), ("skimmer_left_bridge", skimmer, left) })
             {
-                var en = pair.Item2; if (en == null || !en.gameObject.activeInHierarchy) { info += pair.Item1 + ": not alive\n"; continue; }
-                cam.transform.position = en.transform.position - cam.transform.forward * 5f;
-                for (int f = 0; f < 4; f++) yield return null; long dc = draws.LastValue, bt = batches.LastValue;
-                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, pair.Item1 + "_close.png"));
-                var fm = en.GetComponentInChildren<StoneSignal.VFX.FlyingMotion>(true);
-                Transform bar = null; float best = 9;
-                foreach (Transform ch in s.Enemies.transform) if (ch.name == "HP background" && ch.gameObject.activeInHierarchy) { var dd = new Vector2(ch.position.x - en.transform.position.x, ch.position.z - en.transform.position.z).magnitude; if (dd < best) { best = dd; bar = ch; } }
-                info += pair.Item1 + " " + en.name + " root y=" + en.transform.position.y.ToString("F2") + " FlyingMotion=" + (fm ? "yes CurrentHeight=" + fm.CurrentHeight.ToString("F2") + " model y=" + fm.transform.position.y.ToString("F2") : "no") + " visual top y=" + VisualTop(en).ToString("F2") +
-                        " | HP bar y=" + (bar ? bar.position.y.ToString("F2") + " (above root " + (bar.position.y - en.transform.position.y).ToString("F2") + ")" : "not found") +
-                        " | frame drawCalls=" + dc + " batches=" + bt + RendererTops(en) + "\n";
+                if (run.Item2 == null || run.Item3 < 0) { info += run.Item1 + ": data/spawn missing\n"; continue; }
+                if (s.Game.State != GameState.Combat) info += "(state " + s.Game.State + " -> StartWave=" + s.Waves.StartWave() + ")\n"; // enemies only move in Combat
+                var entry = s.grid.Spawns[run.Item3]; var en = s.Enemies.Spawn(run.Item2, 40, 1, run.Item3);
+                float t0 = Time.realtimeSinceStartup; var bridge = s.grid.BridgeWaterPoint(entry);
+                // follow the enemy once it reaches the bridge; frames while it crosses toward the board
+                float shotAt = -1; int k = 0;
+                while (Time.realtimeSinceStartup - t0 < 9f && k < 3 && en != null && en.Alive)
+                {
+                    var p = en.transform.position; float along = Vector3.Dot(p - bridge, -GridManager.OutwardOf(entry, s.grid.width, s.grid.height));
+                    if (shotAt < 0 && along > -.4f) shotAt = Time.realtimeSinceStartup;
+                    if (shotAt >= 0 && Time.realtimeSinceStartup - shotAt >= k * .45f)
+                    {
+                        cam.transform.position = p - cam.transform.forward * 6f; yield return null; yield return new WaitForEndOfFrame();
+                        long dc = draws.LastValue; Capture(Path.Combine(dir, run.Item1 + "_" + k + ".png"));
+                        info += run.Item1 + "_" + k + ": " + Describe(en) + " | frame drawCalls=" + dc + "\n" + Prints(en) + "\n";
+                        k++;
+                    }
+                    else yield return null;
+                }
+                if (k == 0) info += run.Item1 + ": enemy never reached the bridge (alive=" + (en != null && en.Alive) + " pos=" + (en != null ? en.transform.position.ToString("F2") : "-") + " state=" + s.Game.State + " held=" + (en != null && en.HeldBySpawn) + ")\n";
             }
             cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
-            File.WriteAllText(Path.Combine(dir, "flyer_shot.txt"), info); Debug.Log("FLYER SHOT\n" + info);
+            File.WriteAllText(Path.Combine(dir, "ground_shot.txt"), info); Debug.Log("GROUND SHOT\n" + info);
         }
+        string Describe(Enemy en)
+        {
+            int gfx = 0, gfxActive = 0, fm = 0, fmActive = 0, blobs = 0; string blobY = "";
+            foreach (var g in en.GetComponentsInChildren<StoneSignal.VFX.EnemyGroundFx>(true)) { gfx++; if (g.isActiveAndEnabled) gfxActive++; }
+            foreach (var f in en.GetComponentsInChildren<StoneSignal.VFX.FlyingMotion>(true)) { fm++; if (f.isActiveAndEnabled) fmActive++; }
+            foreach (var r in en.GetComponentsInChildren<Renderer>()) if (r.enabled && r.name.StartsWith("Blob")) { blobs++; blobY += " " + r.bounds.center.y.ToString("F2"); }
+            Transform bar = null; float best = 9;
+            foreach (Transform ch in s.Enemies.transform) if (ch.name == "HP background" && ch.gameObject.activeInHierarchy) { var dd = new Vector2(ch.position.x - en.transform.position.x, ch.position.z - en.transform.position.z).magnitude; if (dd < best) { best = dd; bar = ch; } }
+            float top = VisualTop(en);
+            return en.name + " root y=" + en.transform.position.y.ToString("F2") + " yaw=" + en.transform.eulerAngles.y.ToString("F0") + " EnemyGroundFx " + gfxActive + "/" + gfx + " active, FlyingMotion " + fmActive + "/" + fm +
+                   " active, visible blobs=" + blobs + " (y" + blobY + "), model top y=" + top.ToString("F2") + ", HP bar y=" + (bar ? bar.position.y.ToString("F2") + (bar.position.y > top ? " (above model)" : " (BELOW model top)") : "none");
+        }
+        string Prints(Enemy en)
+        {
+            var sys = StoneSignal.VFX.EnemyGroundFxSystem.Instance; if (sys == null || sys.dust == null) return "    footprints: no EnemyGroundFxSystem";
+            var ps = new ParticleSystem.Particle[StoneSignal.VFX.EnemyGroundFxSystem.MaxFootprints]; int n = sys.dust.GetParticles(ps), near = 0; var sb = new System.Text.StringBuilder();
+            bool local = sys.dust.main.simulationSpace == ParticleSystemSimulationSpace.Local;
+            for (int i = 0; i < n; i++)
+            {
+                var wp = local ? sys.dust.transform.TransformPoint(ps[i].position) : ps[i].position;
+                if ((new Vector2(wp.x - en.transform.position.x, wp.z - en.transform.position.z)).magnitude > 2.5f) continue;
+                if (near++ < 6) sb.Append(" [" + wp.x.ToString("F2") + "," + wp.y.ToString("F2") + "," + wp.z.ToString("F2") + " rot=" + ps[i].rotation.ToString("F0") + " age=" + (ps[i].startLifetime - ps[i].remainingLifetime).ToString("F2") + "]");
+            }
+            var r = sys.dust.GetComponent<ParticleSystemRenderer>();
+            return "    footprints total=" + n + " near enemy=" + near + " align=" + (r ? r.alignment.ToString() + " renderMode=" + r.renderMode : "-") + " yawOffset=" + sys.footprintYawOffset + " yawSign=" + sys.footprintYawSign + sb;
+        }
+        static string Bloom()
+        {
+            string o = "BLOOM:";
+            foreach (var v in FindObjectsOfType<UnityEngine.Rendering.Volume>())
+            {
+                var prof = v.HasInstantiatedProfile() ? v.profile : v.sharedProfile;
+                UnityEngine.Rendering.Universal.Bloom bl = null; if (prof != null) prof.TryGet(out bl);
+                o += " volume '" + v.name + "' global=" + v.isGlobal + " weight=" + v.weight + " profile=" + (prof ? prof.name : "none") + " bloom=" + (bl != null ? "active=" + bl.active + " intensity=" + bl.intensity.value + " (override " + bl.intensity.overrideState + ") threshold=" + bl.threshold.value : "NOT IN PROFILE") + ";";
+            }
+            foreach (var c in FindObjectsOfType<Camera>())
+            {
+                var ad = c.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+                o += " camera '" + c.name + "' renderPostProcessing=" + (ad ? ad.renderPostProcessing.ToString() : "no URP data") + " hdr=" + c.allowHDR + ";";
+            }
+            var rp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+            o += " pipeline=" + (rp ? rp.name : "none") + (rp is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset ua ? " hdrAsset=" + ua.supportsHDR : "");
+            return o + "\n";
+        }
+        static long Tris(Mesh m) { long t = 0; for (int i = 0; i < m.subMeshCount; i++) t += m.GetIndexCount(i) / 3; return t; }
         static float VisualTop(Component en) { float t = float.MinValue; foreach (var r in StoneSignal.Enemy.ModelRenderers(en.transform)) t = Mathf.Max(t, StoneSignal.Enemy.MeshTop(r)); return t; }
         static string RendererTops(Component en) { var sb = new System.Text.StringBuilder(); foreach (var r in en.GetComponentsInChildren<Renderer>()) sb.Append("\n    " + r.GetType().Name + " " + r.name + " enabled=" + r.enabled + " boundsTop=" + r.bounds.max.y.ToString("F2") + " meshTop=" + StoneSignal.Enemy.MeshTop(r).ToString("F2")); return sb.ToString(); }
+        // -stepshots: art step 2 (SpawnRipple, shader-only) and step 3 (core enclosure Intact/Cracked/Broken/Critical + CoreDamageFx hit),
+        // close-ups with UI hidden, draw calls per frame and the enclosure's own draw-call cost (renderer toggled off, profiler delta).
+        IEnumerator StepShots()
+        {
+            string dir = Path.GetDirectoryName(path), info = "";
+            var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
+            void Zoom(float k) { if (cam.orthographic) cam.orthographicSize = ortho * k; else cam.fieldOfView = fov * k; }
+            captureNoUi = true; TimeController.ResetAll();
+            // step 2: ripple on the open water under the bottom entry's bridge
+            int si = s.grid.Spawns.Count - 1; var e0 = s.grid.Spawns[si]; var wp = s.grid.BridgeWaterPoint(e0);
+            cam.transform.position = wp - cam.transform.forward * 6f; Zoom(.5f);
+            for (int f = 0; f < 6; f++) yield return null; long dBase = draws.LastValue;
+            info += "STEP 2 SpawnRipple at bridge water " + wp.ToString("F2") + " (entry " + e0 + "), baseline drawCalls=" + dBase + "\n";
+            var en = s.Enemies.Spawn(s.config.waves[0].groups[0].enemy, 30, 1, si); float t0 = Time.realtimeSinceStartup;
+            foreach (var at in new[] { .35f, .8f, 1.2f, 2.0f })
+            {
+                while (Time.realtimeSinceStartup - t0 < at) yield return null;
+                long d = draws.LastValue, b = batches.LastValue; yield return new WaitForEndOfFrame();
+                Capture(Path.Combine(dir, "ripple_t" + Mathf.RoundToInt(at * 100).ToString("000") + ".png"));
+                info += "  t=" + at + (at < 1.6f ? " (ripple alive)" : " (ripple over)") + " drawCalls=" + d + " batches=" + b + "\n";
+            }
+            // step 3: core enclosure states
+            var fx = s.MapView != null ? s.MapView.CoreFx : null;
+            if (fx == null || fx.enclosure == null) info += "STEP 3: CoreDamageFx / enclosure MISSING\n";
+            else
+            {
+                TimeController.SetSpeed(0);
+                var encR = fx.enclosure.GetComponent<MeshRenderer>(); var core = s.grid.CoreCenter;
+                cam.transform.position = core - cam.transform.forward * 6f; Zoom(.4f);
+                info += "STEP 3 core enclosure: material=" + (encR.sharedMaterial ? encR.sharedMaterial.name + " shader=" + encR.sharedMaterial.shader.name : "NONE") + " coreRenderers=" + fx.coreRenderers.Length + " smoke=" + (fx.smoke ? "yes" : "none") + " sparks=" + (fx.sparks ? "yes" : "none") + "\n";
+                foreach (var st in new[] { (1f, "intact"), (.55f, "cracked"), (.3f, "broken"), (.1f, "critical") })
+                {
+                    fx.SetHealth01(st.Item1); for (int f = 0; f < 6; f++) yield return null; long d = draws.LastValue, b = batches.LastValue;
+                    yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_" + st.Item2 + ".png"));
+                    encR.enabled = false; for (int f = 0; f < 4; f++) yield return null; long dOff = draws.LastValue; encR.enabled = true;
+                    var coreOff = new List<Renderer>(); foreach (var r in fx.GetComponentsInChildren<Renderer>()) if (r.enabled) { r.enabled = false; coreOff.Add(r); }
+                    for (int f = 0; f < 4; f++) yield return null; long dNoCore = draws.LastValue; foreach (var r in coreOff) r.enabled = true;
+                    var m = fx.enclosure.sharedMesh;
+                    info += "  " + st.Item2 + " (h=" + st.Item1 + ") stage=" + fx.Current + " mesh=" + (m ? m.name + " tris=" + Tris(m) + " submeshes=" + m.subMeshCount : "-") +
+                            " | frame drawCalls=" + d + " batches=" + b + " | enclosure DC=" + (d - dOff) + " | whole core group DC=" + (d - dNoCore) + " (" + coreOff.Count + " renderers)\n";
+                }
+                fx.SetHealth01(1); fx.PlayHit(); yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_hit.png")); info += "  hit flash captured (PlayHit, intact)\n";
+                TimeController.ResetAll();
+            }
+            cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
+            File.WriteAllText(Path.Combine(dir, "step_shots.txt"), info); Debug.Log("STEP SHOTS\n" + info);
+        }
         // -portalcloseups: after the main shot, one close-up per spawn portal and one mid-spawn (UI hidden), next to the main png.
         IEnumerator PortalCloseups()
         {

@@ -116,17 +116,21 @@ namespace StoneSignal
             slowMultiplier=Mathf.Min(slowMultiplier,1-Mathf.Clamp01(fraction)); slowRemaining=Mathf.Max(slowRemaining,duration);
         }
         private Transform hpBar;
-        // v17 flyers: the model is lifted by FlyingMotion (added by EnemyGroundFx.SetFlying after Initialize), so the bar rides above it.
-        private StoneSignal.VFX.FlyingMotion fly; private bool flyChecked; private float flyTop;
+        // HP bar height follows the model (and a FlyingMotion lift if any; EnemyGroundFx.SetFlying adds it after Initialize).
+        private StoneSignal.VFX.FlyingMotion fly; private bool flyChecked; private float modelTop;
         private float BarHeight()
         {
+            // Bar sits at max(0.75, model top + 0.05) above the root, so tall ground meshes (e.g. the legged Skimmer) keep it above the model.
+            // A flyer (FlyingMotion active; no enemy in this version) adds its live lift on top.
             if (!flyChecked && Application.isPlaying && Time.frameCount > spawnFrame)
             {
-                fly = GetComponentInChildren<StoneSignal.VFX.FlyingMotion>(true); flyChecked = true; flyTop = 0;
-                if (fly != null) foreach (var r in ModelRenderers(fly.transform)) flyTop = Mathf.Max(flyTop, MeshTop(r) - fly.transform.position.y); // model top above the lifted pivot
+                fly = GetComponentInChildren<StoneSignal.VFX.FlyingMotion>(); flyChecked = true; modelTop = 0;
+                var refT = fly != null ? fly.transform : transform;
+                foreach (var r in ModelRenderers(transform)) modelTop = Mathf.Max(modelTop, MeshTop(r) - refT.position.y);
             }
-            if (fly == null || !fly.isActiveAndEnabled) return .75f;
-            return Mathf.Max(.75f + fly.CurrentHeight, fly.transform.position.y - transform.position.y + flyTop + .15f);
+            bool flying = fly != null && fly.isActiveAndEnabled;
+            float lift = flying ? fly.transform.position.y - transform.position.y : 0f;
+            return Mathf.Max(.75f + (flying ? fly.CurrentHeight : 0f), lift + modelTop + .05f);
         }
         // The creature model only: skinned meshes if any (blob shadows / fx quads are MeshRenderers).
         public static List<Renderer> ModelRenderers(Transform root)
@@ -139,7 +143,7 @@ namespace StoneSignal
             }
             return sk.Count > 0 ? sk : all;
         }
-        // World top of a renderer's mesh. SkinnedMeshRenderer.bounds is a loose animation box (measured 2.7 m tall on the Skimmer), so use the rest mesh.
+        // World top of a renderer's mesh. SkinnedMeshRenderer.bounds is a loose animation box, so use the rest mesh.
         public static float MeshTop(Renderer r)
         {
             Mesh m = r is SkinnedMeshRenderer sk ? sk.sharedMesh : (r.TryGetComponent<MeshFilter>(out var mf) ? mf.sharedMesh : null);

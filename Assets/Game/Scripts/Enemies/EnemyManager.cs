@@ -54,15 +54,15 @@ namespace StoneSignal
                     // v16.2 footprints: per-enemy blob + reporter to the single scene emitter (PF_VFX_EnemyGroundSystem, cap 64)
                     var g = ArtVisual.Create(palette.art.enemyGround, obj.transform, obj.transform.position);
                     var fx = g.GetComponent<StoneSignal.VFX.EnemyGroundFx>() ?? g.GetComponentInChildren<StoneSignal.VFX.EnemyGroundFx>();
-                    if (fx != null) { fx.groundY = ground - .45f; fx.SetFlying(data.flying); }
+                    if (fx != null) { StoneSignal.VFX.EnemyGroundFx.ClaimEnemy(obj.transform, fx); fx.groundY = ground - .45f; fx.SetFlying(data.flying); } // v17.2: one ground fx per enemy
                 }
             } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(from), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
             if (enemy == null) enemy = obj.AddComponent<Enemy>();
             enemy.Initialize(this, grid, data, palette, hpScale, speedScale, from);
-            { var gfx = obj.GetComponentInChildren<StoneSignal.VFX.EnemyGroundFx>(); if (gfx != null) gfx.SetFlying(data.flying); } // pooled reuse keeps the flag right
+            { var gfx = obj.GetComponentInChildren<StoneSignal.VFX.EnemyGroundFx>(false); if (gfx != null) gfx.SetFlying(data.flying); } // pooled reuse keeps the flag right (v17.2: active one only = the claimed runtime fx)
             if (!splitting && Application.isPlaying)
             {
-                if (ArtSteps.On(3)) StoneSignal.VFX.SpawnRipple.Play(grid.TryPortalPoint(from, out var rp) ? rp : grid.ToWorld(from));
+                if (ArtSteps.On(3)) StoneSignal.VFX.SpawnRipple.Play(grid.TryPortalPoint(from, out _) ? grid.BridgeWaterPoint(from) : grid.ToWorld(from)); // ripple max radius 1.76 m: at the portal (island centre) it never reaches water
                 if (ArtSteps.On(2) && PortalAt != null) { var portal = PortalAt(from); if (portal != null) { var held = enemy; held.HeldBySpawn = true; portal.PlaySpawn(obj.transform, .6f, () => { if (held != null) held.HeldBySpawn = false; }); } }
             }
             progress.Remove(enemy); // pooled reuse: never inherit the previous life's best distance (false ENEMY STUCK)

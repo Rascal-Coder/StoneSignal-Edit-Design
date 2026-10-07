@@ -62,6 +62,8 @@ namespace StoneSignal
             var o = OutwardOf(entry, width, height); p = ToWorld(entry) + o * islandDistance * cellSize + Vector3.up * islandHeight;
             return o != Vector3.zero && spawns.Contains(entry);
         }
+        /// Open water under the middle of an entry's bridge (board edge at .5 cell, 4x4 island edge at islandDistance - 2 cells).
+        public Vector3 BridgeWaterPoint(Vector2Int entry) { float mid = (.5f + Mathf.Max(.5f, islandDistance - 2f)) * .5f; return ToWorld(entry) + OutwardOf(entry, width, height) * mid * cellSize; }
         public Vector3 ToWorld(Vector2Int p) => transform.position + new Vector3((p.x + .5f) * cellSize, 0, (p.y + .5f) * cellSize);
         public Vector3 CoreCenter
         {
