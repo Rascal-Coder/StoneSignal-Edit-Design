@@ -101,7 +101,7 @@ namespace StoneSignal
         {
             var (muzzlePos, muzzleRot) = Muzzle();
             if (Data.muzzleVfx != null) StylizedVfx.Play(Data.muzzleVfx, muzzlePos, muzzleRot);
-            bool crit = Data.critChance > 0 && UnityEngine.Random.value < Data.critChance;
+            bool crit = GameRng.Gameplay.Permille(GameRng.ToPermille(Data.critChance));
             float damage = Damage * (crit ? Data.critMultiplier : 1);
             GameObject obj;
             if (arcSource != Data.projectileVfx) { arcSource = Data.projectileVfx; isArc = arcSource != null && arcSource.GetComponent<TeslaArc>() != null; }

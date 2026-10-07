@@ -27,7 +27,7 @@ namespace StoneSignal
             var pool = new List<RewardData>(config.rewards);
             for (int i = 0; i < 3 && pool.Count > 0; i++)
             {
-                int index = UnityEngine.Random.Range(0,pool.Count);
+                int index = GameRng.Rewards.Range(0,pool.Count);
                 choices.Add(pool[index]); pool.RemoveAt(index);
             }
             Offered?.Invoke();

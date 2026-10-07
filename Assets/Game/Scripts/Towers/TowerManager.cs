@@ -58,22 +58,40 @@ namespace StoneSignal
             if (artRing != null) { artRing.SetRadius(range); artRing.transform.position = centre + Vector3.up * (Art.tileTop + .02f); }
             return true;
         }
+        // Free wall tops shown while a tower is selected: ONE generated mesh (a UV 0..1 quad per slot) using the art
+        // slot-highlight material, so any number of slots costs a single draw call.
+        private MeshRenderer slotRenderer; private Mesh slotMesh;
         private void RefreshSlots(bool show)
         {
             if (Art == null || Art.slotHighlight == null) return;
             int key = show ? SelectedIndex : -1;
             if (!slotsDirty && key == slotsFor) return;
-            slotsDirty = false; slotsFor = key; int used = 0;
+            slotsDirty = false; slotsFor = key;
+            if (slotRenderer == null)
+            {
+                var go = new GameObject("Slot highlights", typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(transform, false);
+                slotMesh = new Mesh { name = "Slot highlights" }; go.GetComponent<MeshFilter>().sharedMesh = slotMesh;
+                slotRenderer = go.GetComponent<MeshRenderer>();
+                var src = Art.slotHighlight.GetComponentInChildren<Renderer>(true); if (src != null) slotRenderer.sharedMaterial = src.sharedMaterial;
+                slotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; slotRenderer.receiveShadows = false;
+            }
+            var v = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
             if (show)
                 for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
                 {
                     var c = new Vector2Int(x, y);
                     if (grid.Get(c) != CellState.Blocked) continue; // free wall top
-                    if (used == slots.Count) slots.Add(ArtVisual.Create(Art.slotHighlight, transform, Vector3.zero));
-                    var s = slots[used++]; s.SetActive(true); s.transform.position = grid.ToWorld(c) + Vector3.up * (Art.blockTop + .01f);
+                    Vector3 p = transform.InverseTransformPoint(grid.ToWorld(c) + Vector3.up * (Art.blockTop + .015f)); float h = grid.cellSize * .46f;
+                    int k = v.Count;
+                    v.Add(p + new Vector3(-h, 0, -h)); v.Add(p + new Vector3(-h, 0, h)); v.Add(p + new Vector3(h, 0, h)); v.Add(p + new Vector3(h, 0, -h));
+                    uv.Add(new Vector2(0, 0)); uv.Add(new Vector2(0, 1)); uv.Add(new Vector2(1, 1)); uv.Add(new Vector2(1, 0));
+                    t.Add(k); t.Add(k + 1); t.Add(k + 2); t.Add(k); t.Add(k + 2); t.Add(k + 3);
                 }
-            for (int i = used; i < slots.Count; i++) slots[i].SetActive(false);
+            slotMesh.Clear(); slotMesh.SetVertices(v); slotMesh.SetUVs(0, uv); slotMesh.SetTriangles(t, 0);
+            slotMesh.SetNormals(v.ConvertAll(_ => Vector3.up)); slotMesh.RecalculateBounds();
+            slotRenderer.enabled = v.Count > 0;
         }
+
         public int Cost(TowerData data) => Mathf.Max(1,Mathf.RoundToInt(data.cost*modifiers.TowerCost));
         public void Select(int index)
         {
@@ -120,8 +138,18 @@ namespace StoneSignal
             foreach (var t in towers) foreach (var c in t.Cells) if (c == cell) return t;
             return null;
         }
+        // Scripted presentation (GameplayShot): hold a tower ghost + slot highlights regardless of input/state.
+        public bool Pinned { get; private set; }
+        public string PinPreview(int index, Vector2Int origin)
+        {
+            Pinned = true; SelectedIndex = index; slotsDirty = true; RefreshSlots(true); Changed?.Invoke();
+            var data = Data[index]; var size = SizeOf(data, 0); string reason = validator.ValidateTower(origin, size);
+            ShowArtGhost(data, grid.FootprintCenter(origin, size), 0, reason == null, modifiers.Range(data));
+            return reason;
+        }
         private void Update()
         {
+            if (Pinned) return;
             if (Data == null) return;
             if (Input.GetKeyDown(KeyCode.Alpha1)) Select(0);
             if (Input.GetKeyDown(KeyCode.Alpha2)) Select(1);

@@ -10,7 +10,7 @@ namespace StoneSignal {
   public BlockShapeData Draw() {
    if(draw.Count==0) draw.AddRange(cards);
    if(draw.Count==0) return null;
-   int i=Random.Range(0,draw.Count); var card=draw[i]; draw.RemoveAt(i); return card;
+   int i=GameRng.Draw.Range(0,draw.Count); var card=draw[i]; draw.RemoveAt(i); return card;
   }
  }
 }

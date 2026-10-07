@@ -37,6 +37,16 @@ namespace StoneSignal
                 return Vector3.Distance(transform.position, World(path[node])) + (path.Count - node - 1) * grid.cellSize;
             }
         }
+        public string DebugState => $"{(Data != null ? Data.name : "?")} alive={Alive} active={gameObject.activeInHierarchy} pos={transform.position} cell={(grid != null ? CurrentCell : default)} anchor={(grid != null ? NavigationAnchor : default)} node={node}/{(path != null ? path.Count : -1)} hp={HP:0.#}";
+        // Stuck guard: re-route from the current cell; false when no route exists (caller removes the enemy).
+        public bool RecoverRoute()
+        {
+            var from = grid.ToCell(transform.position);
+            var p = owner.Paths.FindPath(grid.Walkable(from) ? from : NavigationAnchor, grid.goal);
+            if (p.Count == 0) return false;
+            path = p; node = 0; return true;
+        }
+        public void ForceRemove() => Resolve(EnemyResolution.Removed);
         public event System.Action<Enemy, float> Damaged;
         // Presentation info about the most recent hit, read by CombatFeedback inside Damaged.
         public DamageKind LastHitKind { get; private set; }
@@ -57,9 +67,10 @@ namespace StoneSignal
                 var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * .75f, new Vector3(.65f,.055f,.08f), palette.invalid);
                 healthFill = PrimitiveVisual.Create("HP", PrimitiveType.Cube, back.transform, back.transform.position + Vector3.up * .005f, new Vector3(.65f,.055f,.08f), palette.valid).transform;
                 hpBar = back.transform;
+                foreach (var r in back.GetComponentsInChildren<Renderer>()) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; }
             }
             else { hpBar.gameObject.SetActive(true); hpBar.position = transform.position + Vector3.up * .75f; } // pooled reuse
-            healthFill.localScale = Vector3.one;
+            SetFill(1); // pooled reuse resets to full
             path = owner.Paths.FindPath(start, grid.goal); node = 0;
             FaceNextNode();
             BindAnimator();
@@ -138,8 +149,25 @@ namespace StoneSignal
             // Yaw-only, smooth turn toward the travel direction (EnemyData.turnSpeed deg/s); no snapping at corners.
             if(heading.sqrMagnitude>.00001f)
                 transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(heading),Data.turnSpeed*deltaTime);
-            if (hpBar != null) hpBar.position = transform.position + Vector3.up * .75f;
+            if (hpBar != null) { hpBar.position = transform.position + Vector3.up * .75f; FaceBar(); }
             if (node >= path.Count) Resolve(EnemyResolution.Escaped);
+        }
+        // HP fill is anchored at the bar's left edge and shrinks from the right (scale + offset in the background's local space);
+        // the bar yaws with the camera so "left" is always screen-left.
+        private void SetFill(float r)
+        {
+            if (healthFill == null) return; r = Mathf.Clamp01(r);
+            healthFill.localScale = new Vector3(r, 1.02f, 1.1f);
+            healthFill.localPosition = new Vector3(-(1 - r) * .5f, .1f, -.05f);
+            healthFill.gameObject.SetActive(r > 0);
+            FaceBar();
+        }
+        private static Transform barCamera;
+        private void FaceBar()
+        {
+            if (hpBar == null) return;
+            if (barCamera == null && Camera.main != null) barCamera = Camera.main.transform;
+            if (barCamera != null) hpBar.rotation = Quaternion.Euler(0, barCamera.eulerAngles.y, 0);
         }
         public void TakeDamage(float damage) => TakeDamage(damage, DamageKind.Physical, false);
         public void TakeDamage(float damage, DamageKind kind, bool crit)
@@ -149,7 +177,7 @@ namespace StoneSignal
             if (Feedback != null) Feedback.OnHit();
             HP = Mathf.Max(0, HP - damage);
             flashUntil = Time.time + .09f;
-            if (healthFill != null) healthFill.localScale = new Vector3(HP / maxHP, 1, 1);
+            SetFill(maxHP > 0 ? HP / maxHP : 0);
             Damaged?.Invoke(this, damage);
             if (HP <= 0) Resolve(EnemyResolution.Killed);
         }

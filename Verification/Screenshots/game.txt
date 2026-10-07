@@ -1,7 +1,7 @@
-renderers=299
-visibleRenderers=267
-totalTris=85554
-visibleTris=69990
-estimatedDrawCalls=267 (pre-batching)
-uniqueMaterials=9
+renderers=202
+visibleRenderers=202
+totalTris=79146
+visibleTris=79146
+estimatedDrawCalls=202 (pre-batching)
+uniqueMaterials=6
 budget drawCalls<150 tris<150000 -> OVER

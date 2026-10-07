@@ -21,7 +21,7 @@ namespace StoneSignal.VFX
             for (int i = 0; i <= segments; i++)
             {
                 float k = i / (float)segments, env = Mathf.Sin(k * Mathf.PI);
-                Vector3 off = (side * Random.Range(-1f, 1f) + up * Random.Range(-1f, 1f)) * jitter * env;
+                Vector3 off = (side * StoneSignal.GameRng.Vfx.Range(-1f, 1f) + up * StoneSignal.GameRng.Vfx.Range(-1f, 1f)) * jitter * env;
                 _lr.SetPosition(i, from + d * k + off);
             }
         }

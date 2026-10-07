@@ -25,7 +25,7 @@ namespace StoneSignal
             Directory.CreateDirectory(captureDirectory);
             session.Blocks.enabled=false; // Programmatic previews stay stable during captures.
             int seedIndex=Array.IndexOf(args,"-seed");
-            UnityEngine.Random.InitState(seedIndex>=0 && seedIndex+1<args.Length ? int.Parse(args[seedIndex+1]) : 37);
+            int seed=seedIndex>=0 && seedIndex+1<args.Length ? int.Parse(args[seedIndex+1]) : 37; UnityEngine.Random.InitState(seed); GameRng.SetSeed(seed); // split deterministic streams
             Application.logMessageReceived+=OnLog;
             StartCoroutine(Run());
         }
@@ -139,9 +139,14 @@ namespace StoneSignal
                 }
                 StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=4;
                 float deadline=Time.realtimeSinceStartup+90;
-                while(session.Game.State==GameState.Combat && Time.realtimeSinceStartup<deadline) yield return null;
+                float tick=Time.realtimeSinceStartup+10;
+                while(session.Game.State==GameState.Combat && Time.realtimeSinceStartup<deadline)
+                {
+                    if(Time.realtimeSinceStartup>tick) { tick+=10; Debug.Log("SMOKE TICK wave="+(wave+1)+" timeScale="+Time.timeScale+" hitStop="+StoneSignal.VFX.HitStop.Active+" remaining="+session.Waves.Remaining+" "+(session.Enemies.Active.Count>0?session.Enemies.Active[0].DebugState:"")); }
+                    yield return null;
+                }
                 StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1;
-                Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat (state="+session.Game.State+" remaining="+session.Waves.Remaining+" active="+session.Enemies.Active.Count+")");
+                Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat (state="+session.Game.State+" remaining="+session.Waves.Remaining+" active="+session.Enemies.Active.Count+" timeScale="+Time.timeScale+" stuckEvents="+session.Enemies.StuckEvents+" "+(session.Enemies.Active.Count>0?session.Enemies.Active[0].DebugState:"")+")");
                 Require(spawnCounts[wave]==session.config.waves[wave].Total+childCounts[wave],"Wave "+(wave+1)+" exact spawn count");
                 Require(session.Economy.Gold>goldBefore,"Wave "+(wave+1)+" kills earn gold");
                 Require(session.Rewards.Choices.Count==3 && new HashSet<RewardData>(session.Rewards.Choices).Count==3,"Three unique reward cards");

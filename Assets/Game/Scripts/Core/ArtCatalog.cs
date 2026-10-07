@@ -52,6 +52,9 @@ namespace StoneSignal
         [Header("HUD sprites (Assets/Game/Art/Stylized/UI)")]
         public Sprite uiOrbCore;
         public Sprite uiCardTower, uiCardBlueprint, uiBadgeHotkey, uiBadgeSize2x2, uiBadgeSize1x2;
+        [Tooltip("Every sprite in Assets/Game/Art/Stylized/UI, looked up by file name (ui9_* are 9-slice). Missing names fall back to generated placeholders.")]
+        public Sprite[] uiSprites = new Sprite[0];
+        public Sprite UiSprite(string spriteName) { if (uiSprites != null) foreach (var s in uiSprites) if (s != null && s.name == spriteName) return s; return null; }
         [Header("Combat VFX")]
         [Tooltip("Played where an enemy reaches the core.")]
         public GameObject coreHitVfx;

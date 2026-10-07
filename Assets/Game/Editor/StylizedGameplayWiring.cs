@@ -186,8 +186,13 @@ namespace StoneSignal.EditorTools
             art.pathFlowSegment = Opt("PF_Path_FlowSegment"); art.pathFlowY = GroundTop + .09f; // above the +0.06 tile undulation (demo 0.82 would sit inside raised tiles)
             art.placeGhostBlock = Opt("PF_UI_PlaceGhost_Block"); art.placeGhostTower = Opt("PF_UI_PlaceGhost_Tower");
             art.slotHighlight = Opt("PF_UI_SlotHighlight");
+            // instanced board pieces (MeshMerge/InstancedBatch): tiles, walls, slot highlights need GPU instancing on their materials
+            foreach (var pf in new[] { art.slotHighlight, art.block, art.tile, art.tilePath }.Concat(art.tileVariants ?? new GameObject[0]))
+                if (pf != null) foreach (var r in pf.GetComponentsInChildren<Renderer>(true)) foreach (var m in r.sharedMaterials)
+                    if (m != null && !m.enableInstancing) { m.enableInstancing = true; EditorUtility.SetDirty(m); }
             // v11 HUD sprites (ui_mockup_v3)
             art.uiOrbCore = UiSprite("ui_orb_core"); art.uiCardTower = UiSprite("ui_card_tower_frame"); art.uiCardBlueprint = UiSprite("ui_card_blueprint");
+            art.uiSprites = System.IO.Directory.GetFiles(UiDir, "*.png").Select(p => UiSprite(System.IO.Path.GetFileNameWithoutExtension(p))).Where(x => x != null).ToArray();
             art.uiBadgeHotkey = UiSprite("ui_badge_hotkey"); art.uiBadgeSize2x2 = UiSprite("ui_badge_size_2x2"); art.uiBadgeSize1x2 = UiSprite("ui_badge_size_1x2");
             EditorUtility.SetDirty(art);
             WireLayout();
@@ -222,6 +227,7 @@ namespace StoneSignal.EditorTools
                 UnityEditor.U2D.SpriteAtlasExtensions.Add(atlas, new UnityEngine.Object[] { AssetDatabase.LoadAssetAtPath<DefaultAsset>(UiDir.TrimEnd((char)47)) });
             }
             foreach (var png in System.IO.Directory.GetFiles(UiDir, "*.png")) UiSprite(System.IO.Path.GetFileNameWithoutExtension(png));
+            AssetDatabase.Refresh();
             UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new[] { atlas }, EditorUserBuildSettings.activeBuildTarget);
         }
         static void Tower(string asset, string prefab, DamageKind kind, string muzzle, string proj, string hit, string boom, Action<TowerData> extra)

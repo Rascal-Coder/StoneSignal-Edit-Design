@@ -77,6 +77,14 @@ namespace StoneSignal.EditorTools
             Case("spawn cell is never a tower cell", (g, v) => v.ValidateTower(new Vector2Int(14, 2), Two) != null);
             Case("1x2 rotates to 2x1", (g, v) => GridManager.RotatedSize(new Vector2Int(1, 2), 1) == new Vector2Int(2, 1) && GridManager.RotatedSize(new Vector2Int(1, 2), 2) == new Vector2Int(1, 2));
             Case("tower on bare ground is rejected (towers sit on walls)", (g, v) => v.ValidateTower(new Vector2Int(2, 2), Vector2Int.one) != null);
+            Case("2x2 / 1x2 / 2x1 entirely on ground -> rejected", (g, v) => v.ValidateTower(new Vector2Int(2, 2), Two) != null && v.ValidateTower(new Vector2Int(2, 2), new Vector2Int(1, 2)) != null && v.ValidateTower(new Vector2Int(2, 2), new Vector2Int(2, 1)) != null);
+            Case("1x2 with one wall + one ground cell -> rejected; both walls -> accepted", (g, v) =>
+            {
+                g.Commit(new[] { new Vector2Int(4, 8) }, CellState.Blocked);
+                bool mixed = v.ValidateTower(new Vector2Int(4, 8), new Vector2Int(1, 2)) != null;
+                g.Commit(new[] { new Vector2Int(4, 9) }, CellState.Blocked);
+                return mixed && v.ValidateTower(new Vector2Int(4, 8), new Vector2Int(1, 2)) == null;
+            });
 
             string result = string.Join("\n", log) + "\nFOOTPRINT TESTS: " + (log.Count - fail) + "/" + log.Count + " passed";
             Debug.Log(result);

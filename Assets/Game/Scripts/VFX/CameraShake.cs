@@ -14,7 +14,7 @@ namespace StoneSignal.VFX
 
         float _amp, _dur, _t; Vector3 _lastPos; Quaternion _lastRot = Quaternion.identity; float _seed;
 
-        void OnEnable() { Instance = this; _seed = Random.value * 100f; }
+        void OnEnable() { Instance = this; _seed = StoneSignal.GameRng.Vfx.Value() * 100f; }
         void OnDisable() { if (Instance == this) Instance = null; Remove(); }
 
         public static void Shake(Preset p)

@@ -16,7 +16,7 @@ namespace StoneSignal.VFX
         internal void Begin(Vector3 pos, float value, Color color, bool isCrit, float scale)
         {
             transform.position = pos; amount = value; crit = isCrit; _color = color; baseScale = scale; age = 0;
-            _vel = new Vector3(Random.Range(-0.7f, 0.7f), isCrit ? 3.0f : 2.4f, Random.Range(-0.3f, 0.3f));
+            _vel = new Vector3(StoneSignal.GameRng.Vfx.Range(-0.7f, 0.7f), isCrit ? 3.0f : 2.4f, StoneSignal.GameRng.Vfx.Range(-0.3f, 0.3f));
             Refresh(); gameObject.SetActive(true);
         }
 

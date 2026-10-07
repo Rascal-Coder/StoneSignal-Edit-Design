@@ -54,11 +54,35 @@ MonoBehaviour:
   placeGhostTower: {fileID: 5797902941885729350, guid: 8d4d82d6d53b9514c8fb240b06c8cfc1, type: 3}
   slotHighlight: {fileID: 6079820617362110597, guid: 84dfc173270a585469a472398563ac7b, type: 3}
   uiOrbCore: {fileID: 21300000, guid: 165d8e7001d95f341b70a897b4d52e81, type: 3}
-  uiCardTower: {fileID: 21300000, guid: a62262f79541da74fafb6174e2c96465, type: 3}
-  uiCardBlueprint: {fileID: 21300000, guid: 28d46bb4880ea57418d834d7df8127c0, type: 3}
-  uiBadgeHotkey: {fileID: 21300000, guid: f8bb91ab07dd5004ab6debe798935ec0, type: 3}
-  uiBadgeSize2x2: {fileID: 21300000, guid: 9fb15730a710fbc4491d7d5e3711d47e, type: 3}
-  uiBadgeSize1x2: {fileID: 21300000, guid: bd069e5419c90594584734176ab1b3ac, type: 3}
+  uiCardTower: {fileID: 0}
+  uiCardBlueprint: {fileID: 0}
+  uiBadgeHotkey: {fileID: 0}
+  uiBadgeSize2x2: {fileID: 0}
+  uiBadgeSize1x2: {fileID: 0}
+  uiSprites:
+  - {fileID: 21300000, guid: 37a937ef98f5466889fd40edf35bf0ef, type: 3}
+  - {fileID: 21300000, guid: 1da13ae143b14de6b2f78f930c9c278d, type: 3}
+  - {fileID: 21300000, guid: 617f5bae7e8d4821abba2f01b186d5d0, type: 3}
+  - {fileID: 21300000, guid: 9767946ee5ea4976841da1b8397b4f07, type: 3}
+  - {fileID: 21300000, guid: d645eeae926d454db262bb44b370825f, type: 3}
+  - {fileID: 21300000, guid: 04e11e0d28dd4919a66bad8bd4a86ead, type: 3}
+  - {fileID: 21300000, guid: 3d5f9bb799a74b248c5a4c749b175679, type: 3}
+  - {fileID: 21300000, guid: c35b848550eb4951b96fd66cffa83e63, type: 3}
+  - {fileID: 21300000, guid: 4e1219be0da6e2546812e8f02f40bf4c, type: 3}
+  - {fileID: 21300000, guid: ed1b183ccf44fdd44bf4add58d063cc0, type: 3}
+  - {fileID: 21300000, guid: f46c2e3d148a42e0b35655dadf43885e, type: 3}
+  - {fileID: 21300000, guid: 0c7169095b1a484090456863aaa419a5, type: 3}
+  - {fileID: 21300000, guid: d6a3da423b0544c0876127081c64ee47, type: 3}
+  - {fileID: 21300000, guid: cad86d243917421a8180a0e7e024e125, type: 3}
+  - {fileID: 21300000, guid: adb9c33921db484dbf106761e6ca93ba, type: 3}
+  - {fileID: 21300000, guid: 8a384f76a4df4edc806ab4e297ce839b, type: 3}
+  - {fileID: 21300000, guid: a0c402310d4d4716b76b425c2d945c9b, type: 3}
+  - {fileID: 21300000, guid: 5bd6d55b52db4ce29442f9c4233071d0, type: 3}
+  - {fileID: 21300000, guid: df828bd151a01914d827c25453d5e445, type: 3}
+  - {fileID: 21300000, guid: 60920737988409f45970f14a5a3576a5, type: 3}
+  - {fileID: 21300000, guid: efd24ce3ebfc5ea40a7fc98ee82bd1b0, type: 3}
+  - {fileID: 21300000, guid: 7ba2b1f3b905c3443b987cd229305159, type: 3}
+  - {fileID: 21300000, guid: 165d8e7001d95f341b70a897b4d52e81, type: 3}
   coreHitVfx: {fileID: 6531622362749199158, guid: ddaceebcf3fae584f84a089110410510, type: 3}
   tileTop: 0.25
   blockTop: 0.6

@@ -58,6 +58,8 @@ namespace StoneSignal
             }
             return ValidateAdditional?.Invoke(cells);
         }
+        // Placed walls are static: bake them into one mesh per material (draw-call budget).
+        public void MergeWalls() { if (placedRoot != null) MeshMerge.Rebuild(placedRoot, "Merged walls", UnityEngine.Rendering.ShadowCastingMode.On); }
         public bool CommitPlacement(Vector2Int anchor)
         {
             if (!canBuild() || Remaining <= 0) return false;
@@ -78,6 +80,7 @@ namespace StoneSignal
                     }
                 }
             }
+            CancelInvoke(nameof(MergeWalls)); Invoke(nameof(MergeWalls), .9f); // after the drop animation
             Hand.Consume();
             rotation = 0; RebuildGhost(); Changed?.Invoke();
             Notice?.Invoke("Placed. Route recalculated.");
@@ -104,8 +107,11 @@ namespace StoneSignal
             }
             SetGhostVisible(true);
         }
+        public bool Pinned { get; set; } // scripted presentation keeps the current Preview()
+        public Transform PlacedRoot => placedRoot;
         private void Update()
         {
+            if (Pinned) return;
             if (!toolActive || canBuild == null || !canBuild() || Remaining <= 0 || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { SetGhostVisible(false); return; }
             if (Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(1)) Rotate();
             var plane = new Plane(Vector3.up, grid.transform.position);

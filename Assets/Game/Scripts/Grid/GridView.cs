@@ -31,6 +31,7 @@ namespace StoneSignal
                     else if (state == CellState.Goal) SetGround(p, art.tileGoal);
                     else SetGround(p, art.tile);
                 }
+                MergeGround();
                 foreach (var s in grid.Spawns) ArtVisual.Create(art.spawnPortal, transform, grid.ToWorld(s));
                 ArtVisual.Create(art.signalCore, transform, grid.CoreCenter);
                 if (art.boardCliff != null || (grid.layout != null && grid.layout.levelDressing != null)) BuildIsland();
@@ -100,6 +101,7 @@ namespace StoneSignal
             foreach (Vector2Int cell in roaded) if (!wanted.Contains(cell)) stale.Add(cell);
             foreach (Vector2Int cell in stale) { roaded.Remove(cell); SetGround(cell, art.tile); }
             foreach (Vector2Int cell in wanted) if (!roaded.Contains(cell)) { roaded.Add(cell); SetGround(cell, art.tilePath); }
+            if (stale.Count > 0 || wanted.Count > 0) MergeGround();
         }
         private void SetGround(Vector2Int cell, GameObject prefab)
         {
@@ -120,21 +122,53 @@ namespace StoneSignal
             }
             ground[cell] = go;
         }
-        // v8 route: pooled flow segments along each current path, ordered spawn -> core.
-        private readonly List<GameObject> flow = new List<GameObject>();
+        // Static tiles: one merged mesh per material, tiles never cast shadows (draw-call budget).
+        private void MergeGround() { if (groundRoot != null) MeshMerge.Rebuild(groundRoot, "Merged ground", UnityEngine.Rendering.ShadowCastingMode.Off); }
+        // Route flow: one generated chevron mesh (single draw call) covering every route from its entry to the core.
+        // Uses the art flow segment's material; chevrons sit above the highest tile undulation.
+        private MeshRenderer flowRenderer; private Mesh flowMesh;
         private void DrawFlow()
         {
-            int used = 0;
+            if (flowRenderer == null)
+            {
+                var go = new GameObject("Route flow", typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(transform, false);
+                flowMesh = new Mesh { name = "Route flow chevrons" }; go.GetComponent<MeshFilter>().sharedMesh = flowMesh;
+                flowRenderer = go.GetComponent<MeshRenderer>();
+                var src = art.pathFlowSegment.GetComponentInChildren<Renderer>(true);
+                // solid orange chevrons (mockup): copy of the art flow material without its strip texture
+                var mat = new Material(src != null ? src.sharedMaterial : routeMaterial) { name = "Route flow chevrons" };
+                var orange = new Color(.96f, .55f, .2f, .9f);
+                if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", null);
+                if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", null);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", orange);
+                if (mat.HasProperty("_Color")) mat.SetColor("_Color", orange);
+                flowRenderer.sharedMaterial = mat;
+                flowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; flowRenderer.receiveShadows = false;
+            }
+            var v = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
+            float lift = art.pathFlowY; float s = grid.cellSize;
+            var seen = new HashSet<(Vector2Int, Vector2Int)>();
             foreach (var path in pathfinding.CurrentPaths)
                 for (int i = 0; i < path.Count - 1; i++)
                 {
+                    if (!seen.Add((path[i], path[i + 1]))) continue; // shared route tails drawn once
                     Vector3 a = grid.ToWorld(path[i]), b = grid.ToWorld(path[i + 1]);
-                    if (used == flow.Count) { var s = ArtVisual.Create(art.pathFlowSegment, transform, a); s.name = "Route flow"; flow.Add(s); }
-                    var seg = flow[used++]; seg.SetActive(true);
-                    seg.transform.position = (a + b) * .5f + Vector3.up * art.pathFlowY;
-                    seg.transform.rotation = Quaternion.LookRotation(b - a);
+                    Vector3 f = (b - a).normalized, r = Vector3.Cross(Vector3.up, f);
+                    Vector3 c = transform.InverseTransformPoint((a + b) * .5f + Vector3.up * lift);
+                    f = transform.InverseTransformDirection(f) * s; r = transform.InverseTransformDirection(r) * s;
+                    // ">" chevron: two thin quads meeting at the tip
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        Vector3 tip = c + f * .26f + Vector3.up * .08f, tail = c - f * .14f + r * (.3f * side) + Vector3.up * .08f, w = (f * .11f);
+                        int k = v.Count;
+                        v.Add(tail - w); v.Add(tail + w); v.Add(tip + w); v.Add(tip - w);
+                        uv.Add(new Vector2(0, 0)); uv.Add(new Vector2(0, 1)); uv.Add(new Vector2(1, 1)); uv.Add(new Vector2(1, 0));
+                        if (side < 0) { t.Add(k); t.Add(k + 1); t.Add(k + 2); t.Add(k); t.Add(k + 2); t.Add(k + 3); }
+                        else { t.Add(k); t.Add(k + 2); t.Add(k + 1); t.Add(k); t.Add(k + 3); t.Add(k + 2); }
+                    }
                 }
-            for (int i = used; i < flow.Count; i++) flow[i].SetActive(false);
+            flowMesh.Clear(); flowMesh.SetVertices(v); flowMesh.SetUVs(0, uv); flowMesh.SetTriangles(t, 0);
+            flowMesh.SetNormals(v.ConvertAll(_ => Vector3.up)); flowMesh.RecalculateBounds();
         }
         private void DrawPath()
         {
