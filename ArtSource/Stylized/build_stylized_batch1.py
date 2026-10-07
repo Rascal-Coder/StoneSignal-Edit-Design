@@ -1136,8 +1136,8 @@ if DO_RENDER:
     put("SM_Env_Dock_Post_01", 9.0, -6.0, 0, 0); put("SM_Env_Bridge_Plank_01", 8.7, -6.3, .35, .6, (.55, 1, 1))
     islet(-11.8, -4.6, .7, 1.9, 3)                                    # right-mid (kept below the top-right speed buttons)
     put("SM_Env_Rock_Small_01", -10.4, -3.6, .0, 1.0, (2.2, 2.2, 2.2))
-    islet(13.2, 9.6, .9, 2.2, 2, (1.0, 1.25))                         # BL foreground framing, pushed out of the card-hand UI zone
-    put("SM_Env_RockPile_01", 11.8, 8.6, .1, 2.0, (1.4, 1.4, 1.4))
+    islet(15.2, 10.8, .8, 2.2, 2, (.85, 1.0))                          # BL foreground framing, pushed out of the card-hand UI zone
+    put("SM_Env_RockPile_01", 13.6, 9.8, .1, 2.0, (1.2, 1.2, 1.2))
     islet(-10.2, 7.6, .7, .9, 1)                                      # BR islet + ruin lighthouse (stacked stones + lantern)
     for k3, (dx, dy, z) in enumerate([(0, 0, .55), (.04, .03, 1.15), (-.03, .05, 1.75)]):
         put("SM_Env_Rock_1x1_01", -10.4 + dx, 7.3 + dy, z, .3 * k3, (.75 - .1 * k3, .75 - .1 * k3, 1))

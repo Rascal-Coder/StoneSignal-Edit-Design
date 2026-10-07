@@ -206,3 +206,9 @@ Changed:
 - Foam ring geometry recolored to WaterDeep (thick white rims), only shader glow line remains.
 - New 9-slice UI sprites ui9_* (navy button normal/pressed/selected, orange BATTLE, red wave banner, gold pill, panel) + ui_draw_pile, borders set in .meta.
 
+
+## Stylized art v13 UI cards (2026-10-07)
+- ui_card_tower_frame: opaque crimson #C8283C, white stroke, dark edge, baked cost strip; 9-slice L28 B64 R28 T28.
+- ui_badge_size_1x2/2x2 cream pills with dark-red text (+ blank), ui_badge_hotkey 32px; ui_card_blueprint 128x128; ui_icon_block_T/L/J/S/Z/O/I at uniform 22px cells. Existing guids preserved.
+- BL foreground islet pushed further out of hand UI zone.
+
