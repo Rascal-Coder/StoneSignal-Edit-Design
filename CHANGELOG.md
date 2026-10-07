@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-10-08 — v17.3 Footprints on the real walk surface, merged core enclosure + smoke/sparks, white-square VFX fix
+
+- **Spawn portal:** not changed. The v17.2 idle look is approved.
+- **Footprints:**
+  - Each print now sits on the actual walk surface, resolved by `StoneSignal.WalkSurface` + `EnemyGroundFx.SurfaceY`:
+    - tiles: placed tile top, including undulation, + 1.5 cm;
+    - bridges and islands: a per-entry height profile sampled from the dressing meshes in `GridView.ProbeIslands`;
+    - then a raycast, then the feet height as fallback;
+    - plus a 0.02 lift.
+  - New `SS_GroundPrint` shader (queue 2995, ZTest LEqual, Offset -1,-2).
+  - #3A2414 at alpha 0.7, 0.40–0.64 m.
+- **Core enclosure:**
+  - `SM_Core_Enclosure_Intact` / `_Cracked` / `_Broken` re-exported, each as ONE merged palette-UV mesh (1 DC) with a vertex-R crack glow.
+  - New `_VColorEmission` in ToonCore, used only by `M_Core_Enclosure`.
+  - New `StylizedCoreV173` (run from BatchImport) builds `PF_Core_Enclosure`: CoreDamageFx with thresholds 0.70/0.40/0.15, plus `PF_VFX_CoreSmoke` (8) and `PF_VFX_CoreSparks` (8).
+  - It also sets `ArtCatalog.coreEnclosureFx`. GridView instantiates the enclosure at tile top.
+  - Source: `ArtSource/Stylized/Core/core_enclosure_v17_3.py`.
+- **White squares (root causes):**
+  - Spawn rubble chunks: `SM_Portal_Rubble.fbx` had auto-UVs that sampled the unused (240,240,240) palette cells. Re-exported with palette UVs (`portal_rubble_v17_3.py`).
+  - `M_FX_Snow` (dressing snow + block drop dust) had no texture and an opaque surface.
+  - `M_VFX_PortalEmber` (status FX) had no texture.
+  - `StylizedVfxTexturesV173.Fix()` gives both materials `T_FX_SoftDot` and a transparent setup. Its `Checks()` fails BatchImport on any particle material with a null `_BaseMap`.
+  - Dust, Flare, Flash, death puff and footprint were already textured.
+- **Documentation:** `Docs/footprints_core_vfx_v17_3.md`.
+- **Previews:** `footprints_v17_3.png`, `core_states_v17_3.png`, `vfx_white_squares_v17_3.png`.
+
 ## 2026-10-08 — v17.2 Spawn portal polish, dust texture, flyer double lift, footprints, explosion smudge
 
 - **Spawn portal idle:**

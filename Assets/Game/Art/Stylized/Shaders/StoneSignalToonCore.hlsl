@@ -15,6 +15,7 @@ CBUFFER_START(UnityPerMaterial)
     half _UseRamp, _ShadowThreshold, _ShadowSmooth, _ShadowStrength, _AmbientStrength;
     half _RimMin, _RimMax, _RimIntensity, _RimLitBias, _LayerTint, _WindStrength, _HitFlash;
     half _Dissolve, _DissolveEdge, _Wobble, _WobbleFreq, _BaseAO, _BaseAOHeight, _Mottle;
+    half _VColorEmission;                // v17.3 vertex R emission (core enclosure crack/rune glow; only with _WindStrength 0)
     half4 _DissolveColor;
     float _OutlineWidthPx, _OutlineZOffset;
 #if !defined(UNITY_INSTANCING_ENABLED)
@@ -158,6 +159,8 @@ half4 ToonFrag(Varyings i) : SV_Target
     half3 c = diffuse + ambient + rim + _EmissionColor.rgb;
     c *= 1 + (SS_Noise(i.positionWS * 2.3) * 0.7 + SS_Noise(i.positionWS * 7.1) * 0.3 - 0.5) * _Mottle; // weathered mottling
     c *= lerp(1 - _BaseAO, 1, saturate(i.positionOS.y / max(_BaseAOHeight, 1e-3))); // contact AO at object base
+    if (_VColorEmission > 0)   // v17.3: palette colour x vertex R x strength (HDR -> bloom), slow ember breathe
+        c += baseCol * i.color.r * _VColorEmission * (0.82 + 0.18 * sin(_Time.y * 2.4 + i.positionWS.x * 1.7 + i.positionWS.z * 1.3));
     if (runeIdx > -0.5)   // rune glyph on the block top (object-space xz -> 4x2 atlas cell), emissive + slow breathe
     {
         float2 uv = saturate(i.positionOS.xz / 0.84 + 0.5); uv.y = 1 - uv.y;

@@ -111,16 +111,17 @@ public static class StylizedFxV14
     {
         // global dust system (one PS, Emit only, cap 64)
         var sysGo = new GameObject("PF_VFX_EnemyGroundSystem"); var sys = sysGo.AddComponent<EnemyGroundFxSystem>();
-        // v17.2 footprints: painted paw print (T_FX_Footprint), dark warm brown, alpha ~0.55, 1.5 s (hold 55% then fade), heading-aligned
+        // v17.2 footprints: painted paw print (T_FX_Footprint), heading-aligned, 1.5 s (hold 55% then fade). v17.3: #3A2414, alpha 0.7, larger
         const string fpTex = StylizedArtIntegration.ArtDir + "FX/Ground/T_FX_Footprint.png";
         var fti = (TextureImporter)AssetImporter.GetAtPath(fpTex);
         if (fti) { fti.sRGBTexture = true; fti.alphaIsTransparency = true; fti.wrapMode = TextureWrapMode.Clamp; fti.mipmapEnabled = true; fti.maxTextureSize = 128; fti.SaveAndReimport(); }
-        var psh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        // v17.3: SS_GroundPrint (queue 2995 after opaque, ZTest LEqual, depth offset), colour from the material (#3A2414), alpha 0.7 from the particle
+        var psh = Shader.Find("StoneSignal/SS_GroundPrint"); if (!psh) throw new System.Exception("SS_GroundPrint shader missing");
         var fpm = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_VFX_Footprint.mat"); if (!fpm) { fpm = new Material(psh); AssetDatabase.CreateAsset(fpm, MatDir + "M_VFX_Footprint.mat"); }
-        fpm.shader = psh; fpm.SetFloat("_Surface", 1); fpm.SetFloat("_Blend", 0); fpm.SetOverrideTag("RenderType", "Transparent");
-        fpm.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha); fpm.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha); fpm.SetInt("_ZWrite", 0); fpm.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        fpm.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(fpTex)); fpm.renderQueue = 2995; fpm.enableInstancing = true; EditorUtility.SetDirty(fpm);
-        var dust = EmitPS(sysGo.transform, "Dust", fpm, 1.5f, .34f, new Color(.24f, .13f, .06f, .55f), EnemyGroundFxSystem.MaxFootprints);
+        fpm.shader = psh; fpm.shaderKeywords = new string[0];
+        fpm.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(fpTex)); fpm.SetColor("_BaseColor", new Color(0x3A / 255f, 0x24 / 255f, 0x14 / 255f, 1f));
+        fpm.renderQueue = 2995; fpm.enableInstancing = false; EditorUtility.SetDirty(fpm);
+        var dust = EmitPS(sysGo.transform, "Dust", fpm, 1.5f, .40f, new Color(1f, 1f, 1f, .7f), EnemyGroundFxSystem.MaxFootprints);
         dust.GetComponent<ParticleSystemRenderer>().renderMode = ParticleSystemRenderMode.HorizontalBillboard;
         var so = dust.sizeOverLifetime; so.enabled = false;
         { var col = dust.colorOverLifetime; col.enabled = true; var g2 = new Gradient();

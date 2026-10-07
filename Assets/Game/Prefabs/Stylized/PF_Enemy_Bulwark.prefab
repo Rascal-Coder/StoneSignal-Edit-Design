@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 192919804569282678}
   - component: {fileID: 5838816738415484765}
-  - component: {fileID: 5408417657565741250}
+  - component: {fileID: 677707959471983446}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: PF_Enemy_Bulwark
@@ -66,7 +66,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1145402439067090465}
-  - {fileID: 8712038602165937089}
+  - {fileID: 1760842455795554177}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5838816738415484765
@@ -87,7 +87,7 @@ MonoBehaviour:
   deathDissolveDelay: 0.35
   deathDissolveDuration: 0.6
   deathVfx: {fileID: 0}
---- !u!114 &5408417657565741250
+--- !u!114 &677707959471983446
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -101,7 +101,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   headHeight: 1.3745629
   radius: 0.44000006
---- !u!1001 &7856359011350157848
+--- !u!1001 &977211800514637400
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -174,10 +174,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
---- !u!4 &8712038602165937089 stripped
+--- !u!4 &1760842455795554177 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1576264362734156249, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
-  m_PrefabInstance: {fileID: 7856359011350157848}
+  m_PrefabInstance: {fileID: 977211800514637400}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8541836954232638025
 PrefabInstance:

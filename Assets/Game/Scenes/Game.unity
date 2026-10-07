@@ -162,6 +162,8 @@ MonoBehaviour:
   goal: {x: 15, y: 4}
   islandDistance: 5.1
   islandHeight: 0
+  tileTop: 0
+  wallTop: 0
 --- !u!4 &330129754
 Transform:
   m_ObjectHideFlags: 0

@@ -26,6 +26,7 @@ namespace StoneSignal
             grid = map; pathfinding = paths; art = palette.art;
             if (art != null)
             {
+                WalkSurface.Begin(grid); // v17.3 art: visual walk-surface heights for footprints (tiles here, bridges/islands in ProbeIslands)
                 groundRoot = new GameObject("Board ground").transform;
                 groundRoot.SetParent(transform, false);
                 for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
@@ -52,7 +53,21 @@ namespace StoneSignal
                     }
                 }
                 var coreGo = ArtVisual.Create(art.signalCore, transform, grid.CoreCenter);
-                if (ArtSteps.On(4) && coreGo != null && art.coreEnclosureIntact != null)
+                if (ArtSteps.On(4) && coreGo != null && art.coreEnclosureFx != null)
+                {
+                    // v17.3 PF_Core_Enclosure: one merged palette mesh per state (1 DC) + CoreDamageFx + pooled smoke/sparks, all wired by
+                    // StylizedCoreV173 (BatchImport). Enclosure pivot = tile top, so it sits ArtCatalog.tileTop above the core pivot.
+                    var enc = Instantiate(art.coreEnclosureFx, coreGo.transform, false); enc.name = "Core enclosure";
+                    enc.transform.localPosition = Vector3.up * art.tileTop; enc.transform.localRotation = Quaternion.identity;
+                    CoreFx = enc.GetComponent<StoneSignal.VFX.CoreDamageFx>();
+                    if (CoreFx != null)
+                    {
+                        var cores = new List<Renderer>(); foreach (var r in coreGo.GetComponentsInChildren<Renderer>()) if (!r.transform.IsChildOf(enc.transform)) cores.Add(r);
+                        CoreFx.coreRenderers = cores.ToArray();
+                    }
+                    else Debug.LogError("CORE: PF_Core_Enclosure has no CoreDamageFx - run BatchImport (StylizedCoreV173)");
+                }
+                else if (ArtSteps.On(4) && coreGo != null && art.coreEnclosureIntact != null)
                 {
                     // v16.2 core enclosure (no generator): one MeshFilter swapped by CoreDamageFx at 0.70 / 0.40 / 0.15
                     var enc = new GameObject("Core enclosure", typeof(MeshFilter), typeof(MeshRenderer)); enc.transform.SetParent(coreGo.transform, false);
@@ -151,6 +166,7 @@ namespace StoneSignal
                 if (!grid.IsCore(cell) && grid.Get(cell) != CellState.Blocked && grid.Get(cell) != CellState.TowerSlot)
                     go.transform.position += Vector3.up * BoardArt.HeightOffset(h); // visual only; gameplay heights unchanged
             }
+            WalkSurface.SetTile(cell, go.transform.position.y + art.tileTop + WalkSurface.TileRoughness); // v17.3: placed tile top incl. undulation
             ground[cell] = go;
         }
         // Static tiles: one merged mesh per material, tiles never cast shadows (draw-call budget).
@@ -301,6 +317,16 @@ namespace StoneSignal
                 sb.Append("\n  -> portal lifted by " + lowMax.ToString("F3") + " to y " + top.y.ToString("F2"));
                 Debug.Log(sb.ToString());
                 Debug.Log("ISLAND PROBE " + s + ": estimate " + est.ToString("F2") + " -> island top centre " + top.ToString("F2") + " (" + ys.Count + " samples, y " + ys[0].ToString("F2") + ".." + ys[ys.Count - 1].ToString("F2") + ")");
+            }
+            // v17.3 art: bridge deck + island top height profile per entry, sampled from the dressing meshes (footprints sit on the planks)
+            foreach (var s in grid.Spawns)
+            {
+                var o = GridManager.OutwardOf(s, grid.width, grid.height); if (o == Vector3.zero || cols.Count == 0) continue;
+                var edge = grid.ToWorld(s) + o * (.5f * grid.cellSize);
+                var prof = WalkSurface.SampleProfile(cols, edge, o, (grid.islandDistance + 1.6f) * grid.cellSize - .5f, grid.ToWorld(s).y + art.tileTop + .25f);
+                WalkSurface.AddProfile(edge, o, prof);
+                float lo = float.MaxValue, hi = float.MinValue; int holes = 0; foreach (var v in prof) { if (float.IsNaN(v)) { holes++; continue; } lo = Mathf.Min(lo, v); hi = Mathf.Max(hi, v); }
+                Debug.Log("WALK SURFACE " + s + ": " + prof.Length + " samples every " + WalkSurface.ProfileStep + " m, top y " + lo.ToString("F2") + ".." + hi.ToString("F2") + ", no-ground " + holes);
             }
             foreach (var c in cols) PrimitiveVisual.DestroyObject(c);
         }

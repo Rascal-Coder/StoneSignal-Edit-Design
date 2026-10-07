@@ -8,8 +8,12 @@ namespace StoneSignal.VFX
     /// and SetFlying(true) makes sure the sibling visual has a FlyingMotion (height/bob/bank).
     /// v17.2: exactly ONE EnemyGroundFx per enemy - the runtime one claims the enemy (ClaimEnemy) and disables any copy baked into the
     /// visual prefab (that copy rode the flyer's lifted model: 2nd shadow at ~2 m and a 2nd FlyingMotion = double lift ~1.8 m).
-    /// Footprints: alternating L/R prints aligned to the heading, sampled per step at the walker's actual feet height
-    /// (visual root y; optional downward raycast if the scene has ground colliders).
+    /// Footprints: alternating L/R prints aligned to the heading. v17.3 height per print (in this order):
+    ///  1. StoneSignal.WalkSurface (filled by GridView): board cell -> placed tile top (tile pivot incl. per-cell undulation + tileTop + 1.5 cm relief);
+    ///     bridge / shore island -> deck / sand top profile sampled from the level-dressing meshes every 0.1 m
+    ///  2. optional groundMask raycast (only if the scene ever gets ground colliders)
+    ///  3. fallback: the walker's feet (visual root y)
+    ///  then + footprintLift (0.02); the print shader (SS_GroundPrint) adds ZTest LEqual + a small depth offset, queue 2995 (after opaque).
     public class EnemyGroundFx : MonoBehaviour
     {
         public Transform blob;
@@ -21,7 +25,7 @@ namespace StoneSignal.VFX
         [Tooltip("v17: shadow scale for flyers (relative to radius*2)")] public float flyingBlobScale = .55f;
         [Tooltip("v17: optional softer/lighter shared blob material for flyers (null = keep the ground one)")] public Material flyingBlobMaterial;
         [Tooltip("v17.2: optional ground colliders for per-step height (0 = none; art has no colliders, the walker's feet height is used)")] public LayerMask groundMask = 0;
-        [Tooltip("v17.2: footprint lift above the sampled ground (planks/tiles)")] public float footprintLift = .045f;
+        [Tooltip("v17.3: footprint lift above the resolved walk surface (planks/tiles); SS_GroundPrint adds a small depth offset on top")] public float footprintLift = .02f;
 
         Vector3 last; bool hasLast; Material groundMat; Renderer blobR; int side; Transform visual;
         void OnEnable() { hasLast = false; EnemyGroundFxSystem.Register(this); Apply(); }
@@ -78,15 +82,22 @@ namespace StoneSignal.VFX
             var d = p - last; d.y = 0;
             if (d.sqrMagnitude >= stepDistance * stepDistance)
             {
-                // per-step ground sample: walker feet = visual root (stands on tiles / bridge planks); colliders refine it when present
-                var v = Visual(); float gy = v ? v.position.y : p.y + groundY;
-                if (groundMask.value != 0 && Physics.Raycast(new Vector3(p.x, gy + .6f, p.z), Vector3.down, out var hit, 1.4f, groundMask, QueryTriggerInteraction.Ignore)) gy = hit.point.y;
                 float yaw = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
                 var right = new Vector3(d.z, 0, -d.x).normalized; side = 1 - side;
-                var at = new Vector3(p.x, gy + footprintLift, p.z) + right * ((side == 0 ? -1 : 1) * radius * .32f);
+                var at = p + right * ((side == 0 ? -1 : 1) * radius * .32f);
+                at.y = SurfaceY(at, p) + footprintLift;
                 EnemyGroundFxSystem.Footprint(at, radius, yaw);
                 last = p;
             }
+        }
+
+        /// v17.3: walk-surface top under a footprint (see class summary for the order).
+        float SurfaceY(Vector3 at, Vector3 root)
+        {
+            var v = Visual(); float feet = v ? v.position.y : root.y + groundY;
+            if (StoneSignal.WalkSurface.TryGet(at, out var y) && Mathf.Abs(y - feet) < .35f) return y;   // sanity: never far from the feet
+            if (groundMask.value != 0 && Physics.Raycast(new Vector3(at.x, feet + .6f, at.z), Vector3.down, out var hit, 1.4f, groundMask, QueryTriggerInteraction.Ignore)) return hit.point.y;
+            return feet;
         }
     }
 

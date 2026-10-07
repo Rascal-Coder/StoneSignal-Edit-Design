@@ -146,4 +146,4 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 0
-  footprintLift: 0.045
+  footprintLift: 0.02

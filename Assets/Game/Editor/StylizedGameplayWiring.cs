@@ -197,6 +197,9 @@ namespace StoneSignal.EditorTools
                 art.coreEnclosureMaterial = AssetDatabase.LoadAllAssetsAtPath("Assets/Game/Art/Stylized/Environment/Core/SM_Core_Enclosure_Intact.fbx").OfType<Material>().FirstOrDefault();
                 var fbx = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Art/Stylized/Environment/Core/SM_Core_Enclosure_Intact.fbx");
                 if (fbx != null) { var mr = fbx.GetComponentInChildren<MeshRenderer>(); if (mr != null && mr.sharedMaterial != null) art.coreEnclosureMaterial = mr.sharedMaterial; }
+                // v17.3: material import is off for these FBXs -> use M_Core_Enclosure (toon palette + vertex-R glow) and the built prefab
+                var cm = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/M_Core_Enclosure.mat"); if (cm != null) art.coreEnclosureMaterial = cm;
+                art.coreEnclosureFx = Opt("PF_Core_Enclosure");
             }
             art.enemyGroundSystem = Opt("PF_VFX_EnemyGroundSystem"); art.rewardFlyGold = Opt("PF_VFX_RewardFly_Gold");
             foreach (var pf in new[] { art.slotHighlight, art.block, art.tile, art.tilePath, art.pathFlowSegment }.Concat(art.tileVariants ?? new GameObject[0]))

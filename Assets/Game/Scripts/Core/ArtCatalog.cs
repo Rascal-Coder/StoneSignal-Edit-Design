@@ -66,6 +66,7 @@ namespace StoneSignal
         public bool portalShowRunestones = false;
         public Mesh coreEnclosureIntact, coreEnclosureCracked, coreEnclosureBroken; // SM_Core_Enclosure_* (CoreDamageFx)
         public Material coreEnclosureMaterial;
+        public GameObject coreEnclosureFx;   // v17.3 PF_Core_Enclosure (merged state meshes + CoreDamageFx + pooled smoke/sparks; StylizedCoreV173)
         public GameObject enemyGroundSystem;     // PF_VFX_EnemyGroundSystem (one per scene)
         public GameObject rewardFlyGold;         // PF_VFX_RewardFly_Gold
         public Sprite UiSprite(string spriteName) { if (uiSprites != null) foreach (var s in uiSprites) if (s != null && s.name == spriteName) return s; return null; }

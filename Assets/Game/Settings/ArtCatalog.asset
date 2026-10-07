@@ -139,10 +139,11 @@ MonoBehaviour:
   enemyGround: {fileID: 3665994463482207982, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
   spawnPortalFx: {fileID: 8755518914830713815, guid: 8ead1772b58ea774f97d9d8a0662dd84, type: 3}
   portalShowRunestones: 0
-  coreEnclosureIntact: {fileID: -8936622394817868014, guid: a969fdcd6a8ff5e459c00d00aa747fa4, type: 3}
-  coreEnclosureCracked: {fileID: -8936622394817868014, guid: 5801fb8c72b4425428a14718389fc614, type: 3}
-  coreEnclosureBroken: {fileID: -8936622394817868014, guid: 23a13e304225d544e9712c90f9d8a5f4, type: 3}
-  coreEnclosureMaterial: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  coreEnclosureIntact: {fileID: -3972916158915351090, guid: a969fdcd6a8ff5e459c00d00aa747fa4, type: 3}
+  coreEnclosureCracked: {fileID: -2097092816383334856, guid: 5801fb8c72b4425428a14718389fc614, type: 3}
+  coreEnclosureBroken: {fileID: 5739836276069614249, guid: 23a13e304225d544e9712c90f9d8a5f4, type: 3}
+  coreEnclosureMaterial: {fileID: 2100000, guid: 1ccf744ac97a9b34caa4c824f1201055, type: 2}
+  coreEnclosureFx: {fileID: 7048652917408457396, guid: 88838d57c62baba4e833287a324ab1b0, type: 3}
   enemyGroundSystem: {fileID: 6042952406824403819, guid: c1f957d00b09c7e4a9555bab3fb997bd, type: 3}
   rewardFlyGold: {fileID: 4663132577274263441, guid: 404ccb5c1f65df641a8ec7e01fc2fdd8, type: 3}
   coreHitVfx: {fileID: 6531622362749199158, guid: ddaceebcf3fae584f84a089110410510, type: 3}

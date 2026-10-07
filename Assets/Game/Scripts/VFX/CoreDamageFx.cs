@@ -4,6 +4,8 @@ namespace StoneSignal.VFX
     /// v16.2 ember core damage states. Visual only: call SetHealth01(hp/maxHp) whenever HP changes, PlayHit() on each hit.
     /// 1.0-0.70 Intact, 0.70-0.40 Cracked (crack glow), 0.40-0.15 Broken (chunk mesh + smoke), <0.15 Critical (core red flicker + sparks).
     /// Enclosure = mesh swap on one MeshFilter (SM_Core_Enclosure_Intact/Cracked/Broken). Core tint/flash = instanced _HiColor/_HiAmount (MPB, batching-safe).
+    /// v17.3: lives on PF_Core_Enclosure (StylizedCoreV173): each state is ONE merged palette mesh (M_Core_Enclosure, crack glow = vertex R x
+    /// _VColorEmission), smoke = PF_VFX_CoreSmoke (8), sparks = PF_VFX_CoreSparks (8); GridView fills coreRenderers.
     public class CoreDamageFx : MonoBehaviour
     {
         public enum Stage { Intact, Cracked, Broken, Critical }

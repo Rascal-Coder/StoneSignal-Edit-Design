@@ -224,7 +224,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.24, g: 0.13, b: 0.06, a: 0.55}
+      maxColor: {r: 1, g: 1, b: 1, a: 0.7}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -288,7 +288,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.34
+      scalar: 0.4
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -4884,4 +4884,4 @@ MonoBehaviour:
   dust: {fileID: 785179927172231023}
   footprintYawOffset: 0
   footprintYawSign: 1
-  footprintSize: {x: 0.34, y: 0.56}
+  footprintSize: {x: 0.4, y: 0.64}

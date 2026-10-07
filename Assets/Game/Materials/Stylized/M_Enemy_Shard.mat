@@ -58,6 +58,7 @@ Material:
     - _ShadowStrength: 0.85
     - _ShadowThreshold: 0.45
     - _UseRamp: 1
+    - _VColorEmission: 0
     - _WindStrength: 0
     - _Wobble: 1
     - _WobbleFreq: 6

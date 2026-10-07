@@ -605,15 +605,19 @@ public static class StylizedArtIntegration
         try
         {
             Import();
+            StylizedVfxTexturesV173.Fix();       // v17.3: M_FX_Snow / M_VFX_PortalEmber had no texture -> white squares
             BuildLevelDressing();
             StylizedPlacementFX.BuildAll();
             StylizedVFXBuilder.BuildAll();
             StylizedFxV14.BuildAll();
             StylizedPortalV161.Build();          // v16.2 art-led spawn portal
             StylizedPortalV161.BuildStatus();    // v16.1 enemy status FX
+            StylizedCoreV173.Build();            // v17.3 core enclosure prefab (merged meshes, CoreDamageFx, smoke/sparks) + ArtCatalog
             Checks();
             StylizedFxV14.Checks();
             StylizedPortalV161.Checks(); StylizedPortalV161.StatusChecks(); StylizedPortalV161.BuildDeath(); StylizedPortalV161.DeathChecks();
+            StylizedCoreV173.Checks();
+            StylizedVfxTexturesV173.Checks();    // v17.3: fail loudly on any particle material with a null main texture
             StylizedVFXBuilder.Checks();
             ThirdPartyArtIntegration.Checks();   // existing runtime art untouched
             Stage2Validation.Run();              // gameplay logic still passes

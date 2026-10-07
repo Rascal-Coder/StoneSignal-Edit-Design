@@ -30,6 +30,7 @@ Shader "StoneSignal/ToonLit"
         _DissolveEdge ("Dissolve Edge Width", Range(0.01,0.3)) = 0.08
         [HDR] _DissolveColor ("Dissolve Edge Color", Color) = (4,2.2,0.8,1)
         _Mottle ("World Mottle (weathering)", Range(0,1)) = 0
+        _VColorEmission ("Vertex R Emission (v17.3 core enclosure; needs Wind 0)", Float) = 0
         [HideInInspector] _RuneIdx ("Rune Index", Float) = -1
         [HideInInspector] [HDR] _RuneColor ("Rune Color", Color) = (1,1,1,1)
         [NoScaleOffset] _RuneAtlas ("Rune Glyph Atlas (4x2, alpha)", 2D) = "black" {}

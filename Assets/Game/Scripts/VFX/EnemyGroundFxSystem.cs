@@ -6,13 +6,15 @@ namespace StoneSignal.VFX
     /// Global pooled footprint emitter (one ParticleSystem, ParticleSystem.Emit, hard cap 64). Lives in PF_VFX_EnemyGroundSystem.
     /// v17.2: painted paw prints (T_FX_Footprint, M_VFX_Footprint), dark warm brown, alpha ~0.55, 1.5 s life (hold then fade), larger,
     /// rotated to the walk heading (horizontal billboard).
+    /// v17.3: darker + more opaque (#3A2414 via M_VFX_Footprint _BaseColor, alpha 0.7), slightly larger, SS_GroundPrint shader
+    /// (queue 2995 after opaque, ZTest LEqual, small depth offset); heights resolved by EnemyGroundFx from StoneSignal.WalkSurface.
     public class EnemyGroundFxSystem : MonoBehaviour
     {
         public static EnemyGroundFxSystem Instance { get; private set; }
         public ParticleSystem dust;
         [Tooltip("v17.2: added to the heading yaw (set 180 if prints point backwards)")] public float footprintYawOffset = 0f;
         [Tooltip("v17.2: set -1 if prints turn the wrong way on diagonal paths (billboard rotation handedness)")] public float footprintYawSign = 1f;
-        [Tooltip("v17.2: print size range by enemy radius (0.2..1)")] public Vector2 footprintSize = new Vector2(.34f, .56f);
+        [Tooltip("v17.2: print size range by enemy radius (0.2..1)")] public Vector2 footprintSize = new Vector2(.40f, .64f);   // v17.3 (was .34/.56)
         public const int MaxFootprints = 64;
         static readonly HashSet<EnemyGroundFx> active = new HashSet<EnemyGroundFx>();
         public static int ActiveCount => active.Count;
