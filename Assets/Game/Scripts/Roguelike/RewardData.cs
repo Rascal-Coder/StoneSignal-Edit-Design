@@ -3,6 +3,8 @@ using UnityEngine;
 namespace StoneSignal
 {
     public enum RewardEffect { AllDamage, AllAttackSpeed, ArrowRange, BaseHP, NextWaveGold, CannonRadius, AllRange, AddBlock, NextDraw, PathSlow, BonusSlot, KillGold, WaveGold, TowerDiscount, WaveHeal, ExtraDraw }
+    /// v18.2 (玩法策划): reward tier for the weighted offer roll (RewardRoll). Display: 普通 / 精良 / 稀有 / 传说.
+    public enum RewardTier { Common, Rare, Epic, Legendary }
     [CreateAssetMenu(menuName = "StoneSignal/Reward")]
     public sealed class RewardData : ScriptableObject
     {
@@ -11,6 +13,8 @@ namespace StoneSignal
         public string effectText;
         public RewardEffect effect;
         public float amount = .1f;
+        [Tooltip("v18.2 offer roll tier: Common 600 / Rare 300 / Epic 90 / Legendary 10 permille (after the 30% rune roll); equal odds within a tier.")]
+        public RewardTier tier = RewardTier.Common;
         public BlockShapeData blockShape;
         public void Apply(RunModifiers modifiers, RunEconomy economy, BlockPlacementManager blocks = null)
         {

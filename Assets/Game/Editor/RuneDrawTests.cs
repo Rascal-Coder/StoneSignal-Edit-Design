@@ -184,6 +184,73 @@ namespace StoneSignal.EditorTools
                 TimeController.Evaluate(3, true, false, false, 1) == 0 && TimeController.Evaluate(3, false, true, true, .05f) == 0 &&
                 TimeController.Evaluate(3, false, false, true, .05f) == .05f && TimeController.Evaluate(.01f, false, false, true, .05f) == .01f &&
                 TimeController.Evaluate(2, false, false, false, .05f) == 2);
+            // ---- v18.2 rarity-weighted reward roll (RewardRoll; 玩法策划: 30% rune, then 600/300/90/10 permille, no duplicates per pick)
+            bool Within(int obs, int n, double p) { double sd = Math.Sqrt(n * p * (1 - p)); return Math.Abs(obs - n * p) <= 5 * sd + 1; }
+            int[] Single(int[] tierList, int chance, int n, int seed, out int runeCount, out int[] perEntry)
+            {
+                var rng = new RngStream(seed); var idx = new List<int>(); var rn = new List<int>(); var byTier = new int[4]; perEntry = new int[tierList.Length]; runeCount = 0;
+                for (int k = 0; k < n; k++)
+                {
+                    RewardRoll.Offer(tierList, chance, r => RuneRules.RollType(c, r), rng, idx, rn, 1);
+                    if (rn[0] != RuneRules.NoRune) runeCount++; else { byTier[tierList[idx[0]]]++; perEntry[idx[0]]++; }
+                }
+                return byTier;
+            }
+            Case("reward roll: 100k options -> rune 300 / 普通 420 / 精良 210 / 稀有 63 / 传说 7 permille (5 sigma), equal odds within a tier", () =>
+            {
+                int[] pool = { 0, 0, 0, 0, 1, 1, 1, 2, 2, 3 }; const int N = 100000;
+                var t = Single(pool, 300, N, 11, out int runes, out var per);
+                bool ok = Within(runes, N, .3) && Within(t[0], N, .42) && Within(t[1], N, .21) && Within(t[2], N, .063) && Within(t[3], N, .007);
+                for (int i = 0; i < 4; i++) ok &= Within(per[i], N, .42 / 4); for (int i = 4; i < 7; i++) ok &= Within(per[i], N, .21 / 3); ok &= Within(per[7], N, .063 / 2) && Within(per[8], N, .063 / 2);
+                log.Add("  roll 100k: rune " + runes + " C " + t[0] + " R " + t[1] + " E " + t[2] + " L " + t[3] + " | per entry " + string.Join(",", per));
+                return ok;
+            });
+            Case("reward roll: no Legendary in pool -> its 10 permille goes to 稀有 (C 600 / R 300 / E 100)", () =>
+            {
+                int[] pool = { 0, 0, 1, 1, 2, 2 }; const int N = 100000;
+                var t = Single(pool, 0, N, 12, out int runes, out _);
+                log.Add("  legendary merge 100k: C " + t[0] + " R " + t[1] + " E " + t[2] + " L " + t[3]);
+                return runes == 0 && t[3] == 0 && Within(t[0], N, .6) && Within(t[1], N, .3) && Within(t[2], N, .1);
+            });
+            Case("reward roll: shipped pool shape (13 普通 + ExtraDraw 精良, no 稀有/传说) -> empty tiers fall to 精良: rune 300 / C 420 / R 280", () =>
+            {
+                var pool = new int[14]; pool[13] = 1; const int N = 100000;
+                var t = Single(pool, 300, N, 13, out int runes, out _);
+                log.Add("  shipped pool 100k: rune " + runes + " C " + t[0] + " R " + t[1] + " E " + t[2] + " L " + t[3]);
+                return Within(runes, N, .3) && Within(t[0], N, .42) && Within(t[1], N, .28) && t[2] == 0 && t[3] == 0;
+            });
+            Case("reward roll: empty-tier weights (down first, else up)", () =>
+            {
+                var w = new int[4];
+                RewardRoll.Weights(new[] { 0, 0, 0, 2 }, w); bool a = w[0] == 0 && w[1] == 0 && w[2] == 0 && w[3] == 1000;
+                RewardRoll.Weights(new[] { 5, 0, 0, 0 }, w); bool b = w[0] == 1000 && w[1] + w[2] + w[3] == 0;
+                RewardRoll.Weights(new[] { 0, 3, 0, 1 }, w); bool d = w[0] == 0 && w[1] == 990 && w[2] == 0 && w[3] == 10;
+                RewardRoll.Weights(new[] { 1, 1, 1, 1 }, w); bool e = w[0] == 600 && w[1] == 300 && w[2] == 90 && w[3] == 10;
+                return a && b && d && e;
+            });
+            Case("reward roll: 50k picks of three never repeat a reward or a rune type (small pool, re-roll/exclude)", () =>
+            {
+                int[] pool = { 0, 0, 1, 3 }; var rng = new RngStream(21); var idx = new List<int>(); var rn = new List<int>(); bool ok = true;
+                for (int k = 0; k < 50000 && ok; k++)
+                {
+                    RewardRoll.Offer(pool, 300, r => RuneRules.RollType(c, r), rng, idx, rn, 3);
+                    var a = new HashSet<int>(); var b = new HashSet<int>(); ok &= idx.Count == 3 && rn.Count == 3;
+                    for (int i = 0; i < idx.Count; i++) ok &= idx[i] >= 0 ? rn[i] == RuneRules.NoRune && a.Add(idx[i]) : rn[i] != RuneRules.NoRune && b.Add(rn[i]);
+                }
+                return ok;
+            });
+            Case("reward roll: pool of 2, no runes -> 2 options, no duplicate, no crash", () =>
+            {
+                var rng = new RngStream(3); var idx = new List<int>(); var rn = new List<int>(); bool ok = true;
+                for (int k = 0; k < 1000; k++) { RewardRoll.Offer(new[] { 0, 1 }, 0, r => RuneRules.NoRune, rng, idx, rn, 3); ok &= idx.Count == 2 && idx[0] != idx[1]; }
+                return ok;
+            });
+            Case("reward roll: deterministic per seed (same seed -> same 2000 picks; another seed differs)", () =>
+            {
+                int[] pool = { 0, 0, 0, 0, 0, 1, 1, 2, 3 };
+                string Seq(int seed) { var rng = new RngStream(seed); var idx = new List<int>(); var rn = new List<int>(); var sb = new System.Text.StringBuilder(); for (int k = 0; k < 2000; k++) { RewardRoll.Offer(pool, 300, r => RuneRules.RollType(c, r), rng, idx, rn, 3); for (int i = 0; i < 3; i++) sb.Append(idx[i]).Append(':').Append(rn[i]).Append(','); } return sb.ToString(); }
+                return Seq(37) == Seq(37) && Seq(37) != Seq(38);
+            });
             UnityEngine.Object.DestroyImmediate(c);
             string result = string.Join("\n", log) + "\nRUNE/DRAW TESTS: " + (log.Count - fail) + "/" + log.Count + " passed";
             Debug.Log(result);

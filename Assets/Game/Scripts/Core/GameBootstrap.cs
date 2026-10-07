@@ -112,6 +112,7 @@ namespace StoneSignal
             Blocks.Modifiers = Modifiers;
             Rewards = Service<RewardManager>("Reward choices"); Rewards.Initialize(Game,config,Waves,Blocks,Towers,Modifiers,Economy); Rewards.Runes = Runes;
             var ui = Service<GameUI>("UGUI"); ui.Initialize(this);
+            Service<CameraFit>("Camera fit").Initialize(viewCamera, grid, ui); // v18.2: aspect-adaptive framing (board + entry bridges clear of the HUD)
             DrawsChanged += () => Blocks.NotifyChanged();
             if (art != null && art.rewardFlyGold != null)
             {
@@ -127,6 +128,7 @@ namespace StoneSignal
             }
             Service<CombatFeedback>("Combat feedback").Initialize(Enemies,config.palette,viewCamera);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-touch") >= 0) { PointerInput.ForceTouch = true; Debug.Log("TOUCH MODE: forced by -touch (diagnostics)"); }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-stonesignal-smoke") >= 0)
                 Service<PrototypeSmokeTest>("Automated play verification").Initialize(this);
             { var a = System.Environment.GetCommandLineArgs(); int i = System.Array.IndexOf(a,"-stonesignal-shot");

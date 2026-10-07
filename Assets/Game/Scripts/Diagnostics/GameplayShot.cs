@@ -35,6 +35,7 @@ namespace StoneSignal
         {
             yield return new WaitForSecondsRealtime(1f);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudshots") >= 0) { yield return HudShots(); Debug.Log("HUD SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots3") >= 0) { yield return CnShots3(); Debug.Log("CN SHOTS3 DONE " + path); Application.Quit(0); yield break; }
             var grid = s.grid; s.Economy.AddGold(900);
             // wall clusters (deterministic pattern) that leave every route open
@@ -310,6 +311,39 @@ namespace StoneSignal
                 yield return Shot("drag_fade_released");
             }
             File.WriteAllText(Path.Combine(dir, "cn3_" + res + ".txt"), sb.ToString());
+        }
+        // v18.2 -hudshots [-touch] [-notch]: full HUD frame with the aspect-adaptive camera (CameraFit report), touch-mode hotkey badge check,
+        // clean-frame draw calls, then a real weighted reward offer (RewardRoll) on the reward screen. Writes hud_<res>.txt.
+        IEnumerator HudShots()
+        {
+            var args = System.Environment.GetCommandLineArgs(); bool notch = System.Array.IndexOf(args, "-notch") >= 0;
+            if (notch) HudScaler.SimulatedSafeArea = new Rect(132, 63, Screen.width - 264, Screen.height - 63); // landscape notch L/R 132 px, home bar 63 px
+            string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height + (notch ? "_notch" : "") + (PointerInput.TouchMode ? "_touch" : "_pc");
+            var sb = new System.Text.StringBuilder("hud shots " + res + " aspect " + ((float)Screen.width / Mathf.Max(1, Screen.height)).ToString("F3") + " touchMode=" + PointerInput.TouchMode + " (ForceTouch=" + PointerInput.ForceTouch + " -touch=" + (System.Array.IndexOf(args, "-touch") >= 0) + " mobilePlatform=" + Application.isMobilePlatform + ") safe=" + HudScaler.SafeArea + "\n");
+            IEnumerator Wait(float sec) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < sec) yield return null; }
+            IEnumerator Shot(string name) { for (int f = 0; f < 6; f++) yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, name + "_" + res + ".png")); }
+            string Dc() => "drawCalls=" + draws.LastValue + " batches=" + batches.LastValue + " setPass=" + setPass.LastValue + " tris=" + tris.LastValue;
+            if (s.Game.State == GameState.Build) s.Draw(); // free draw: 3 block cards in the hand (typical build HUD)
+            var fit = CameraFit.Instance; if (notch && fit != null) fit.Refit();
+            float tw = Time.realtimeSinceStartup; while ((fit == null || fit.Fits == 0 || notch && fit.Fits < 2) && Time.realtimeSinceStartup - tw < 3f) yield return null;
+            yield return Wait(.6f);
+            sb.Append("camera fit: ").Append(fit != null ? fit.Report : "NO CameraFit").Append('\n');
+            int badges = 0, badgesAll = 0; foreach (var t in FindObjectsOfType<RectTransform>(true)) if (t.name == "Hotkey") { badgesAll++; if (t.gameObject.activeInHierarchy) badges++; }
+            sb.Append("hotkey badges (1-4) visible ").Append(badges).Append(" of ").Append(badgesAll).Append(PointerInput.TouchMode ? (badges == 0 ? " -> hidden in touch mode OK" : " -> VISIBLE IN TOUCH MODE (bug)") : " (PC mode: shown)").Append('\n');
+            yield return Clean(); for (int f = 0; f < 10; f++) yield return null;
+            sb.Append("HUD frame (clean, no capture): ").Append(Dc()).Append('\n');
+            yield return Shot("hud");
+            // reward screen with a real weighted offer
+            s.Game.SetState(GameState.Combat); s.Game.SetState(GameState.Reward); s.Rewards.DebugOffer();
+            yield return Wait(1.4f);
+            sb.Append("reward offer (seed ").Append(GameRng.Seed).Append("):");
+            for (int i = 0; i < s.Rewards.Choices.Count; i++) { int rn = s.Rewards.RuneChoices[i]; var r = s.Rewards.Choices[i]; sb.Append(rn != RuneRules.NoRune ? " rune " + RuneRules.Names[rn] + " (精良)" : " " + r.effect + " (" + r.tier + ")"); }
+            sb.Append('\n');
+            yield return Clean(); for (int f = 0; f < 10; f++) yield return null;
+            sb.Append("reward screen (clean): ").Append(Dc()).Append('\n');
+            yield return Shot("reward");
+            File.WriteAllText(Path.Combine(dir, "hud_" + res + ".txt"), sb.ToString());
+            HudScaler.SimulatedSafeArea = null;
         }
         IEnumerator RewardShots()
         {
@@ -599,7 +633,7 @@ namespace StoneSignal
                            " centroid=" + cen.ToString("F2") + " spread=" + rMax.ToString("F2") + " colour0=#" + ColorUtility.ToHtmlStringRGBA(c0) + " | wall=" + at.ToString("F2") + " ghost=" + pg.transform.position.ToString("F2") +
                            " centroid->wall=" + (n > 0 ? Vector2.Distance(new Vector2(cen.x, cen.z), new Vector2(at.x, at.z)).ToString("F2") : "-") + " centroid->ghost=" + (n > 0 ? Vector2.Distance(new Vector2(cen.x, cen.z), new Vector2(pg.transform.position.x, pg.transform.position.z)).ToString("F2") : "-");
                 }
-                // v17.5b (art-requested): capture at REAL time since landing = the dust emit frame (PlacementGhost.dustDelay after the commit).
+                // v17.5b (art-requested): capture at REAL time since landing = the dust emit frame (v18.2: the drop-in landing callback, PlacementGhost.LandTime after the commit).
                 // Measured on the rendered frame: oldest dust particle age (timeScale 1 -> sim time = real time) and wall clock since the land
                 // frame. Frames are grabbed into memory and PNG-encoded afterwards so the capture cost does not push the next sample late.
                 float commitT = Time.time, landWall = -1f; var grabs = new List<(Texture2D tex, string file)>();
@@ -610,15 +644,15 @@ namespace StoneSignal
                     while (true)
                     {
                         yield return new WaitForEndOfFrame(); age = Age();
-                        if (age >= 0 && landWall < 0) { landWall = Time.realtimeSinceStartup - age; info += "landing dust: emitted " + (Time.time - commitT - age).ToString("F3") + " s after the commit (dustDelay " + (pg != null ? pg.dustDelay.ToString("F2") : "-") + ", block drop-in touches down at 0.112 s)\n"; }
+                        if (age >= 0 && landWall < 0) { landWall = Time.realtimeSinceStartup - age; info += "landing dust: emitted " + (Time.time - commitT - age).ToString("F3") + " s after the commit (landing callback; drop-in touchdown at " + StoneSignal.VFX.PlacementGhost.LandTime.ToString("F3") + " s; callback fired " + (pg != null && pg.LastLandTime >= 0 ? (pg.LastLandTime - commitT).ToString("F3") : "-") + " s after the commit)\n"; }
                         if (age >= t - .008f || Time.time - commitT > 2f) break;
                     }
                     long d = draws.LastValue; string di = DustInfo(); string file = "vfx_landing_dust_land" + Mathf.RoundToInt(t * 100).ToString("000") + ".png";
                     grabs.Add((Grab(), file));
-                    info += "landing dust target " + t.ToString("F2") + " s after land: ACTUAL particle age " + age.ToString("F3") + " s, wall clock since land frame " + (Time.realtimeSinceStartup - landWall).ToString("F3") + " s, since commit " + (Time.time - commitT).ToString("F3") + " s (since block touchdown " + (Time.time - commitT - .112f).ToString("F3") + " s), frame dt " + Time.deltaTime.ToString("F3") + " -> " + file + " committed=" + ok + " drawCalls=" + d + di + "\n";
+                    info += "landing dust target " + t.ToString("F2") + " s after land: ACTUAL particle age " + age.ToString("F3") + " s, wall clock since land frame " + (Time.realtimeSinceStartup - landWall).ToString("F3") + " s, since commit " + (Time.time - commitT).ToString("F3") + " s (since block touchdown " + (Time.time - commitT - StoneSignal.VFX.PlacementGhost.LandTime).ToString("F3") + " s), frame dt " + Time.deltaTime.ToString("F3") + " -> " + file + " committed=" + ok + " drawCalls=" + d + di + "\n";
                 }
                 foreach (var g in grabs) { File.WriteAllBytes(Path.Combine(dir, g.file), g.tex.EncodeToPNG()); Destroy(g.tex); }
-                if (pg != null && pg.dust != null) { var mn = pg.dust.main; info += "landing dust system: startColor=#" + ColorUtility.ToHtmlStringRGBA(mn.startColor.color) + " startSize=" + mn.startSize.constantMin.ToString("F2") + "-" + mn.startSize.constantMax.ToString("F2") + " maxParticles=" + mn.maxParticles + " dustDelay=" + pg.dustDelay.ToString("F2") + "\n"; }
+                if (pg != null && pg.dust != null) { var mn = pg.dust.main; info += "landing dust system: startColor=#" + ColorUtility.ToHtmlStringRGBA(mn.startColor.color) + " startSize=" + mn.startSize.constantMin.ToString("F2") + "-" + mn.startSize.constantMax.ToString("F2") + " maxParticles=" + mn.maxParticles + " emit=landing callback (LandTime " + StoneSignal.VFX.PlacementGhost.LandTime.ToString("F3") + " s)" + "\n"; }
                 float tw = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - tw < .8f) yield return null; yield return Clean();
                 info += "landing dust: drawCalls 1.1 s+ after commit (walls merged)=" + draws.LastValue + "\n";
             }

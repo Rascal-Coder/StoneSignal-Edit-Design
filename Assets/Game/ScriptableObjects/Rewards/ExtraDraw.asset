@@ -17,4 +17,5 @@ MonoBehaviour:
   effectText: FREE 2ND DRAW
   effect: 15
   amount: 1
+  tier: 1
   blockShape: {fileID: 0}

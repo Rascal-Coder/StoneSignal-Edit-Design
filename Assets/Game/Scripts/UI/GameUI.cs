@@ -45,6 +45,8 @@ namespace StoneSignal
         // the ghost is over the hand; the dragged card stays opaque; restores on leaving / release.
         private const float HandFadeAlpha = .35f, HandFadeSeconds = .15f;
         private float handAlpha = 1f, handAlphaApplied = -1f; private int fadeKey = -1, fadeKeyApplied = -2; private bool lastAdAvailable = true;
+        private RectTransform hudOrb, hudBanner; private float handCardW = 150, handRowY = 276;
+        private readonly List<GameObject> hotkeyBadges = new List<GameObject>(); private bool badgesTouch;
         private readonly List<(CanvasGroup cg, bool tower, int index)> handCards = new List<(CanvasGroup, bool, int)>();
         public float HandAlpha => handAlpha;
         public string HandAlphas { get { var o = ""; foreach (var h in handCards) if (h.cg) o += (h.tower ? "T" : "B") + h.index + "=" + h.cg.alpha.ToString("F2") + " "; return o; } }
@@ -82,7 +84,7 @@ namespace StoneSignal
             goldCounter.SetValue(session.Economy.Gold, true);
             goldPill = pill;
             // ---- top-centre wave banner
-            var banner = Panel(root, "Wave banner", "ui9_banner_wave_red", Red); TC(banner, 0, 24, 440, 92);
+            var banner = Panel(root, "Wave banner", "ui9_banner_wave_red", Red); TC(banner, 0, 24, 440, 92); hudOrb = orb; hudBanner = banner;
             wave = Txt(banner, "", 44, Ink); UseCn(wave); Full(wave.rectTransform); wave.outlineWidth = .2f; wave.outlineColor = Navy;
             // ---- top-right speed + strike target
             string[] speeds = { "II", "x1", "x2", "x3" };
@@ -147,7 +149,7 @@ namespace StoneSignal
         private void RebuildHands()
         {
             handDirty = false;
-            foreach (var g in built) Destroy(g); built.Clear(); handCards.Clear(); handAlphaApplied = -1f;
+            foreach (var g in built) Destroy(g); built.Clear(); handCards.Clear(); handAlphaApplied = -1f; hotkeyBadges.Clear(); badgesTouch = PointerInput.TouchMode;
             var pic = PlacementInputController.Instance; if (pic != null) { pic.HandRects.Clear(); pic.HandRects.Add(handCount); } // touch "over the hand" = these rects
             bool build = session.Game.State == GameState.Build;
             var towers = session.config.towers;
@@ -175,8 +177,9 @@ namespace StoneSignal
                 if (data.icon != null) { var icon = Img(face, "Icon", data.icon, Color.white); TL(icon, 35, 15, 130, 130); icon.GetComponent<Image>().preserveAspect = true; }
                 var price = Txt(face, session.Towers.Cost(data).ToString(), 36, Ink); TL(price.rectTransform, 20, 162, 130, 44);
                 price.fontStyle = FontStyles.Bold; price.outlineWidth = .25f; price.outlineColor = new Color32(0x1E, 0x1A, 0x3A, 255); price.alignment = TextAlignmentOptions.Center;
-                if (!PointerInput.TouchMode) { var hot = Img(face, "Hotkey", art ? art.uiBadgeHotkey : null, Color.white); TL(hot, 152, 170, 32, 32);
-                var num = Txt(hot, (i + 1).ToString(), 22, new Color32(0x1E, 0x1A, 0x3A, 255)); Full(num.rectTransform); } // 1-4 badges: desktop only
+                { var hot = Img(face, "Hotkey", art ? art.uiBadgeHotkey : null, Color.white); TL(hot, 152, 170, 32, 32);
+                var num = Txt(hot, (i + 1).ToString(), 22, new Color32(0x1E, 0x1A, 0x3A, 255)); Full(num.rectTransform);
+                hot.gameObject.SetActive(!PointerInput.TouchMode); hotkeyBadges.Add(hot.gameObject); } // 1-4 badges: desktop only (v18.2: toggled live when touch mode starts, no hand rebuild)
                 var size = TowerManager.SizeOf(data, 0);
                 if (size != Vector2Int.one)
                 {
@@ -196,7 +199,7 @@ namespace StoneSignal
             float safeW = ((RectTransform)blockHand.parent).rect.width; if (safeW <= 0) safeW = 1920;
             float cardW = Mathf.Max(88, Mathf.Min(150, (safeW - 24 - 512 - 24) / 7f - 12));
             float sc = cardW / 128f, step = (cardW + 12) / sc * (anyStack ? 150f / 140f : 1f), left = 24, rowY = 24 + CH + 32;
-            handCount.anchoredPosition = new Vector2(24, rowY + cardW + 8);
+            handCount.anchoredPosition = new Vector2(24, rowY + cardW + 8); handCardW = cardW; handRowY = rowY;
             if (PlacementInputController.Instance != null) { var cv = blockHand.GetComponentInParent<Canvas>(); float k = cv ? cv.scaleFactor : 1; PlacementInputController.Instance.CanvasScale = k; PlacementInputController.Instance.HandTop = (rowY + cardW + 8) * k; }
             int selectedIndex = session.Blocks.Hand.Selected;
             for (int gi = 0; gi < groups.Count; gi++)
@@ -309,6 +312,36 @@ namespace StoneSignal
             noticePill.GetWorldCorners(corners);
             noticeInfo = "notice '" + notice + "' slot" + best + " clearance=" + bestClear.ToString("F0") + "px (scale " + k.ToString("F2") + ", need " + (NoticeClearance * k).ToString("F0") + ") rect=" + Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y) + " |" + log + " | obstacles=" + pts.Count;
         }
+        // ---- v18.2 camera fit: HUD rects (screen px, y up) the board / entry bridges must stay clear of (CameraFit).
+        /// True once the HUD and the hand have been laid out (rects are valid).
+        public bool HudReady => towerHand != null && blockHand != null && built.Count > 0;
+        /// Fixed HUD obstacles: top bar (core orb + HP, gold, wave banner, speed buttons), bottom-left hand (4 tower cards, the hand counter
+        /// and a block row of FitBlockCards cards - the draw size, so the camera never moves when cards are drawn or played),
+        /// bottom-right draw pile + BATTLE. Padded by padPx (screen pixels).
+        public const int FitBlockCards = GameBootstrap.CardsPerDraw;
+        public void HudObstacles(List<Rect> list, float padPx)
+        {
+            list.Clear(); var c = new Vector3[4];
+            void Add(RectTransform r)
+            {
+                if (r == null || !r.gameObject.activeInHierarchy) return; r.GetWorldCorners(c);
+                float x0 = Mathf.Min(Mathf.Min(c[0].x, c[1].x), Mathf.Min(c[2].x, c[3].x)), x1 = Mathf.Max(Mathf.Max(c[0].x, c[1].x), Mathf.Max(c[2].x, c[3].x));
+                float y0 = Mathf.Min(Mathf.Min(c[0].y, c[1].y), Mathf.Min(c[2].y, c[3].y)), y1 = Mathf.Max(Mathf.Max(c[0].y, c[1].y), Mathf.Max(c[2].y, c[3].y));
+                list.Add(Rect.MinMaxRect(x0 - padPx, y0 - padPx, x1 + padPx, y1 + padPx));
+            }
+            Add(hudOrb); Add(hpSmall != null ? hpSmall.rectTransform : null); Add(goldPill); Add(hudBanner);
+            foreach (var b in speedButtons) if (b != null) Add((RectTransform)b.transform);
+            if (battle != null) Add((RectTransform)battle.transform);
+            if (drawPile != null) Add((RectTransform)drawPile.transform);
+            Add(handCount);
+            foreach (var h in handCards) if (h.tower && h.cg != null) Add((RectTransform)h.cg.transform);
+            if (blockHand != null)
+            {   // block row at its draw size (left-aligned at x 24, rowY; +12 px selected lift)
+                blockHand.GetWorldCorners(c); var cv = blockHand.GetComponentInParent<Canvas>(); float k = cv ? cv.scaleFactor : 1f;
+                float x0 = c[0].x + 24 * k, y0 = c[0].y + handRowY * k, w = (FitBlockCards * (handCardW + 12) - 12) * k, h = (handCardW + 12) * k;
+                list.Add(Rect.MinMaxRect(x0 - padPx, y0 - padPx, x0 + w + padPx, y0 + h + padPx));
+            }
+        }
         private void Update()
         {
             if (session == null) return;
@@ -329,6 +362,7 @@ namespace StoneSignal
                     foreach (var h in handCards) if (h.cg != null) h.cg.alpha = fadeKey >= 0 && h.tower == (fadeKey >= 1000) && h.index == fadeKey % 1000 ? 1f : handAlpha;
                 }
             }
+            if (PointerInput.TouchMode != badgesTouch) { badgesTouch = PointerInput.TouchMode; foreach (var b in hotkeyBadges) if (b != null) b.SetActive(!badgesTouch); } // first real touch (sticky) hides the 1-4 hotkey badges
             if (session.Draws.Next == DrawRules.Offer.Ad && session.AdAvailable != lastAdAvailable) Refresh(); // ad readiness changed (SDK loaded / failed)
             if (Input.GetKeyDown(KeyCode.Space) && session.Game.State == GameState.Build) session.Waves.StartWave();
         }
@@ -364,7 +398,7 @@ namespace StoneSignal
         private StoneSignal.UI.RewardRarity[] debugRarity; private RewardEffect[] debugEffects;
         /// Reward card tier: 免广告再抽 (ExtraDraw) is 精良 (Rare, 玩法策划 v18); the other wave rewards stay Common for now.
         public static StoneSignal.UI.RewardRarity RarityOf(RewardEffect e) => e == RewardEffect.ExtraDraw ? StoneSignal.UI.RewardRarity.Rare : StoneSignal.UI.RewardRarity.Common;
-        public static StoneSignal.UI.RewardRarity RarityOf(RewardData r) => r != null ? RarityOf(r.effect) : StoneSignal.UI.RewardRarity.Common;
+        public static StoneSignal.UI.RewardRarity RarityOf(RewardData r) => r != null ? (StoneSignal.UI.RewardRarity)(int)r.tier : StoneSignal.UI.RewardRarity.Common; // v18.2: data tier (RewardRoll) drives the card frame
         private bool ShowRewardPick()
         {
             if (!ArtSteps.On(5) || art == null || art.UiSprite("ui9_reward_frame_common") == null) return false;
@@ -414,7 +448,7 @@ namespace StoneSignal
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
                 if (rune != RuneRules.NoRune) { opts[i] = RuneOption(rune); rar[i] = StoneSignal.UI.RewardRarity.Rare; }
-                else { opts[i] = RewardOption(session.Rewards.Choices[i]); rar[i] = RarityOf(session.Rewards.Choices[i]); } // ExtraDraw = 精良; others Common until gameplay assigns tiers
+                else { opts[i] = RewardOption(session.Rewards.Choices[i]); rar[i] = RarityOf(session.Rewards.Choices[i]); } // tier from the reward asset (ExtraDraw = 精良)
             }
             pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(opts, rar); FitRewardText(); if (pickGlow != null) pickGlow.Begin(rar); Refresh();
             return true;

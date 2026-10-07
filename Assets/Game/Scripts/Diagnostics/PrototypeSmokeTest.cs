@@ -77,6 +77,7 @@ namespace StoneSignal
             for(int i=0;i<5;i++) if(session.Blocks.Hand.Cards[i].displayName=="L") session.Blocks.SelectCard(i);
             Require(session.config.waves[0].Total==5 && session.config.waves[1].Total==8 && session.config.waves[2].Total==12,"Configured 5 / 8 / 12 initial enemies");
             Require(session.config.towers.Length==4 && session.config.rewards.Length==14,"Four towers and fourteen reward assets (incl. ExtraDraw)");
+            Require(System.Array.Exists(session.config.rewards,r=>r!=null && r.effect==RewardEffect.ExtraDraw && r.tier==RewardTier.Rare),"ExtraDraw reward tier is Rare (精良)");
             // Sealing the core: every empty ring cell around the core at once must be rejected.
             var ring=new List<Vector2Int>();
             foreach(var c in grid.CoreCells) foreach(var d in new[]{Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right})
@@ -151,7 +152,9 @@ namespace StoneSignal
                 Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat (state="+session.Game.State+" remaining="+session.Waves.Remaining+" active="+session.Enemies.Active.Count+" timeScale="+Time.timeScale+" stuckEvents="+session.Enemies.StuckEvents+" "+(session.Enemies.Active.Count>0?session.Enemies.Active[0].DebugState:"")+")");
                 Require(spawnCounts[wave]==session.config.waves[wave].Total+childCounts[wave],"Wave "+(wave+1)+" exact spawn count");
                 Require(session.Economy.Gold>goldBefore,"Wave "+(wave+1)+" kills earn gold");
-                Require(session.Rewards.Choices.Count==3 && new HashSet<RewardData>(session.Rewards.Choices).Count==3,"Three unique reward cards");
+                { var rc=session.Rewards.Choices; var rr=session.Rewards.RuneChoices; var seenR=new HashSet<RewardData>(); var seenRune=new HashSet<int>(); bool uniq=rc.Count==3 && rr.Count==3; string desc="";
+                  for(int i=0;i<rc.Count && i<rr.Count;i++){ if(rr[i]!=RuneRules.NoRune){ uniq&=rc[i]==null && seenRune.Add(rr[i]); desc+=" rune"+rr[i]; } else { uniq&=rc[i]!=null && seenR.Add(rc[i]); desc+=" "+(rc[i]!=null?rc[i].effect+"("+rc[i].tier+")":"null"); } }
+                  Require(uniq,"Three unique reward options (weighted roll):"+desc); }
                 Require(!session.Waves.StartWave(),"Combat cannot start during Reward");
                 if(wave==0) yield return Capture("04-rewards");
                 Require(session.Rewards.Choose(0) && !session.Rewards.Choose(0),"Only one reward can be selected");
@@ -165,6 +168,7 @@ namespace StoneSignal
             }
             Require(killed>0 && session.Economy.HP>0,"Three waves survived with automatic tower combat");
             Require(session.Enemies.StuckEvents==0,"No ENEMY STUCK events (guard is only a fallback)");
+            { var fit=CameraFit.Instance; Require(fit!=null && fit.Fits>0 && fit.Size>=fit.BaseSize && !fit.Report.Contains("FALLBACK"),"Camera fit: board + entry bridges inside the safe area, clear of the HUD (ortho "+(fit!=null?fit.Size.ToString("F2")+" pan "+fit.Pan.ToString("F2"):"-")+")"); }
             yield return TouchDragCheck();
             AdsAndExtraDrawCheck();
             yield return Capture("05-next-build");

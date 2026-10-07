@@ -119,7 +119,9 @@ public static class PrototypeBuild
     public static void EnsureRewardPool()
     {
         var config=AssetDatabase.LoadAssetAtPath<GameConfig>(Root+"Settings/GameConfig.asset"); if(config==null) return;
-        var extra=Asset<RewardData>(Root+"ScriptableObjects/Rewards/ExtraDraw.asset",r=>{r.displayName="Ad-free Draw";r.description="2nd draw of the wave needs no ad";r.effectText="FREE 2ND DRAW";r.effect=RewardEffect.ExtraDraw;r.amount=1;});
+        var extra=Asset<RewardData>(Root+"ScriptableObjects/Rewards/ExtraDraw.asset",r=>{r.displayName="Ad-free Draw";r.description="2nd draw of the wave needs no ad";r.effectText="FREE 2ND DRAW";r.effect=RewardEffect.ExtraDraw;r.amount=1;r.tier=RewardTier.Rare;});
+        // v18.2: tier drives the weighted roll; ExtraDraw is 精良 (Rare). One-time migration of the v18.1 asset (created before the tier field).
+        if(extra.tier==RewardTier.Common){ extra.tier=RewardTier.Rare; EditorUtility.SetDirty(extra); AssetDatabase.SaveAssets(); Debug.Log("REWARD POOL: ExtraDraw tier -> Rare"); }
         if(Array.IndexOf(config.rewards,extra)>=0) return;
         var list=new System.Collections.Generic.List<RewardData>(config.rewards){extra}; config.rewards=list.ToArray();
         EditorUtility.SetDirty(config); AssetDatabase.SaveAssets(); Debug.Log("REWARD POOL: ExtraDraw added ("+config.rewards.Length+" rewards)");
