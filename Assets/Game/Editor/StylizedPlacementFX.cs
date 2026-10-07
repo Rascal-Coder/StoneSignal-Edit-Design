@@ -32,7 +32,7 @@ public static class StylizedPlacementFX
     /// v17.4 landing dust colour: spec FX_Build_Dust #E9C9A0 (light tan), texture is the painted soft puff sheet (light grey).
     /// v17.5: #D9B48A, alpha 1 (the puff sheet is soft: only ~15% of each 2x2 cell is above alpha 0.5, so the v17.4 0.34-0.5 m puffs read
     /// as ~0.15 m smudges at gameplay zoom).
-    public static readonly Color LandingDustColor = new Color(0xD9 / 255f, 0xB4 / 255f, 0x8A / 255f, 1f);
+    public static readonly Color LandingDustColor = new Color(0xF2 / 255f, 0xE2 / 255f, 0xC6 / 255f, 1f);   // art-requested fix: #D9B48A -> #F2E2C6
     const string DustTex = StylizedArtIntegration.ArtDir + "FX/Placement/T_FX_LandingDust_2x2.png";   // v17.5: denser copy of the portal puff sheet
     const string DustTexFallback = StylizedArtIntegration.ArtDir + "FX/Portal/T_Portal_DustPuff_2x2.png"; // (alpha^0.6 x 1.2, 128 px; portal keeps its own)
 
@@ -77,7 +77,7 @@ public static class StylizedPlacementFX
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var mn = ps.main; mn.playOnAwake = false; mn.loop = true; mn.duration = 1f;
             mn.startLifetime = new ParticleSystem.MinMaxCurve(.5f, .6f); mn.startSpeed = 0;   // speed/direction come from EmitParams
-            mn.startSize = new ParticleSystem.MinMaxCurve(.5f, .8f); mn.startRotation = new ParticleSystem.MinMaxCurve(0, Mathf.PI * 2);
+            mn.startSize = new ParticleSystem.MinMaxCurve(.65f, 1f);   /* art-requested fix: 0.5-0.8 -> 0.65-1.0 m (size over life x1.6 kept) */ mn.startRotation = new ParticleSystem.MinMaxCurve(0, Mathf.PI * 2);
             mn.startColor = LandingDustColor; mn.maxParticles = PlacementGhost.DustMax;
             mn.simulationSpace = ParticleSystemSimulationSpace.World; mn.scalingMode = ParticleSystemScalingMode.Shape;
             mn.gravityModifier = -.10f;   // v17.5 gentle rise mn.stopAction = ParticleSystemStopAction.None; mn.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;

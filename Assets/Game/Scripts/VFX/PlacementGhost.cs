@@ -108,7 +108,7 @@ namespace StoneSignal.VFX
         [Tooltip("v17.5: outward puff speed (m/s, drag slows it) - slight push, v17.4 was 0.7-1.15")] public Vector2 dustSpeed = new Vector2(.45f, .8f);
         [Tooltip("v17.5: upward drift speed (m/s)")] public Vector2 dustRise = new Vector2(.25f, .45f);
         [Tooltip("v17.5: puff centre height above the ghost's base (m) - at the block base (v17.4 0.12)")] public float dustLift = .06f;
-        [Tooltip("v17.4: seconds after PlayDrop = when the dropping block touches down (Drop: 0.35 m drop over 0.11 s)")] public float dustDelay = .1f;
+        [Tooltip("v17.4: seconds after PlayDrop = when the dropping block touches down (Drop: 0.35 m drop over 0.11 s)")] public float dustDelay = .06f;   // art-requested fix: 0.1 -> 0.06 s
         float dustWait;
         static readonly HashSet<Vector2Int> dustKeys = new HashSet<Vector2Int>();
         readonly List<Vector3> dustCells = new List<Vector3>(8);
@@ -135,7 +135,7 @@ namespace StoneSignal.VFX
             dustCells.Clear();
             int edges = dustEdges.Count; if (edges == 0 || !dust) return;
             if (!dust.isPlaying) dust.Play();   // loop on, emission module off: Play() spawns nothing by itself
-            int count = Mathf.Min(DustMax - dust.particleCount, Mathf.Max(edges, 8)); if (count <= 0) return;
+            int count = DustMax - dust.particleCount; if (count <= 0) return;   // art-requested fix: fixed 12 per landing (was max(edges, 8), capped 12)
             var ep = new ParticleSystem.EmitParams { applyShapeToPosition = false };
             for (int i = 0; i < count; i++)
             {

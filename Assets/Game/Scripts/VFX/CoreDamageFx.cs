@@ -45,7 +45,7 @@ namespace StoneSignal.VFX
         }
         public void PlayHit() { hit = 1; enabled = true; if (sparks && Current < Stage.Critical) sparks.Emit(3); }
 
-        static void Toggle(ParticleSystem p, bool on) { if (!p) return; if (on && !p.isPlaying) p.Play(); else if (!on && p.isPlaying) p.Stop(true, ParticleSystemStopBehavior.StopEmitting); }
+        static void Toggle(ParticleSystem p, bool on) { if (!p) return; if (on && !p.isEmitting) p.Play(); else if (!on && p.isEmitting) p.Stop(true, ParticleSystemStopBehavior.StopEmitting); }
 
         void Update()
         {
