@@ -176,7 +176,8 @@ namespace StoneSignal
             bool dressed = layout != null && layout.levelDressing != null;
             if (dressed)
             {
-                var dressing = ArtVisual.Create(layout.levelDressing, transform, grid.BoardCenter + layout.levelDressingOffset);
+                // Authored around the world-space board centre at water level 0 (cliff top 0.55 = grid plane), independent of the grid height.
+                var c = grid.BoardCenter; var dressing = ArtVisual.Create(layout.levelDressing, transform, new Vector3(c.x, 0, c.z) + layout.levelDressingOffset);
                 dressing.transform.localRotation = Quaternion.identity; // prefab authored in game space
             }
             if (!dressed || !layout.levelDressingReplacesCliff)

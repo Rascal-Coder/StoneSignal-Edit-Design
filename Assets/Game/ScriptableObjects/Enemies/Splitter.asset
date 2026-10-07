@@ -22,6 +22,7 @@ MonoBehaviour:
   kind: 3
   splitChild: {fileID: 11400000, guid: 7f4ee6a2515e42b4bd6cd8b5dd01fce1, type: 2}
   splitCount: 2
+  turnSpeed: 540
   splitChildScale: 1
   deathVfx: {fileID: 1471683524797061847, guid: 1a24321d256d67145a0f66567153eeec, type: 3}
   coinVfx: {fileID: 1247375302900105625, guid: 15519893c6c62c443857c055167f1602, type: 3}

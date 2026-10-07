@@ -33,7 +33,7 @@ namespace StoneSignal.EditorTools
             foreach (var r in UnityEngine.Object.FindObjectsOfType<Renderer>())
             {
                 if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
-                Mesh m = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                Mesh m = null; if (r is SkinnedMeshRenderer s) m = s.sharedMesh; else if (r.TryGetComponent<MeshFilter>(out var mf)) m = mf.sharedMesh;
                 long t = 0; int subs = 1;
                 if (m != null) { subs = m.subMeshCount; for (int i = 0; i < subs; i++) t += m.GetIndexCount(i) / 3; }
                 renderers++; tris += t;

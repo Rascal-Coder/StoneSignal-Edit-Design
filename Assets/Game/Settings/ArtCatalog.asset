@@ -34,12 +34,25 @@ MonoBehaviour:
   detailDirt: {fileID: 5046714115729109645, guid: c867780bebd5a1e489806e6de5e62028, type: 3}
   atlas: {fileID: 2100000, guid: a2bf304f4332eb64e8df2694f9b0ec37, type: 2}
   backdrop: {fileID: 2100000, guid: d45a2c1e443d96f4db865de735f3f6fa, type: 2}
-  boardCliff: {fileID: 2571206500013787580, guid: 91161e3e9f81a964a93892a1f91fa8cb, type: 3}
+  boardCliff: {fileID: 0}
   boardCliffSize: {x: 16, y: 12}
   boardCliffOffsetY: -0.55
-  entryBridge: {fileID: 1232416522293476760, guid: b396d9254e58c8e43a029d1d54a82e79, type: 3}
+  entryBridge: {fileID: 0}
   entryBridgePlanks: 4
   entryBridgeOffsetY: -0.55
+  tileVariants:
+  - {fileID: 5856094974100018678, guid: 1d4b2e0fc47ae0b458b51fc82ad9275f, type: 3}
+  - {fileID: 5856094974100018678, guid: 1d4b2e0fc47ae0b458b51fc82ad9275f, type: 3}
+  - {fileID: 8879056266098044780, guid: 48d491a3533b37e4ea4415686a351a7c, type: 3}
+  - {fileID: 682677518262469062, guid: eff50b8ddc9f3d04a8bf475c565200db, type: 3}
+  - {fileID: 1429911457044707201, guid: 459cc0f963b031040a2015028ebb1470, type: 3}
+  - {fileID: 3685006158152696142, guid: df682e2b8ee439f4e888007090df4456, type: 3}
+  tileUndulation: 1
+  pathFlowSegment: {fileID: 3585437777789776170, guid: 5087ceb7993693e4bb2760a9b381ea21, type: 3}
+  pathFlowY: 0.34
+  placeGhostBlock: {fileID: 3235682694636928108, guid: 66f9747f005741a4d87393493963a003, type: 3}
+  placeGhostTower: {fileID: 5797902941885729350, guid: 8d4d82d6d53b9514c8fb240b06c8cfc1, type: 3}
+  slotHighlight: {fileID: 6079820617362110597, guid: 84dfc173270a585469a472398563ac7b, type: 3}
   coreHitVfx: {fileID: 6531622362749199158, guid: ddaceebcf3fae584f84a089110410510, type: 3}
   tileTop: 0.25
   blockTop: 0.6

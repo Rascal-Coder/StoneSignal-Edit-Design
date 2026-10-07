@@ -46,11 +46,22 @@ namespace StoneSignal.EditorTools
             var grid = UnityEngine.Object.FindObjectOfType<GridManager>();
             if (grid == null) throw new Exception("Game.unity has no GridManager");
             grid.layout = layout; grid.width = layout.width; grid.height = layout.height; grid.cellSize = layout.cellSize;
-            grid.transform.position = new Vector3(-layout.width * layout.cellSize * .5f, 0, -layout.height * layout.cellSize * .5f);
+            // v10: the level dressing sits at world origin with its board cliff top at 0.55, so the grid plane (tile pivots) is raised to match the art preview.
+            float gridY = layout.levelDressing != null ? CliffTop : 0;
+            grid.transform.position = new Vector3(-layout.width * layout.cellSize * .5f, gridY, -layout.height * layout.cellSize * .5f);
             grid.gameObject.name = "Grid " + layout.width + " x " + layout.height;
             EditorUtility.SetDirty(grid); EditorUtility.SetDirty(grid.transform);
             var cam = UnityEngine.Object.FindObjectOfType<GameBootstrap>()?.viewCamera;
-            if (cam != null && cam.orthographic) { cam.orthographicSize = GameCamOrthoV7; EditorUtility.SetDirty(cam); }
+            if (cam != null)
+            {
+                // Art v10 framing (StylizedArtIntegration.GameCam*V10): camera = look-at - forward * 30.
+                var rot = Quaternion.Euler(StylizedArtIntegration.GameCamPitchV10, StylizedArtIntegration.GameCamYawV10, 0);
+                cam.orthographic = true; cam.orthographicSize = StylizedArtIntegration.GameCamOrthoV10;
+                cam.transform.SetPositionAndRotation(StylizedArtIntegration.GameCamTargetV10 - rot * Vector3.forward * 30f, rot);
+                var urp = cam.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+                if (urp != null) { urp.requiresDepthOption = UnityEngine.Rendering.Universal.CameraOverrideOption.On; EditorUtility.SetDirty(urp); }
+                EditorUtility.SetDirty(cam); EditorUtility.SetDirty(cam.transform);
+            }
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
         }
 
@@ -87,7 +98,7 @@ namespace StoneSignal.EditorTools
             // Data-driven dressing slot: art agent ships PF_Env_LevelDressing_16x12; until then keep cliff + water + bridges.
             layout.levelDressing = AssetDatabase.LoadAssetAtPath<GameObject>(P + "PF_Env_LevelDressing_16x12.prefab");
             // v8: the dressing is authored at Game world origin (= board centre) and already contains BoardCliff + EntryBridges.
-            layout.levelDressingOffset = Vector3.zero; layout.levelDressingReplacesCliff = true;
+            layout.levelDressingOffset = Vector3.zero; // v10 dressing is authored in game space at world origin layout.levelDressingReplacesCliff = true;
             if (layout.levelDressing != null) layout.surroundings = new BoardSurroundItem[0];
             if (layout.levelDressing == null) Debug.Log("Level dressing: PF_Env_LevelDressing_16x12 not found, using cliff fallback");
             layout.waterMaterial = layout.levelDressing != null ? null : AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/M_Env_Water_Flat.mat");
@@ -171,7 +182,7 @@ namespace StoneSignal.EditorTools
             var variants = "AABCDE".Select(c => Opt("PF_Env_Tile_Stone_" + c)).ToArray();
             art.tileVariants = variants.All(v => v != null) ? variants : new GameObject[0];
             art.tileUndulation = true;
-            art.pathFlowSegment = Opt("PF_Path_FlowSegment"); art.pathFlowY = .82f + DemoToGameY;
+            art.pathFlowSegment = Opt("PF_Path_FlowSegment"); art.pathFlowY = GroundTop + .09f; // above the +0.06 tile undulation (demo 0.82 would sit inside raised tiles)
             art.placeGhostBlock = Opt("PF_UI_PlaceGhost_Block"); art.placeGhostTower = Opt("PF_UI_PlaceGhost_Tower");
             art.slotHighlight = Opt("PF_UI_SlotHighlight");
             EditorUtility.SetDirty(art);

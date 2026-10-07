@@ -66,7 +66,8 @@ namespace StoneSignal
                 Require(session.config.palette.art.block!=null && session.config.palette.art.signalCore!=null,"Art catalog environment assigned");
                 Require(session.config.palette.art.tile!=null && session.config.palette.art.tilePath!=null && session.config.palette.art.tileGoal!=null,"Board tile, road and goal assigned");
                 foreach(var tower in session.config.towers) Require(tower.visualPrefab!=null && tower.icon!=null,"Tower model and icon "+tower.displayName);
-                Require(session.config.palette.art.boardCliff!=null || session.GetComponentsInChildren<BoardEnvironment>().Length==1,"Board island / decoration initialized");
+                Application.runInBackground=true; // unfocused smoke window must keep running
+                Require(session.config.palette.art.boardCliff!=null || (session.grid.layout!=null && session.grid.layout.levelDressing!=null) || session.GetComponentsInChildren<BoardEnvironment>().Length==1,"Board island / decoration initialized");
             }
             var grid=session.grid;
             Require(session.Paths.CurrentPaths.Count==grid.Spawns.Count && session.Paths.CurrentPaths.TrueForAll(p=>p.Count>1) && session.Game.State==GameState.Build,"Initial scene, a route from every spawn and Build state");

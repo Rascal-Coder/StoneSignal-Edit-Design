@@ -25,6 +25,8 @@ MonoBehaviour:
   damage: 30
   projectileSpeed: 9
   splashRadius: 1.35
+  footprint: {x: 2, y: 2}
+  footprintRotates: 0
   critChance: 0
   critMultiplier: 1.5
   headName: 

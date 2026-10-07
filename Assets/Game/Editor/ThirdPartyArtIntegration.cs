@@ -608,7 +608,7 @@ public static class ThirdPartyArtIntegration
         PrototypeChecks.Require(art != null, "Art catalog assigned");
         PrototypeChecks.Require(art.tile != null && art.tilePath != null && art.tileSpawn != null && art.tileGoal != null, "Board tiles assigned");
         // Multi-edge spawns are marked by entry bridges on the stylized island; a portal is only required without them.
-        PrototypeChecks.Require(art.block != null && art.signalCore != null && (art.spawnPortal != null || art.entryBridge != null), "Block and landmarks assigned");
+        PrototypeChecks.Require(art.block != null && art.signalCore != null && (art.spawnPortal != null || art.entryBridge != null || (art.tileVariants != null && art.tileVariants.Length > 0)) /* v8+: level dressing owns bridges */, "Block and landmarks assigned");
         PrototypeChecks.Require(art.atlas != null && art.backdrop != null, "Materials assigned");
         foreach (var tower in config.towers) PrototypeChecks.Require(tower.visualPrefab != null && tower.icon != null, "Tower prefab and icon");
         foreach (var shape in config.blocks) PrototypeChecks.Require(shape.icon != null, "Block icon");
