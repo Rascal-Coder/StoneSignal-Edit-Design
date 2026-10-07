@@ -78,12 +78,10 @@ namespace StoneSignal
             s.Blocks.SelectCard(0);
             s.Towers.PinPreview(1, blocked);
             s.Blocks.Pinned = true; s.Blocks.SetToolActive(true); if (fv) s.Blocks.Preview(valid);
-            if (fv) Label("VALID", s.grid.ToWorld(valid), new Color(.55f, 1f, .6f));
-            if (fb) Label("BLOCKED", s.grid.ToWorld(blocked), new Color(1f, .45f, .55f));
             TimeController.ResetAll();
             yield return null; yield return null;
             yield return new WaitForEndOfFrame();
-            string stats = Stats();
+            string stats = Stats() + Layout();
             Capture();
             yield return Breakdown(r => stats += r);
             File.WriteAllText(Path.ChangeExtension(path, ".txt"), stats);
@@ -137,18 +135,26 @@ namespace StoneSignal
             yield return Try("towers", none, R(r => r.GetComponentInParent<Tower>() != null && r.GetComponentInParent<StoneSignal.VFX.TowerBuffIcons>() == null && !Under(r, "ResonanceAura")));
             yield return Try("enemies", none, R(r => r.GetComponentInParent<Enemy>() != null));
             yield return Try("dressing", none, R(r => Under(r, "LevelDressing") || Under(r, "Dressing")));
-            yield return Try("ghosts/labels", none, R(r => Under(r, "Ghost") || Under(r, "label") || Under(r, "Range")));
+            yield return Try("ghosts/labels", none, R(r => Under(r, "Ghost") || Under(r, "Range")));
             yield return Try("particles/VFX", none, R(r => r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer));
             var inst = new List<Behaviour>(FindObjectsOfType<InstancedBatch>());
             yield return Try("instanced batches (ground/walls/flow)", inst, noR);
             add(report.ToString() + "\n");
         }
-        void Label(string text, Vector3 at, Color color)
+        // Runtime UI geometry in screen pixels (overlay canvases: world corners = screen px), taken before the capture switches modes.
+        string Layout()
         {
-            var go = new GameObject(text + " label"); go.transform.position = at + Vector3.up * 2.1f;
-            go.transform.rotation = s.viewCamera.transform.rotation;
-            var t = go.AddComponent<TMPro.TextMeshPro>(); t.text = text; t.fontSize = 3.2f; t.fontStyle = TMPro.FontStyles.Bold; t.color = color;
-            t.alignment = TMPro.TextAlignmentOptions.Center; t.outlineWidth = .25f; t.outlineColor = new Color32(30, 26, 58, 255);
+            var sb = new System.Text.StringBuilder("\nlayout screen=" + Screen.width + "x" + Screen.height + " safeArea=" + Screen.safeArea);
+            foreach (var c in FindObjectsOfType<Canvas>()) if (c.isRootCanvas)
+            { var sc = c.GetComponent<UnityEngine.UI.CanvasScaler>(); sb.Append("\n  canvas " + c.name + " mode=" + c.renderMode + " scaleFactor=" + c.scaleFactor + (sc ? " scaler=" + sc.uiScaleMode + " ref=" + sc.referenceResolution : "")); }
+            foreach (var rt in FindObjectsOfType<RectTransform>())
+            {
+                if (rt.name != "BATTLE" && rt.name != "DrawPileRoot" && rt.name != "SafeAreaRoot" && !rt.name.StartsWith("Tower card")) continue;
+                var k = new Vector3[4]; rt.GetWorldCorners(k);
+                sb.Append("\n  " + rt.name + " parent=" + (rt.parent ? rt.parent.name : "-") + " x " + k[0].x.ToString("0") + ".." + k[2].x.ToString("0") + " y " + k[0].y.ToString("0") + ".." + k[2].y.ToString("0") +
+                          " (right margin " + (Screen.width - k[2].x).ToString("0") + ", bottom " + k[0].y.ToString("0") + ") rotZ=" + rt.localEulerAngles.z.ToString("0.0") + " pos=" + rt.anchoredPosition);
+            }
+            return sb.ToString() + "\n";
         }
         string Stats()
         {

@@ -33,7 +33,7 @@ namespace StoneSignal
         private readonly TextMeshProUGUI[] rewardNames = new TextMeshProUGUI[3], rewardDescriptions = new TextMeshProUGUI[3], rewardEffects = new TextMeshProUGUI[3];
         private float noticeUntil; private string notice; private bool handDirty = true;
         private int speedIndex = 1; private bool paused;
-        private const string DefaultHint = "R rotate  ·  RMB cancel  ·  ghost shows valid / blocked";
+        private const string DefaultHint = "R rotate  ·  RMB cancel";
 
         static readonly Color Ink = Color.white, Navy = Hex("1E2A4A"), Slate = Hex("3B4566"), Blue = Hex("2F5FD0"),
             Red = Hex("D9404A"), Gold = Hex("F7C948"), Orange = Hex("F59A3A"), Blueprint = Hex("2A5DB0"), Shadow = new Color(0, 0, 0, .35f);
@@ -77,8 +77,7 @@ namespace StoneSignal
             var target = Btn(root, "", 28, "ui9_button_navy_normal", Slate, CycleTarget); TR((RectTransform)target.transform, -24, 124, 420, 88);
             targetLabel = target.GetComponentInChildren<TextMeshProUGUI>();
             // ---- bottom: hint pill, battle, draw deck
-            var hintPill = Panel(root, "Hint", "ui9_panel_navy", new Color(.12f, .16f, .28f, .85f)); TC(hintPill, 0, 128, 620, 48); // under the WAVE banner (bottom row is full)
-            hint = Txt(hintPill, DefaultHint, 21, Ink); Full(hint.rectTransform);
+            // no hint pill / instruction text this version (user decision; tutorial later). R / RMB input unchanged.
             // DRAW pile v16 (art StoneSignal.VFX.DrawPileUI): 200x268 bottom-right at (-312,+24), 32 px left of BATTLE (256x104 at (-24,+24)).
             // Own nested canvas: the pill bob animates every frame and would otherwise rebuild the whole HUD canvas mesh.
             var pileGo = new GameObject("DrawPileRoot", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster)); pileGo.SetActive(false);
@@ -92,6 +91,7 @@ namespace StoneSignal
             handCount = Panel(root, "Hand count", "ui9_panel_navy", Navy); BL(handCount, 24, 0, 108, 52);
             var hc = Txt(handCount, "", 28, Ink); Full(hc.rectTransform); hc.fontStyle = FontStyles.Bold; drawPile.handCountLabel = hc;
             battle = Btn(root, "BATTLE  ►", 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 24, 256, 104);
+            battle.name = "BATTLE"; { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
             var handCanvas = Canvas("Hand", 1);
             towerHand = Group(handCanvas, "Tower hand"); Full(towerHand);
             blockHand = Group(handCanvas, "Block hand"); Full(blockHand);
@@ -250,7 +250,7 @@ namespace StoneSignal
         private void Update()
         {
             if (session == null) return;
-            hint.text = Time.unscaledTime < noticeUntil ? notice : DefaultHint;
+            if (hint != null) hint.text = Time.unscaledTime < noticeUntil ? notice : DefaultHint;
             if (Input.GetKeyDown(KeyCode.Space) && session.Game.State == GameState.Build) session.Waves.StartWave();
         }
 

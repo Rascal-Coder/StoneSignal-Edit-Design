@@ -7,7 +7,8 @@ namespace StoneSignal.VFX
 
     /// DRAW pile (art v16). Visual only: game code owns the rule "2 draws per wave: 1st free, 2nd rewarded ad"
     /// and calls SetState / SetStackCount / PlayDrawPulse. Card face carries no price; status lives in the pill below.
-    /// Layout (1920x1080 ref): root 200x268, card 124x160 at (30,8) top-left, layer step (+4,+7), pill 172x60 at bottom.
+    /// Layout v16.1 (1920x1080 ref): root 200x268; pill 172x60 top-centre (y=0); card 124x160 at (30,72) (10px gap under pill), layer step (+4,+7).
+    /// Option B (default, showTail=false): plain pill. Option A (showTail=true): ui_draw_bubble_tail flipped, pointing down at the pile.
     public class DrawPileUI : MonoBehaviour
     {
         [Header("Sprites (HUD atlas)")]
@@ -29,6 +30,7 @@ namespace StoneSignal.VFX
         [Header("Tuning")]
         public Vector2 cardSize = new Vector2(124, 160);
         public Vector2 layerStep = new Vector2(4, -7);
+        [Tooltip("Option A: downward tail under the pill. Default false = option B (plain pill).")] public bool showTail = false;
         public float bobAmplitude = 4f, bobPeriod = 1.6f;
         public Color textColor = new Color32(0x1E, 0x1A, 0x3A, 0xFF);
         [Tooltip("Hand counter label near the block row, e.g. 5/7 (optional)")] public TMPro.TMP_Text handCountLabel;
@@ -46,7 +48,7 @@ namespace StoneSignal.VFX
             if (built) return; built = true;
             var rt = (RectTransform)transform;
             if (rt.sizeDelta == Vector2.zero) rt.sizeDelta = new Vector2(200, 268);
-            if (!stackRoot) stackRoot = NewRect("Stack", rt, new Vector2(0, 1), new Vector2(0, 1), new Vector2(30, -8), cardSize);
+            if (!stackRoot) stackRoot = NewRect("Stack", rt, new Vector2(0, 1), new Vector2(0, 1), new Vector2(30, -72), cardSize);
             for (int i = 3; i >= 0; i--)   // back to front; layer i+1 below top
             {
                 var img = NewImage("Layer" + (i + 1), stackRoot, layerCard);
@@ -56,16 +58,24 @@ namespace StoneSignal.VFX
             if (!top) top = NewImage("Top", stackRoot, topCard);
             if (!pill)
             {
-                tail = NewImage("Tail", rt, tailSprite);
-                Place(tail.rectTransform, new Vector2(.5f, 0), new Vector2(0, 61), new Vector2(26, 15));
                 pillImage = NewImage("Pill", rt, pillSprite); pillImage.type = Image.Type.Sliced;
-                pill = pillImage.rectTransform; Place(pill, new Vector2(.5f, 0), new Vector2(0, 34), new Vector2(172, 60));
-                tail.transform.SetParent(pill, true);
-                statusIcon = NewImage("Icon", pill, freeIcon);
-                Place(statusIcon.rectTransform, new Vector2(0, .5f), new Vector2(36, 2), new Vector2(40, 40));
+                pill = pillImage.rectTransform; Place(pill, new Vector2(.5f, 1), new Vector2(0, 0), new Vector2(172, 60));
+                tail = NewImage("Tail", pill, tailSprite);   // sprite points up -> flip to point down at the pile
+                Place(tail.rectTransform, new Vector2(.5f, 0), new Vector2(0, 4), new Vector2(26, 15));
+                tail.rectTransform.localScale = new Vector3(1, -1, 1); tail.transform.SetAsFirstSibling();
+                // v16.1: icon + label in a horizontal group (no overlap): padding L14 R18, spacing 8, centred.
+                var row = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>(); row.SetParent(pill, false);
+                row.anchorMin = Vector2.zero; row.anchorMax = Vector2.one; row.offsetMin = new Vector2(0, 4); row.offsetMax = Vector2.zero; // 4px bottom bevel
+                var hg = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+                hg.padding = new RectOffset(14, 18, 0, 0); hg.spacing = 8; hg.childAlignment = TextAnchor.MiddleCenter;
+                hg.childControlWidth = hg.childControlHeight = true; hg.childForceExpandWidth = hg.childForceExpandHeight = false;
+                statusIcon = NewImage("Icon", row, freeIcon); statusIcon.preserveAspect = true;
+                var le = statusIcon.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = le.preferredHeight = 40; le.minWidth = 40;
                 var lt = new GameObject("Label", typeof(RectTransform)).AddComponent<TMPro.TextMeshProUGUI>();
-                lt.transform.SetParent(pill, false); Place(lt.rectTransform, new Vector2(.5f, .5f), new Vector2(18, 2), new Vector2(110, 40));
+                lt.transform.SetParent(row, false);
                 lt.fontSize = 24; lt.fontStyle = TMPro.FontStyles.Bold; lt.alignment = TMPro.TextAlignmentOptions.Center; lt.raycastTarget = false;
+                lt.enableWordWrapping = false; lt.overflowMode = TMPro.TextOverflowModes.Overflow;
+                var ll = lt.gameObject.AddComponent<LayoutElement>(); ll.minHeight = 40;
                 statusLabel = lt;
             }
             if (statusLabel) statusLabel.color = textColor;
@@ -80,11 +90,10 @@ namespace StoneSignal.VFX
         {
             Build(); State = s;
             bool used = s == DrawPileState.Used || s == DrawPileState.Full;
-            if (statusIcon) { statusIcon.enabled = !used; statusIcon.sprite = s == DrawPileState.Free ? freeIcon : adIcon; }
+            if (statusIcon) { statusIcon.gameObject.SetActive(!used); statusIcon.sprite = s == DrawPileState.Free ? freeIcon : adIcon; }
             if (statusLabel) statusLabel.text = s == DrawPileState.Free ? "FREE" : s == DrawPileState.Ad ? "DRAW" : s == DrawPileState.Full ? "FULL" : "0 / 2";
-            if (statusLabel) statusLabel.rectTransform.anchoredPosition = new Vector2(used ? 0 : 18, 2);
             var tint = used ? usedTint : Color.white;
-            if (top) top.color = tint; if (pillImage) pillImage.color = tint; if (tail) tail.color = tint;
+            if (tail) tail.enabled = showTail; if (top) top.color = tint; if (pillImage) pillImage.color = tint; if (tail) tail.color = tint;
             for (int i = 0; i < layers.Length; i++) if (layers[i]) layers[i].color = used ? usedTint : Color.Lerp(Color.white, new Color(.7f, .7f, .8f), .08f * (i + 1));
             if (button) button.interactable = !used;
         }
