@@ -54,6 +54,12 @@ namespace StoneSignal
         public Sprite uiCardTower, uiCardBlueprint, uiBadgeHotkey, uiBadgeSize2x2, uiBadgeSize1x2;
         [Tooltip("Every sprite in Assets/Game/Art/Stylized/UI, looked up by file name (ui9_* are 9-slice). Missing names fall back to generated placeholders.")]
         public Sprite[] uiSprites = new Sprite[0];
+        [Header("v15 runes / rewards / ground fx")]
+        public Texture2D runeAtlas;              // RuneInlay.Atlas (T_RuneGlyphAtlas)
+        public GameObject towerBuffIcons;        // PF_UI_TowerBuffIcons
+        public GameObject resonanceAura;         // PF_UI_ResonanceAura
+        public GameObject enemyGroundSystem;     // PF_VFX_EnemyGroundSystem (one per scene)
+        public GameObject rewardFlyGold;         // PF_VFX_RewardFly_Gold
         public Sprite UiSprite(string spriteName) { if (uiSprites != null) foreach (var s in uiSprites) if (s != null && s.name == spriteName) return s; return null; }
         [Header("Combat VFX")]
         [Tooltip("Played where an enemy reaches the core.")]

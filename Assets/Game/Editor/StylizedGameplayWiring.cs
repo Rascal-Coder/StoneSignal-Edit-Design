@@ -187,7 +187,11 @@ namespace StoneSignal.EditorTools
             art.placeGhostBlock = Opt("PF_UI_PlaceGhost_Block"); art.placeGhostTower = Opt("PF_UI_PlaceGhost_Tower");
             art.slotHighlight = Opt("PF_UI_SlotHighlight");
             // instanced board pieces (MeshMerge/InstancedBatch): tiles, walls, slot highlights need GPU instancing on their materials
-            foreach (var pf in new[] { art.slotHighlight, art.block, art.tile, art.tilePath }.Concat(art.tileVariants ?? new GameObject[0]))
+            // v15: runes / tower buff icons / resonance aura / global enemy ground system / kill gold fly
+            art.runeAtlas = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Game/Art/Stylized/Runes/T_RuneGlyphAtlas.png");
+            art.towerBuffIcons = Opt("PF_UI_TowerBuffIcons"); art.resonanceAura = Opt("PF_UI_ResonanceAura");
+            art.enemyGroundSystem = Opt("PF_VFX_EnemyGroundSystem"); art.rewardFlyGold = Opt("PF_VFX_RewardFly_Gold");
+            foreach (var pf in new[] { art.slotHighlight, art.block, art.tile, art.tilePath, art.pathFlowSegment }.Concat(art.tileVariants ?? new GameObject[0]))
                 if (pf != null) foreach (var r in pf.GetComponentsInChildren<Renderer>(true)) foreach (var m in r.sharedMaterials)
                     if (m != null && !m.enableInstancing) { m.enableInstancing = true; EditorUtility.SetDirty(m); }
             // v11 HUD sprites (ui_mockup_v3)

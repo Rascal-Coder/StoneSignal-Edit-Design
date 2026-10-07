@@ -25,9 +25,14 @@ namespace StoneSignal
             Origin = origin; Size = size; Rotation = rotation & 3; Cells = cells;
             transform.rotation = Quaternion.Euler(0, 90 * Rotation, 0); // model stays centred on the footprint centre (transform.position)
         }
-        public float Range => modifiers.Range(Data);
-        public float Damage => Data.damage * modifiers.Damage;
-        public float AttackRate => Data.attacksPerSecond * modifiers.AttackSpeed;
+        // Runes inlaid under the footprint (TowerManager.RecomputeRunes): per-mille effects, already stacked/resonated.
+        public RuneStats Runes { get; private set; }
+        public System.Collections.Generic.List<int> RuneList { get; } = new System.Collections.Generic.List<int>();
+        private float cellSize = 1;
+        public void SetRunes(RuneStats stats, float cell) { Runes = stats; cellSize = cell; }
+        public float Range => modifiers.Range(Data) + Runes.RangeCells * cellSize;
+        public float Damage => Data.damage * modifiers.Damage * Runes.DamageMul;
+        public float AttackRate => Data.attacksPerSecond * modifiers.AttackSpeed * Runes.AttackSpeedMul;
         public float SplashRadius => modifiers.Radius(Data);
         public Transform Head => head;
         // elevation = world height of the surface the tower stands on (ground tile top or wall block top).
@@ -121,7 +126,8 @@ namespace StoneSignal
             }
             else obj = PrimitiveVisual.Create("Signal bolt", PrimitiveType.Sphere, projectileRoot, transform.position + Vector3.up * (.9f+visualElevation), Vector3.one * (Data.kind == TowerKind.Cannon ? .25f : .12f), Data.kind==TowerKind.Chill ? palette.path : Data.kind==TowerKind.Rapid ? palette.rapid : Data.kind==TowerKind.Cannon ? palette.cannon : palette.arrow);
             Projectile projectile = obj.GetComponent<Projectile>(); if (projectile == null) projectile = obj.AddComponent<Projectile>();
-            projectile.Initialize(target, enemies, Data.projectileSpeed, damage, SplashRadius, canAttack, Data.slowFraction, Data.slowDuration);
+            float slow = Mathf.Max(Data.slowFraction, Runes.SlowFraction), slowFor = Runes.slow > 0 ? Mathf.Max(Data.slowDuration, Runes.SlowSeconds) : Data.slowDuration;
+            projectile.Initialize(target, enemies, Data.projectileSpeed, damage, SplashRadius, canAttack, slow, slowFor); projectile.Owner = this;
             projectile.SetPresentation(Data, crit, Data.lobbedShot ? Data.lobHeight : 0);
             return projectile;
         }

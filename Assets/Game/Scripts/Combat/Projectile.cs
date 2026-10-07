@@ -28,9 +28,11 @@ namespace StoneSignal
             if (p == null) { p = new GameObject(name).AddComponent<Projectile>(); p.pooled = Application.isPlaying; }
             p.transform.SetParent(parent, false); p.transform.position = position; p.transform.rotation = Quaternion.identity;
             p.gameObject.SetActive(true);
-            p.resolved = false; p.lifetime = 0; p.travelled = 0; p.source = null; p.crit = false; p.lobHeight = 0; p.body = null;
+            p.resolved = false; p.lifetime = 0; p.travelled = 0; p.source = null; p.Owner = null; p.crit = false; p.lobHeight = 0; p.body = null;
             return p;
         }
+        /// Firing tower (rune bounty attribution); null for non-tower shots.
+        public Tower Owner { get; set; }
         public void AttachBody(GameObject vfx) { body = vfx; }
         public void Initialize(Enemy destination, EnemyManager registry, float moveSpeed, float hitDamage, float splash, Func<bool> allowed, float slow = 0, float duration = 0)
         {
@@ -52,7 +54,7 @@ namespace StoneSignal
             if (distance <= speed * deltaTime + .1f)
             {
                 var kind = source != null ? source.damageKind : DamageKind.Physical;
-                target.ApplySlow(slowFraction,slowDuration);
+                target.ApplySlow(slowFraction,slowDuration); target.LastAttacker = Owner;
                 if (radius > 0) enemies.DamageArea(destination, radius, damage, kind, crit); else target.TakeDamage(damage, kind, crit);
                 Impact?.Invoke(destination, radius);
                 PlayImpact(destination, !target.Alive);

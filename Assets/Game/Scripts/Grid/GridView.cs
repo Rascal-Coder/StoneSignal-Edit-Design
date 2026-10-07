@@ -124,51 +124,24 @@ namespace StoneSignal
         }
         // Static tiles: one merged mesh per material, tiles never cast shadows (draw-call budget).
         private void MergeGround() { if (groundRoot != null) MeshMerge.Rebuild(groundRoot, "Merged ground", UnityEngine.Rendering.ShadowCastingMode.Off); }
-        // Route flow: one generated chevron mesh (single draw call) covering every route from its entry to the core.
-        // Uses the art flow segment's material; chevrons sit above the highest tile undulation.
-        private MeshRenderer flowRenderer; private Mesh flowMesh;
+        // Route flow: the art flow segment (PF_Path_FlowSegment, M_Path_Flow untouched) on every edge of every entry->core route,
+        // drawn through MeshMerge/InstancedBatch (GPU instanced: one draw call per material). Shared route tails are drawn once.
+        private Transform flowRoot;
         private void DrawFlow()
         {
-            if (flowRenderer == null)
-            {
-                var go = new GameObject("Route flow", typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(transform, false);
-                flowMesh = new Mesh { name = "Route flow chevrons" }; go.GetComponent<MeshFilter>().sharedMesh = flowMesh;
-                flowRenderer = go.GetComponent<MeshRenderer>();
-                var src = art.pathFlowSegment.GetComponentInChildren<Renderer>(true);
-                // solid orange chevrons (mockup): copy of the art flow material without its strip texture
-                var mat = new Material(src != null ? src.sharedMaterial : routeMaterial) { name = "Route flow chevrons" };
-                var orange = new Color(.96f, .55f, .2f, .9f);
-                if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", null);
-                if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", null);
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", orange);
-                if (mat.HasProperty("_Color")) mat.SetColor("_Color", orange);
-                flowRenderer.sharedMaterial = mat;
-                flowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; flowRenderer.receiveShadows = false;
-            }
-            var v = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
-            float lift = art.pathFlowY; float s = grid.cellSize;
+            if (flowRoot != null) PrimitiveVisual.DestroyObject(flowRoot.gameObject);
+            flowRoot = new GameObject("Route flow").transform; flowRoot.SetParent(transform, false);
             var seen = new HashSet<(Vector2Int, Vector2Int)>();
             foreach (var path in pathfinding.CurrentPaths)
                 for (int i = 0; i < path.Count - 1; i++)
                 {
-                    if (!seen.Add((path[i], path[i + 1]))) continue; // shared route tails drawn once
+                    if (!seen.Add((path[i], path[i + 1]))) continue;
                     Vector3 a = grid.ToWorld(path[i]), b = grid.ToWorld(path[i + 1]);
-                    Vector3 f = (b - a).normalized, r = Vector3.Cross(Vector3.up, f);
-                    Vector3 c = transform.InverseTransformPoint((a + b) * .5f + Vector3.up * lift);
-                    f = transform.InverseTransformDirection(f) * s; r = transform.InverseTransformDirection(r) * s;
-                    // ">" chevron: two thin quads meeting at the tip
-                    for (int side = -1; side <= 1; side += 2)
-                    {
-                        Vector3 tip = c + f * .26f + Vector3.up * .08f, tail = c - f * .14f + r * (.3f * side) + Vector3.up * .08f, w = (f * .11f);
-                        int k = v.Count;
-                        v.Add(tail - w); v.Add(tail + w); v.Add(tip + w); v.Add(tip - w);
-                        uv.Add(new Vector2(0, 0)); uv.Add(new Vector2(0, 1)); uv.Add(new Vector2(1, 1)); uv.Add(new Vector2(1, 0));
-                        if (side < 0) { t.Add(k); t.Add(k + 1); t.Add(k + 2); t.Add(k); t.Add(k + 2); t.Add(k + 3); }
-                        else { t.Add(k); t.Add(k + 2); t.Add(k + 1); t.Add(k); t.Add(k + 3); t.Add(k + 2); }
-                    }
+                    var seg = ArtVisual.Create(art.pathFlowSegment, flowRoot, (a + b) * .5f + Vector3.up * art.pathFlowY, grid.cellSize);
+                    seg.transform.rotation = Quaternion.LookRotation(b - a, Vector3.up);
+                    foreach (var r in seg.GetComponentsInChildren<Renderer>(true)) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; }
                 }
-            flowMesh.Clear(); flowMesh.SetVertices(v); flowMesh.SetUVs(0, uv); flowMesh.SetTriangles(t, 0);
-            flowMesh.SetNormals(v.ConvertAll(_ => Vector3.up)); flowMesh.RecalculateBounds();
+            MeshMerge.Rebuild(flowRoot, "Route flow", UnityEngine.Rendering.ShadowCastingMode.Off);
         }
         private void DrawPath()
         {

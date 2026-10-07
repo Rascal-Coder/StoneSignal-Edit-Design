@@ -35,13 +35,13 @@ namespace StoneSignal
             rangeView = new GameObject("Range preview").AddComponent<LineRenderer>(); rangeView.transform.SetParent(transform);
             rangeView.sharedMaterial = palette.path; rangeView.startWidth = rangeView.endWidth = .035f; rangeView.loop = true; rangeView.positionCount = 48;
             HideGhost();
-            grid.Changed += () => slotsDirty = true;
+            grid.Changed += () => hiKey = "?";
+            blocks.RunesChanged += RecomputeRunes;
         }
         // ---- v8 presentation: art ghost (PF_UI_PlaceGhost_Tower), range ring, pooled slot highlights. ----
         private StoneSignal.VFX.PlacementGhost artGhost; private StoneSignal.VFX.RangeRing artRing; private int artGhostIndex = -1;
-        private readonly List<GameObject> slots = new List<GameObject>(); private bool slotsDirty = true; private int slotsFor = -2;
         private ArtCatalog Art => palette != null ? palette.art : null;
-        private bool ShowArtGhost(TowerData data, Vector3 centre, int rotation, bool ok, float range)
+        private bool ShowArtGhost(TowerData data, Vector3 centre, int rotation, bool ok, float range, IReadOnlyList<Vector2Int> foot = null, bool[] footOk = null)
         {
             if (Art == null || Art.placeGhostTower == null || data.visualPrefab == null) return false;
             if (artGhost == null)
@@ -55,41 +55,75 @@ namespace StoneSignal
             artGhost.transform.position = centre + Vector3.up * Art.blockTop;
             artGhost.transform.rotation = Quaternion.Euler(0, 90 * rotation, 0);
             artGhost.SetValid(ok);
+            if (foot != null)
+            {
+                // v15 footprint ghost: one base cell per footprint cell, each valid (wall top) / invalid (#E5484D)
+                var raw = new Vector2Int(Mathf.Max(1, data.footprint.x), Mathf.Max(1, data.footprint.y));
+                if (artGhost.FootprintSize != raw || artGhost.FootprintRotation != rotation) artGhost.SetFootprint(raw, rotation);
+                for (int i = 0; i < foot.Count; i++) artGhost.SetCellValid(i, ok || footOk[i]);
+            }
             if (artRing != null) { artRing.SetRadius(range); artRing.transform.position = centre + Vector3.up * (Art.tileTop + .02f); }
             return true;
         }
-        // Free wall tops shown while a tower is selected: ONE generated mesh (a UV 0..1 quad per slot) using the art
-        // slot-highlight material, so any number of slots costs a single draw call.
-        private MeshRenderer slotRenderer; private Mesh slotMesh;
-        private void RefreshSlots(bool show)
+        // Wall highlight (art WallHighlight: _HiAmount/_HiColor on the real wall renderers). While a tower is selected every free
+        // wall top glows valid; the cells under the ghost show per-cell valid / invalid (#E5484D family). Applied only on change.
+        private string hiKey = "";
+        private void UpdateHighlight(bool show, IReadOnlyList<Vector2Int> foot, bool[] footOk)
         {
-            if (Art == null || Art.slotHighlight == null) return;
-            int key = show ? SelectedIndex : -1;
-            if (!slotsDirty && key == slotsFor) return;
-            slotsDirty = false; slotsFor = key;
-            if (slotRenderer == null)
-            {
-                var go = new GameObject("Slot highlights", typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(transform, false);
-                slotMesh = new Mesh { name = "Slot highlights" }; go.GetComponent<MeshFilter>().sharedMesh = slotMesh;
-                slotRenderer = go.GetComponent<MeshRenderer>();
-                var src = Art.slotHighlight.GetComponentInChildren<Renderer>(true); if (src != null) slotRenderer.sharedMaterial = src.sharedMaterial;
-                slotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; slotRenderer.receiveShadows = false;
-            }
-            var v = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
+            var cells = new List<Vector2Int>(); var ok = new List<bool>();
             if (show)
-                for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
+            {
+                // footprint cells only: lighting every free wall top made each one a non-instanced renderer (+1 draw call each)
+                if (foot != null) for (int i = 0; i < foot.Count; i++) if (blocks.IsWall(foot[i])) { cells.Add(foot[i]); ok.Add(footOk[i]); }
+            }
+            var sb = new System.Text.StringBuilder(); for (int i = 0; i < cells.Count; i++) sb.Append(cells[i].x).Append(',').Append(cells[i].y).Append(ok[i] ? '+' : '-');
+            string key = sb.ToString(); if (key == hiKey) return; hiKey = key;
+            blocks.HighlightWalls(cells.ToArray(), ok.ToArray());
+        }
+        private static bool Contains(IReadOnlyList<Vector2Int> list, Vector2Int c) { foreach (var x in list) if (x == c) return true; return false; }
+        private bool[] CellValidity(IReadOnlyList<Vector2Int> foot, bool allOk)
+        {
+            var r = new bool[foot.Count];
+            for (int i = 0; i < foot.Count; i++) r[i] = allOk || (grid.InBounds(foot[i]) && grid.Get(foot[i]) == CellState.Blocked);
+            return r;
+        }
+        private void RefreshSlots(bool show) { if (!show) UpdateHighlight(false, null, null); }
+
+        // ---- runes: stats per tower from the runes under its footprint + resonance; buff icons / aura presentation ----
+        public RuneConfig RuneRulesConfig { get; set; }
+        private readonly Dictionary<Tower, GameObject> buffIcons = new Dictionary<Tower, GameObject>(), auras = new Dictionary<Tower, GameObject>();
+        public void RecomputeRunes()
+        {
+            var cfg = RuneRulesConfig; if (cfg == null || blocks == null) return;
+            foreach (var t in towers) { t.RuneList.Clear(); foreach (var c in t.Cells) { int r = blocks.RuneAt(c); if (r != RuneRules.NoRune) t.RuneList.Add(r); } }
+            foreach (var t in towers)
+            {
+                bool res = false;
+                foreach (var src in towers)
+                    if (src != t && src.RuneList.Contains((int)StoneSignal.VFX.RuneId.Resonance) && RuneRules.InResonance(cfg, src.Origin, src.Size, t.Origin, t.Size)) { res = true; break; }
+                t.SetRunes(RuneRules.Compute(cfg, t.RuneList, res), grid.cellSize);
+                Present(t);
+            }
+        }
+        private void Present(Tower t)
+        {
+            if (Art == null) return;
+            if (Art.towerBuffIcons != null)
+            {
+                buffIcons.TryGetValue(t, out var go);
+                if (t.RuneList.Count > 0 && go == null) { go = ArtVisual.Create(Art.towerBuffIcons, t.transform, t.transform.position + Vector3.up * Art.blockTop); buffIcons[t] = go; }
+                var icons = go != null ? go.GetComponent<StoneSignal.VFX.TowerBuffIcons>() : null;
+                if (icons != null)
                 {
-                    var c = new Vector2Int(x, y);
-                    if (grid.Get(c) != CellState.Blocked) continue; // free wall top
-                    Vector3 p = transform.InverseTransformPoint(grid.ToWorld(c) + Vector3.up * (Art.blockTop + .015f)); float h = grid.cellSize * .46f;
-                    int k = v.Count;
-                    v.Add(p + new Vector3(-h, 0, -h)); v.Add(p + new Vector3(-h, 0, h)); v.Add(p + new Vector3(h, 0, h)); v.Add(p + new Vector3(h, 0, -h));
-                    uv.Add(new Vector2(0, 0)); uv.Add(new Vector2(0, 1)); uv.Add(new Vector2(1, 1)); uv.Add(new Vector2(1, 0));
-                    t.Add(k); t.Add(k + 1); t.Add(k + 2); t.Add(k); t.Add(k + 2); t.Add(k + 3);
+                    var ids = new List<StoneSignal.VFX.RuneId>(); var at = new List<Vector3>();
+                    foreach (var c in t.Cells) { int r = blocks.RuneAt(c); if (r != RuneRules.NoRune) { ids.Add((StoneSignal.VFX.RuneId)r); at.Add(grid.ToWorld(c) + Vector3.up * Art.blockTop); } }
+                    icons.Set(ids, at);
                 }
-            slotMesh.Clear(); slotMesh.SetVertices(v); slotMesh.SetUVs(0, uv); slotMesh.SetTriangles(t, 0);
-            slotMesh.SetNormals(v.ConvertAll(_ => Vector3.up)); slotMesh.RecalculateBounds();
-            slotRenderer.enabled = v.Count > 0;
+            }
+            bool isRes = t.RuneList.Contains((int)StoneSignal.VFX.RuneId.Resonance);
+            auras.TryGetValue(t, out var aura);
+            if (isRes && aura == null && Art.resonanceAura != null) auras[t] = ArtVisual.Create(Art.resonanceAura, t.transform, t.transform.position + Vector3.up * (Art.tileTop + .03f));
+            else if (!isRes && aura != null) { Destroy(aura); auras.Remove(t); }
         }
 
         public int Cost(TowerData data) => Mathf.Max(1,Mathf.RoundToInt(data.cost*modifiers.TowerCost));
@@ -123,6 +157,7 @@ namespace StoneSignal
             var obj = new GameObject(data.displayName); obj.transform.SetParent(transform); obj.transform.position = grid.FootprintCenter(origin, size);
             var tower = obj.AddComponent<Tower>(); tower.SetFootprint(origin, size, rotation, cells);
             tower.Initialize(data,enemies,palette,modifiers,canAttack,missiles,elevation); towers.Add(tower);
+            RecomputeRunes(); hiKey = "?";
             Changed?.Invoke(); Notice?.Invoke("Tower ready"); return true;
         }
         // Removal / selling frees every covered cell (walls remain).
@@ -130,8 +165,9 @@ namespace StoneSignal
         {
             if (tower == null || !towers.Remove(tower)) return false;
             grid.ReleaseTower(tower.Cells);
+            buffIcons.Remove(tower); auras.Remove(tower);
             PrimitiveVisual.DestroyObject(tower.gameObject);
-            Changed?.Invoke(); return true;
+            RecomputeRunes(); Changed?.Invoke(); return true;
         }
         public Tower TowerAt(Vector2Int cell)
         {
@@ -142,9 +178,11 @@ namespace StoneSignal
         public bool Pinned { get; private set; }
         public string PinPreview(int index, Vector2Int origin)
         {
-            Pinned = true; SelectedIndex = index; slotsDirty = true; RefreshSlots(true); Changed?.Invoke();
+            Pinned = true; SelectedIndex = index; Changed?.Invoke();
             var data = Data[index]; var size = SizeOf(data, 0); string reason = validator.ValidateTower(origin, size);
-            ShowArtGhost(data, grid.FootprintCenter(origin, size), 0, reason == null, modifiers.Range(data));
+            var foot = grid.Footprint(origin, size); var footOk = CellValidity(foot, reason == null);
+            ShowArtGhost(data, grid.FootprintCenter(origin, size), 0, reason == null, modifiers.Range(data), foot, footOk);
+            UpdateHighlight(true, foot, footOk);
             return reason;
         }
         private void Update()
@@ -157,7 +195,7 @@ namespace StoneSignal
             if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
             if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)) Select(-1);
             RefreshSlots(SelectedIndex >= 0 && canBuild());
-            if (SelectedIndex < 0 || !canBuild() || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { HideGhost(); return; }
+            if (SelectedIndex < 0 || !canBuild() || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { HideGhost(); UpdateHighlight(SelectedIndex >= 0 && canBuild(), null, null); return; }
             Camera camera = Camera.main;
             var plane = new Plane(Vector3.up,grid.transform.position);
             Ray ray = camera.ScreenPointToRay(Input.mousePosition);
@@ -172,7 +210,9 @@ namespace StoneSignal
             if (reason == null && balance() < Cost(Data[SelectedIndex])) reason = "Not enough gold";
             Status = reason ?? "Left click to build";
             float range = modifiers.Range(Data[SelectedIndex]);
-            if (ShowArtGhost(data, centre, data.footprintRotates ? Rotation : 0, reason == null, range))
+            var foot = grid.Footprint(cell, size); var footOk = CellValidity(foot, reason == null);
+            UpdateHighlight(true, foot, footOk);
+            if (ShowArtGhost(data, centre, data.footprintRotates ? Rotation : 0, reason == null, range, foot, footOk))
             {
                 ghost.SetActive(false); rangeView.gameObject.SetActive(false);
                 if (Input.GetMouseButtonDown(0)) TryBuild(cell,SelectedIndex);

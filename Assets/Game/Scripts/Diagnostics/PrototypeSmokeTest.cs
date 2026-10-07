@@ -137,7 +137,7 @@ namespace StoneSignal
                     yield return new WaitForSecondsRealtime(1.3f);
                     yield return Capture("03-combat");
                 }
-                StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=4;
+                TimeController.SetSpeed(4);
                 float deadline=Time.realtimeSinceStartup+90;
                 float tick=Time.realtimeSinceStartup+10;
                 while(session.Game.State==GameState.Combat && Time.realtimeSinceStartup<deadline)
@@ -145,7 +145,7 @@ namespace StoneSignal
                     if(Time.realtimeSinceStartup>tick) { tick+=10; Debug.Log("SMOKE TICK wave="+(wave+1)+" timeScale="+Time.timeScale+" hitStop="+StoneSignal.VFX.HitStop.Active+" remaining="+session.Waves.Remaining+" "+(session.Enemies.Active.Count>0?session.Enemies.Active[0].DebugState:"")); }
                     yield return null;
                 }
-                StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1;
+                TimeController.SetSpeed(1);
                 Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat (state="+session.Game.State+" remaining="+session.Waves.Remaining+" active="+session.Enemies.Active.Count+" timeScale="+Time.timeScale+" stuckEvents="+session.Enemies.StuckEvents+" "+(session.Enemies.Active.Count>0?session.Enemies.Active[0].DebugState:"")+")");
                 Require(spawnCounts[wave]==session.config.waves[wave].Total+childCounts[wave],"Wave "+(wave+1)+" exact spawn count");
                 Require(session.Economy.Gold>goldBefore,"Wave "+(wave+1)+" kills earn gold");
@@ -153,7 +153,12 @@ namespace StoneSignal
                 Require(!session.Waves.StartWave(),"Combat cannot start during Reward");
                 if(wave==0) yield return Capture("04-rewards");
                 Require(session.Rewards.Choose(0) && !session.Rewards.Choose(0),"Only one reward can be selected");
-                Require(session.Game.State==GameState.Build && session.Blocks.Remaining>=session.config.blocksPerBuild,"Next Build refills blocks");
+                while(session.Blocks.Remaining>1) session.Blocks.Hand.Consume(); // hand carries across waves (cap 7): start the draw checks from 1 card
+                int handBefore=session.Blocks.Remaining;
+                Require(session.Game.State==GameState.Build && session.Draws.Next==DrawRules.Offer.Free,"Intermission offers one FREE draw");
+                Require(session.Draw() && session.Blocks.Remaining==System.Math.Min(BlockHandManager.MaxCards,handBefore+GameBootstrap.CardsPerDraw),"Free DRAW adds blocks");
+                Require(session.Draws.Next==DrawRules.Offer.Ad && session.Draw() && session.Blocks.Remaining==BlockHandManager.MaxCards && session.Draws.Next==DrawRules.Offer.None && Time.timeScale>0,"2nd DRAW via placeholder ad (hand reaches cap 7); ad pause released");
+                Require(!session.Draw(),"No 3rd DRAW");
             }
             Require(killed>0 && session.Economy.HP>0,"Three waves survived with automatic tower combat");
             yield return Capture("05-next-build");
@@ -186,7 +191,7 @@ namespace StoneSignal
         }
         private void Finish()
         {
-            StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1;
+            TimeController.SetSpeed(1);
             results.Add("CHECKS: "+checks+"; RESULT: "+(failed?"FAIL":"PASS"));
             File.WriteAllLines(Path.Combine(captureDirectory,"play-verification.txt"),results);
             Debug.Log(failed?"PROTOTYPE SMOKE FAILED":"PROTOTYPE SMOKE PASSED");

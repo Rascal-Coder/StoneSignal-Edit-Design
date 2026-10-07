@@ -13,6 +13,8 @@ namespace StoneSignal
         public TowerData[] towers;
         public WaveData[] waves;
         public RewardData[] rewards;
+        [Tooltip("Rune tuning + drawn-block rune table (null = RuneConfig defaults).")]
+        public RuneConfig runes;
         public VisualPalette palette;
         [Tooltip("Board size, spawn points and core footprint for the game scene (null = legacy grid fields).")]
         public BoardLayoutData layout;

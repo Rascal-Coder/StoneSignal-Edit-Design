@@ -46,6 +46,8 @@ namespace StoneSignal
             if (p.Count == 0) return false;
             path = p; node = 0; return true;
         }
+        /// Tower whose shot last hit this enemy (rune bounty); cleared on spawn.
+        public Tower LastAttacker { get; set; }
         public void ForceRemove() => Resolve(EnemyResolution.Removed);
         public event System.Action<Enemy, float> Damaged;
         // Presentation info about the most recent hit, read by CombatFeedback inside Damaged.
@@ -55,6 +57,7 @@ namespace StoneSignal
 
         public void Initialize(EnemyManager manager, GridManager map, EnemyData data, VisualPalette palette, float hpScale, float speedScale, Vector2Int? from = null)
         {
+            LastAttacker = null;
             owner = manager; grid = map; Data = data; HPScale=hpScale; SpeedScale=speedScale;
             HP = maxHP = data.hp * hpScale; speed = data.moveSpeed * speedScale; Alive = true;
             Vector2Int start = from ?? grid.spawn;

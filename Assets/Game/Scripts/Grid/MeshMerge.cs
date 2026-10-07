@@ -33,6 +33,8 @@ namespace StoneSignal
                 if (mr == null || mesh == null || !mf.gameObject.activeInHierarchy) continue;
                 var mats = mr.sharedMaterials; bool ok = true;
                 foreach (var mat in mats) if (mat == null || !mat.enableInstancing) ok = false;
+                // per-renderer MaterialPropertyBlock (RuneInlay / WallHighlight) must stay a real renderer: instanced draws share one block
+                if (mr.HasPropertyBlock()) ok = false;
                 if (!ok) { mr.enabled = true; mr.shadowCastingMode = castShadows; continue; } // non-instanced material: stays a renderer
                 for (int s = 0; s < mesh.subMeshCount && s < mats.Length; s++)
                 {

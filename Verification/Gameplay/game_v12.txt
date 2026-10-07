@@ -1,0 +1,12 @@
+source=player frame (ProfilerRecorder, 1920x1080 screen, URP quality Ultra)
+drawCalls=156
+batches=132
+setPassCalls=104
+triangles=111240
+activeRenderers=133
+visibleRenderers=99
+visibleShadowCasters=23
+uniqueMaterialsVisible=29
+canvases=4
+enemies=2 towers=6
+budget drawCalls<150 tris<150000 -> OVER

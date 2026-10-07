@@ -11,6 +11,8 @@ namespace StoneSignal
         public int HP { get; private set; }
         public int MaxHP { get; private set; }
         public event Action Changed;
+        /// (world position, gold) per kill - drives the RewardFlyFx gold fly-to-counter.
+        public event Action<Vector3, int> KillReward;
         public void Initialize(GameConfig config, EnemyManager registry, RunModifiers upgrades)
         {
             Gold = config.initialGold; HP = MaxHP = config.baseHP;
@@ -26,7 +28,12 @@ namespace StoneSignal
         public void Heal(int amount) { HP=Mathf.Min(MaxHP,HP+amount); Changed?.Invoke(); }
         private void OnResolved(Enemy enemy, EnemyResolution reason)
         {
-            if (reason == EnemyResolution.Killed) Gold += Mathf.RoundToInt(enemy.Data.reward * modifiers.CurrentWaveGold * modifiers.KillGold);
+            if (reason == EnemyResolution.Killed)
+            {
+                int gain = Mathf.RoundToInt(enemy.Data.reward * modifiers.CurrentWaveGold * modifiers.KillGold);
+                var by = enemy.LastAttacker; if (by != null) gain += Mathf.RoundToInt(by.Runes.bounty / 1000f); // 丰 bounty rune
+                Gold += gain; KillReward?.Invoke(enemy.transform.position, gain);
+            }
             if (reason == EnemyResolution.Escaped) HP = Mathf.Max(0, HP - enemy.Data.damageToBase);
             Changed?.Invoke();
         }

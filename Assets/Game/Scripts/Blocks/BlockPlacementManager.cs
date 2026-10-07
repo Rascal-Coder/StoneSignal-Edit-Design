@@ -32,10 +32,31 @@ namespace StoneSignal
             grid = map; viewCamera = camera; palette = colors; Deck = new BlockDeckManager(data); canBuild = allowed;
             placedRoot = new GameObject("Placed blocks").transform; placedRoot.SetParent(transform);
         }
+        public RuneConfig Runes { get; set; }
+        // wall renderer + inlaid rune per grid cell (runes are gameplay data; RuneInlay is the art)
+        private readonly Dictionary<Vector2Int, Renderer> walls = new Dictionary<Vector2Int, Renderer>();
+        private readonly Dictionary<Vector2Int, int> runeCells = new Dictionary<Vector2Int, int>();
+        public int RuneAt(Vector2Int cell) => runeCells.TryGetValue(cell, out int r) ? r : RuneRules.NoRune;
+        public IReadOnlyDictionary<Vector2Int, int> RuneCells => runeCells;
+        public bool IsWall(Vector2Int cell) => walls.ContainsKey(cell);
+        public IEnumerable<Vector2Int> WallCells => walls.Keys;
+        public event Action RunesChanged;
+        int RollRune() => Runes != null ? RuneRules.Roll(Runes, GameRng.Rewards) : RuneRules.NoRune;
         public void Refill(int count, bool first = false)
         {
-            Hand.Draw(Deck, count);
+            Hand.Draw(Deck, count, RollRune);
             rotation = 0; RebuildGhost(); Changed?.Invoke();
+        }
+        /// DRAW pile: append cards to the hand (the intermission allowance lives in DrawRules / GameBootstrap.Draw).
+        /// Rune reward: one wall block from the deck carrying the rune (dropped if the hand is full).
+        public void AddRuneCard(int rune) { var shape = Deck.Draw(); if (shape != null) Hand.AddCard(shape, rune); RebuildGhost(); Changed?.Invoke(); }
+        public void NotifyChanged() => Changed?.Invoke();
+        public void DrawCards(int count) { Hand.Add(Deck, count, RollRune); RebuildGhost(); Changed?.Invoke(); }
+        /// Highlight the real wall blocks under a footprint (art WallHighlight) and keep them out of the instanced batch.
+        public void HighlightWalls(Vector2Int[] cells, bool[] valid)
+        {
+            if (cells == null || cells.Length == 0) StoneSignal.VFX.WallHighlight.Clear(); else StoneSignal.VFX.WallHighlight.SetCells(cells, valid);
+            if (!IsInvoking(nameof(MergeWalls))) MergeWalls();
         }
         public void SelectCard(int index) { if (Hand.Select(index)) { rotation=0; RebuildGhost(); Changed?.Invoke(); } }
         public void SetToolActive(bool active) { toolActive = active; SetGhostVisible(false); Changed?.Invoke(); }
@@ -67,16 +88,20 @@ namespace StoneSignal
             if (reason != null) { Notice?.Invoke(reason); return false; }
             List<Vector2Int> cells = CellsAt(anchor);
             grid.Commit(cells, CurrentShape.placedState);
-            foreach (Vector2Int p in cells)
+            int rune = Hand.CurrentRune;
+            for (int i = 0; i < cells.Count; i++)
             {
+                Vector2Int p = cells[i];
                 var wall = ArtVisual.Wall(palette, placedRoot, grid.ToWorld(p), grid.cellSize);
+                RegisterWall(p, wall, i == 0 ? rune : RuneRules.NoRune); // rune sits on the card's first cell
                 if (artGhost != null && wall != null) artGhost.PlayDrop(wall.transform);
             }
+            if (rune != RuneRules.NoRune) RunesChanged?.Invoke();
             if (Modifiers != null && Modifiers.BonusSlotShape == CurrentShape) {
                 foreach(var cell in cells) { Vector2Int slot=cell+Vector2Int.right;
                     if(grid.InBounds(slot) && grid.CanPlace(slot) && ValidateAdditional?.Invoke(new[]{slot})==null) {
                         grid.Commit(new[]{slot},CellState.Blocked);
-                        ArtVisual.Wall(palette, placedRoot, grid.ToWorld(slot), grid.cellSize); break;
+                        RegisterWall(slot, ArtVisual.Wall(palette, placedRoot, grid.ToWorld(slot), grid.cellSize), RuneRules.NoRune); break;
                     }
                 }
             }
@@ -85,6 +110,21 @@ namespace StoneSignal
             rotation = 0; RebuildGhost(); Changed?.Invoke();
             Notice?.Invoke("Placed. Route recalculated.");
             return true;
+        }
+        private void RegisterWall(Vector2Int cell, GameObject wall, int rune)
+        {
+            var r = wall != null ? wall.GetComponentInChildren<MeshRenderer>() : null;
+            if (r == null) return;
+            walls[cell] = r; StoneSignal.VFX.WallHighlight.Register(cell, r);
+            if (rune != RuneRules.NoRune) { runeCells[cell] = rune; StoneSignal.VFX.RuneInlay.Set(r, (StoneSignal.VFX.RuneId)rune); }
+        }
+        /// Scripted wall (presentation/tests): visual + registry for an already-committed cell.
+        public void SpawnWall(Vector2Int cell, int rune = RuneRules.NoRune) => RegisterWall(cell, ArtVisual.Wall(palette, placedRoot, grid.ToWorld(cell), grid.cellSize), rune);
+        /// Scripted/test placement of a rune on an existing wall.
+        public void InlayRune(Vector2Int cell, int rune)
+        {
+            if (!walls.TryGetValue(cell, out var r)) return;
+            runeCells[cell] = rune; StoneSignal.VFX.RuneInlay.Set(r, (StoneSignal.VFX.RuneId)rune); MergeWalls(); RunesChanged?.Invoke();
         }
         public void Preview(Vector2Int anchor)
         {

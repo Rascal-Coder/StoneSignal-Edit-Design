@@ -13,16 +13,18 @@ namespace StoneSignal
     // Hand card hover: scale 1.06 and +12 px (ui_card_spec_v13).
     public sealed class CardHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        RectTransform card; Vector2 rest; bool lifted;
-        public void Init(RectTransform target, bool alreadyLifted) { card = target; rest = target.anchoredPosition; lifted = alreadyLifted; }
-        public void OnPointerEnter(PointerEventData e) { card.localScale = Vector3.one * 1.06f; card.anchoredPosition = rest + (lifted ? Vector2.zero : new Vector2(0, 12)); }
-        public void OnPointerExit(PointerEventData e) { card.localScale = Vector3.one; card.anchoredPosition = rest; }
+        RectTransform card; Vector2 rest; Vector3 restScale; bool lifted;
+        public void Init(RectTransform target, bool alreadyLifted) { card = target; rest = target.anchoredPosition; restScale = target.localScale; lifted = alreadyLifted; }
+        public void OnPointerEnter(PointerEventData e) { card.localScale = restScale * 1.06f; card.anchoredPosition = rest + (lifted ? Vector2.zero : new Vector2(0, 12)); }
+        public void OnPointerExit(PointerEventData e) { card.localScale = restScale; card.anchoredPosition = rest; }
     }
     public sealed class GameUI : MonoBehaviour
     {
         private GameBootstrap session;
         private ArtCatalog art;
-        private TextMeshProUGUI hpNumber, hpSmall, gold, wave, hint, targetLabel, drawLeft, drawCost;
+        private TextMeshProUGUI hpNumber, hpSmall, gold, wave, hint, targetLabel;
+        private RectTransform goldPill, handCount; private StoneSignal.VFX.DrawPileUI drawPile; private StoneSignal.VFX.RewardCounterUI goldCounter;
+        public RectTransform GoldTarget => goldPill; public StoneSignal.VFX.RewardCounterUI GoldCounter => goldCounter;
         private Button battle;
         private readonly Button[] speedButtons = new Button[4];
         private RectTransform towerHand, blockHand;
@@ -42,39 +44,54 @@ namespace StoneSignal
             if (EventSystem.current == null) { var es = new GameObject("Event system"); es.transform.SetParent(transform); es.AddComponent<EventSystem>(); es.AddComponent<StandaloneInputModule>(); }
             var root = Canvas("HUD", 0);
             // ---- top-left: core orb (HP number only) + small HP/Max below; gold pill
-            var orb = Img(root, "Core orb", art ? art.uiOrbCore : null, Hex("3A8FE0")); TL(orb, 24, 18, 160, 160);
-            var glow = Img(orb, "Orb light", Circle, new Color(.75f, .93f, 1f, .42f)); Center(glow, 0, 0, 118, 118); // brighter, lighter core
+            var orb = Img(root, "Core orb", art ? art.uiOrbCore : null, Hex("3A8FE0")); TL(orb, 24, 24, 150, 150);
+            var glow = Img(orb, "Orb light", Circle, new Color(.75f, .93f, 1f, .42f)); Center(glow, 0, 0, 110, 110); // brighter, lighter core
             hpNumber = Txt(orb, "", 64, Ink); Full(hpNumber.rectTransform); hpNumber.outlineWidth = .2f; hpNumber.outlineColor = Navy;
-            hpSmall = Txt(root, "", 22, Ink); TL(hpSmall.rectTransform, 24, 178, 160, 30); hpSmall.outlineWidth = .25f; hpSmall.outlineColor = Navy;
-            var pill = Panel(root, "Gold", "ui9_pill_gold", Gold); TL(pill, 210, 36, 230, 76);
-            var coinRim = Img(pill, "Coin rim", Circle, Navy); TL(coinRim, 12, 10, 54, 54);
-            var coin = Img(coinRim, "Coin", Circle, Hex("FFC83D")); Center(coin, 0, 0, 44, 44);
-            var dollar = Txt(coin, "$", 28, Hex("8A5A00")); Full(dollar.rectTransform);
-            gold = Txt(pill, "", 42, Navy); TL(gold.rectTransform, 70, 4, 146, 64); gold.alignment = TextAlignmentOptions.Center;
+            hpSmall = Txt(root, "", 22, Ink); TL(hpSmall.rectTransform, 24, 172, 150, 30); hpSmall.outlineWidth = .25f; hpSmall.outlineColor = Navy;
+            var pill = Panel(root, "Gold", "ui9_pill_gold", Gold); TL(pill, 190, 44, 220, 72);
+            RectTransform coin;
+            if (S("ui_coin_gold") != null) { coin = Img(pill, "Coin", S("ui_coin_gold"), Color.white); TL(coin, 6, 6, 60, 60); }
+            else
+            {
+                var coinRim = Img(pill, "Coin rim", Circle, Navy); TL(coinRim, 10, 9, 54, 54); coin = coinRim;
+                var face = Img(coinRim, "Coin", Circle, Hex("FFC83D")); Center(face, 0, 0, 44, 44);
+                var dollar = Txt(face, "$", 28, Hex("8A5A00")); Full(dollar.rectTransform);
+            }
+            gold = Txt(pill, "", 40, Navy); TL(gold.rectTransform, 66, 4, 146, 64); gold.alignment = TextAlignmentOptions.Center;
+            // kill gold flies into this counter (art RewardFlyFx + RewardCounterUI)
+            goldCounter = pill.gameObject.AddComponent<StoneSignal.VFX.RewardCounterUI>(); goldCounter.label = gold; goldCounter.punchTarget = pill; goldCounter.icon = coin;
+            var ringSprite = S("ui_counter_glow_ring");
+            if (ringSprite != null) { var ring = Img(pill, "Glow ring", ringSprite, new Color(1, 1, 1, 0)); TL(ring, -30, -30, 126, 126); ring.GetComponent<Image>().raycastTarget = false; goldCounter.glowRing = ring.GetComponent<Image>(); }
+            var pop = Txt(pill, "", 28, Gold); TL(pop.rectTransform, 80, 66, 140, 36); pop.outlineWidth = .25f; pop.outlineColor = Navy; goldCounter.incomePop = pop;
+            goldCounter.SetValue(session.Economy.Gold, true);
+            goldPill = pill;
             // ---- top-centre wave banner
-            var banner = Panel(root, "Wave banner", "ui9_banner_wave_red", Red); TC(banner, 0, 20, 440, 88);
+            var banner = Panel(root, "Wave banner", "ui9_banner_wave_red", Red); TC(banner, 0, 24, 440, 92);
             wave = Txt(banner, "", 44, Ink); Full(wave.rectTransform); wave.outlineWidth = .2f; wave.outlineColor = Navy;
             // ---- top-right speed + strike target
             string[] speeds = { "II", "x1", "x2", "x3" };
             for (int i = 0; i < 4; i++)
             {
-                int idx = i; var b = Btn(root, speeds[i], 34, "ui9_button_navy_normal", Slate, () => SetSpeed(idx)); TR((RectTransform)b.transform, -(24 + (3 - i) * 96), 28, 86, 86); speedButtons[i] = b;
+                int idx = i; var b = Btn(root, speeds[i], 34, "ui9_button_navy_normal", Slate, () => SetSpeed(idx)); TR((RectTransform)b.transform, -(24 + (3 - i) * 108), 24, 96, 88); speedButtons[i] = b;
             }
-            var target = Btn(root, "", 28, "ui9_button_navy_normal", Slate, CycleTarget); TR((RectTransform)target.transform, -24, 126, 374, 68);
+            var target = Btn(root, "", 28, "ui9_button_navy_normal", Slate, CycleTarget); TR((RectTransform)target.transform, -24, 124, 420, 88);
             targetLabel = target.GetComponentInChildren<TextMeshProUGUI>();
             // ---- bottom: hint pill, battle, draw deck
-            var hintPill = Panel(root, "Hint", "ui9_panel_navy", new Color(.12f, .16f, .28f, .85f)); BL(hintPill, 884, 168, 620, 48);
+            var hintPill = Panel(root, "Hint", "ui9_panel_navy", new Color(.12f, .16f, .28f, .85f)); TC(hintPill, 0, 128, 620, 48); // under the WAVE banner (bottom row is full)
             hint = Txt(hintPill, DefaultHint, 21, Ink); Full(hint.rectTransform);
-            // DRAW deck: 4 offset card layers (card-edge thickness) under the top card; BATTLE sits above it
-            var deck = new GameObject("Draw deck", typeof(RectTransform)).GetComponent<RectTransform>(); deck.SetParent(root, false); BR(deck, -70, 30, 176, 200);
-            var pile = S("ui_draw_pile");
-            for (int i = 4; i >= 1; i--) { var layer = Img(deck, "Layer", pile ?? Rounded, Color.Lerp(Color.white, Navy, .18f + i * .1f)); Full(layer); layer.anchoredPosition = new Vector2(i * 3, -i * 5); if (pile == null) layer.GetComponent<Image>().type = Image.Type.Sliced; }
-            var top = Img(deck, "Top", pile ?? Rounded, pile != null ? Color.white : Red); Full(top); if (pile == null) top.GetComponent<Image>().type = Image.Type.Sliced;
-            var drawTitle = Txt(top, "DRAW", 36, Ink); TL(drawTitle.rectTransform, 0, 22, 176, 44); drawTitle.outlineWidth = .2f; drawTitle.outlineColor = Navy;
-            drawLeft = Txt(top, "", 22, Ink); TL(drawLeft.rectTransform, 0, 64, 176, 30);
-            var costPill = Panel(top, "Deck", "ui9_pill_gold", Gold); TL(costPill, 38, 128, 100, 42);
-            drawCost = Txt(costPill, "", 26, Navy); Full(drawCost.rectTransform);
-            battle = Btn(root, "BATTLE  ►", 46, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 246, 290, 100);
+            // DRAW pile v16 (art StoneSignal.VFX.DrawPileUI): 200x268 bottom-right at (-312,+24), 32 px left of BATTLE (256x104 at (-24,+24)).
+            // Own nested canvas: the pill bob animates every frame and would otherwise rebuild the whole HUD canvas mesh.
+            var pileGo = new GameObject("DrawPileRoot", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster)); pileGo.SetActive(false);
+            var pileRt = (RectTransform)pileGo.transform; pileRt.SetParent(root, false); BR(pileRt, -312, 24, 200, 268);
+            drawPile = pileGo.AddComponent<StoneSignal.VFX.DrawPileUI>();
+            drawPile.topCard = S("ui_draw_pile"); drawPile.layerCard = S("ui_draw_pile_layer") ?? S("ui_draw_pile"); drawPile.pillSprite = S("ui9_draw_bubble");
+            drawPile.tailSprite = S("ui_draw_bubble_tail"); drawPile.freeIcon = S("ui_icon_free"); drawPile.adIcon = S("ui_badge_video_ad");
+            pileGo.SetActive(true); // Awake builds the stack/pill with the sprites above
+            drawPile.button.onClick.AddListener(() => { if (session.Draw()) drawPile.PlayDrawPulse(); });
+            // hand counter "5/7" (navy pill above the block row, left-aligned)
+            handCount = Panel(root, "Hand count", "ui9_panel_navy", Navy); BL(handCount, 24, 0, 108, 52);
+            var hc = Txt(handCount, "", 28, Ink); Full(hc.rectTransform); hc.fontStyle = FontStyles.Bold; drawPile.handCountLabel = hc;
+            battle = Btn(root, "BATTLE  ►", 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 24, 256, 104);
             var handCanvas = Canvas("Hand", 1);
             towerHand = Group(handCanvas, "Tower hand"); Full(towerHand);
             blockHand = Group(handCanvas, "Block hand"); Full(blockHand);
@@ -93,10 +110,14 @@ namespace StoneSignal
             if (session == null) return;
             hpNumber.text = session.Economy.HP.ToString();
             hpSmall.text = session.Economy.HP + "/" + session.Economy.MaxHP;
-            gold.text = session.Economy.Gold.ToString();
             wave.text = "WAVE " + Mathf.Min(session.Waves.WaveIndex + 1, Mathf.Max(1, session.config.waves.Length)) + " / " + session.config.waves.Length;
-            drawLeft.text = session.Blocks.Remaining + " left";
-            drawCost.text = session.Blocks.Deck != null ? session.Blocks.Deck.Cards.Count.ToString() : "-";
+            var offer = session.Draws.Next;
+            var st = session.Blocks.Hand.IsFull ? StoneSignal.VFX.DrawPileState.Full : offer == DrawRules.Offer.Free ? StoneSignal.VFX.DrawPileState.Free : offer == DrawRules.Offer.Ad ? StoneSignal.VFX.DrawPileState.Ad : StoneSignal.VFX.DrawPileState.Used;
+            if (drawPile.State != st) drawPile.SetState(st);
+            drawPile.SetStackCount(st == StoneSignal.VFX.DrawPileState.Free || st == StoneSignal.VFX.DrawPileState.Full ? 5 : st == StoneSignal.VFX.DrawPileState.Ad ? 4 : 3);
+            if (session.Game.State != GameState.Build && drawPile.button.interactable) drawPile.button.interactable = false;
+            drawPile.SetHandCount(session.Blocks.Hand.Cards.Count, BlockHandManager.MaxCards);
+            goldCounter.SetValue(session.Economy.Gold - session.GoldInFlight);
             targetLabel.text = "TARGET: " + session.Enemies.Targeting.ToString().ToUpper() + "  ►";
             battle.interactable = session.Game.State == GameState.Build;
             if (handDirty) RebuildHands();
@@ -146,34 +167,57 @@ namespace StoneSignal
             }
             // ---- block hand: ui_card_blueprint 128x128 (9-slice 24) + ui_icon_block_X 128x128 overlay (uniform, never per-shape scaling),
             // spacing 140, bottom-centre anchor; nudged right only if it would overlap the tower hand.
-            var hand = session.Blocks.Hand.Cards;
-            float towerRight = 24 + (towers.Length - 1) * 212 + CW + 16;
-            float span = hand.Count * 140 - 12, left = Mathf.Max(960 - span * .5f, towerRight);
-            for (int i = 0; i < hand.Count; i++)
+            var groups = session.Blocks.Hand.Groups();
+            bool anyStack = groups.Exists(g => g.count > 1);
+            // v16: card w = min(150, budget/7 - 12), budget = safeWidth - 24 - 512 - 24 (DRAW + BATTLE block on the right).
+            // Row sits left-aligned on its own line above the tower hand (bottom 24+220+32) so it never overlaps the hand.
+            float safeW = ((RectTransform)blockHand.parent).rect.width; if (safeW <= 0) safeW = 1920;
+            float cardW = Mathf.Max(88, Mathf.Min(150, (safeW - 24 - 512 - 24) / 7f - 12));
+            float sc = cardW / 128f, step = (cardW + 12) / sc * (anyStack ? 150f / 140f : 1f), left = 24, rowY = 24 + CH + 32;
+            handCount.anchoredPosition = new Vector2(24, rowY + cardW + 8);
+            int selectedIndex = session.Blocks.Hand.Selected;
+            for (int gi = 0; gi < groups.Count; gi++)
             {
-                int idx = i; var shape = hand[i];
-                bool selected = session.Towers.SelectedIndex < 0 && i == session.Blocks.Hand.Selected;
-                var card = Img(blockHand, "Block card " + shape.displayName, art ? art.uiCardBlueprint : null, art && art.uiCardBlueprint ? Color.white : Blueprint);
+                var grp = groups[gi]; int idx = grp.first; var shape = grp.shape;
+                bool selected = session.Towers.SelectedIndex < 0 && session.Blocks.Hand.Cards.Count > 0 && session.Blocks.Hand.Cards[selectedIndex] == shape && session.Blocks.Hand.Runes[selectedIndex] == grp.rune;
+                var holder = Group(blockHand, "Block card " + shape.displayName); holder.anchorMin = holder.anchorMax = Vector2.zero; holder.pivot = Vector2.zero;
+                holder.sizeDelta = new Vector2(128, 128); holder.localScale = Vector3.one * sc;
+                holder.anchoredPosition = new Vector2(left + gi * step * sc, rowY + (selected ? 12 : 0));
+                if (grp.count > 1 && S("ui_card_blueprint_stack") != null) { var st = Img(holder, "Stack", S("ui_card_blueprint_stack"), Color.white); BL(st, 0, -40, 160, 168); }
+                var card = Img(holder, "Card", art ? art.uiCardBlueprint : null, art && art.uiCardBlueprint ? Color.white : Blueprint); Full(card);
                 card.GetComponent<Image>().type = Image.Type.Sliced; card.GetComponent<Image>().raycastTarget = true;
-                card.anchorMin = card.anchorMax = new Vector2(.5f, 0); card.pivot = new Vector2(0, 0); card.sizeDelta = new Vector2(128, 128);
-                card.anchoredPosition = new Vector2(left - 960 + i * 140, 24 + (selected ? 12 : 0));
                 var b = card.gameObject.AddComponent<Button>(); b.targetGraphic = card.GetComponent<Image>(); b.transition = Selectable.Transition.None;
                 b.interactable = build || (session.config.allowCombatBlocks && session.Game.State == GameState.Combat);
                 b.onClick.AddListener(() => { session.Towers.Select(-1); session.Blocks.SelectCard(idx); });
-                card.gameObject.AddComponent<CardHover>().Init(card, selected);
+                card.gameObject.AddComponent<CardHover>().Init(holder, selected);
                 var iconSprite = BlockIcon(shape);
                 if (iconSprite != null) { var ic = Img(card, "Shape", iconSprite, Color.white); Full(ic); }
                 else
                 {
                     // fallback: 22px cells on a 4x4 grid (88x88 area), same scale for every shape
-                    var cells = shape.cells; if (cells == null || cells.Length == 0) { built.Add(card.gameObject); continue; }
-                    int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-                    foreach (var c in cells) { minX = Mathf.Min(minX, c.x); minY = Mathf.Min(minY, c.y); maxX = Mathf.Max(maxX, c.x); maxY = Mathf.Max(maxY, c.y); }
-                    Vector2 off = new Vector2((maxX + minX) * .5f, (maxY + minY) * .5f);
-                    foreach (var c in cells) { var cell = Img(card, "Cell", null, new Color(.86f, .93f, 1f)); Center(cell, (c.x - off.x) * 22, -(c.y - off.y) * 22, 20, 20); }
+                    var cells = shape.cells;
+                    if (cells != null && cells.Length > 0)
+                    {
+                        int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+                        foreach (var c in cells) { minX = Mathf.Min(minX, c.x); minY = Mathf.Min(minY, c.y); maxX = Mathf.Max(maxX, c.x); maxY = Mathf.Max(maxY, c.y); }
+                        Vector2 off = new Vector2((maxX + minX) * .5f, (maxY + minY) * .5f);
+                        foreach (var c in cells) { var cell = Img(card, "Cell", null, new Color(.86f, .93f, 1f)); Center(cell, (c.x - off.x) * 22, -(c.y - off.y) * 22, 20, 20); }
+                    }
+                }
+                if (grp.rune != RuneRules.NoRune)
+                {
+                    // rune carried by this block: corner badge + rune icon (top-left)
+                    var corner = Img(card, "Rune badge", S("ui_rune_badge_corner"), Color.white); TL(corner, -10, -10, 48, 48);
+                    var ri = Img(corner, "Rune", S(StoneSignal.VFX.RuneArt.Icon[grp.rune]), Color.white); Center(ri, 0, 0, 34, 34);
+                }
+                if (grp.count > 1)
+                {
+                    var badge = Img(card, "Count", S("ui9_badge_count") ?? Rounded, S("ui9_badge_count") != null ? Color.white : Navy); TL(badge, 84, -12, 56, 40);
+                    badge.GetComponent<Image>().type = Image.Type.Sliced;
+                    var n = Txt(badge, "\u00D7" + grp.count, 26, Ink); Full(n.rectTransform); n.fontStyle = FontStyles.Bold; n.outlineWidth = .25f; n.outlineColor = Navy;
                 }
                 if (selected) Outline(card, Gold, 4);
-                built.Add(card.gameObject);
+                built.Add(holder.gameObject);
             }
         }
         // ui_icon_block_<T|L|J|S|Z|O|I>: resolved from the shape asset/display name (e.g. "Block_T", "T piece").
@@ -190,9 +234,8 @@ namespace StoneSignal
         }
         private void SetSpeed(int index)
         {
-            StoneSignal.VFX.HitStop.Cancel();
             if (index == 0) paused = !paused; else { paused = false; speedIndex = index; }
-            Time.timeScale = paused ? 0 : speedIndex;
+            TimeController.SetSpeed(speedIndex); TimeController.SetPaused(paused);
             for (int i = 0; i < 4; i++)
             {
                 bool on = i == 0 ? paused : !paused && i == speedIndex; var img = speedButtons[i].GetComponent<Image>();
@@ -226,13 +269,18 @@ namespace StoneSignal
             rewardPanel.SetActive(false);
             var over = Img(root, "Game over", null, new Color(.05f, .06f, .12f, .92f)); Full(over); overPanel = over.gameObject;
             var text = Txt(over, "THE CORE WENT DARK", 64, Ink); Center(text.rectTransform, 0, -90, 1200, 90);
-            var restart = Btn(over, "RESTART", 40, Orange, () => { StoneSignal.VFX.HitStop.Cancel(); Time.timeScale = 1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); });
+            var restart = Btn(over, "RESTART", 40, Orange, () => { TimeController.ResetAll(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); });
             Center((RectTransform)restart.transform, 0, 60, 300, 84);
             overPanel.SetActive(false);
         }
         private void ShowRewards()
         {
-            for (int i = 0; i < 3; i++) { var r = session.Rewards.Choices[i]; rewardNames[i].text = r.displayName; rewardDescriptions[i].text = r.description; rewardEffects[i].text = r.effectText; }
+            for (int i = 0; i < 3 && i < session.Rewards.Choices.Count; i++)
+            {
+                int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
+                if (rune != RuneRules.NoRune) { rewardNames[i].text = "Rune: " + RuneRules.Names[rune]; rewardDescriptions[i].text = "A wall block inlaid with this rune. Towers on that cell gain it."; rewardEffects[i].text = RuneRules.Effects[rune]; continue; }
+                var r = session.Rewards.Choices[i]; rewardNames[i].text = r.displayName; rewardDescriptions[i].text = r.description; rewardEffects[i].text = r.effectText;
+            }
             rewardPanel.SetActive(true); Refresh();
         }
 
@@ -241,8 +289,10 @@ namespace StoneSignal
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)); go.transform.SetParent(transform, false);
             var c = go.GetComponent<Canvas>(); c.renderMode = RenderMode.ScreenSpaceOverlay; c.sortingOrder = order;
-            var s = go.GetComponent<CanvasScaler>(); s.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; s.referenceResolution = new Vector2(1920, 1080); s.matchWidthOrHeight = .5f;
-            return go.GetComponent<RectTransform>();
+            var s = go.GetComponent<CanvasScaler>(); s.referenceResolution = new Vector2(1920, 1080);
+            var safe = new GameObject("SafeAreaRoot", typeof(RectTransform)).GetComponent<RectTransform>(); safe.SetParent(go.transform, false);
+            go.AddComponent<HudScaler>().Init(s, safe); // ui_layout_v14: match height (>=16:9) / width (<16:9), scale clamp 0.6-1.6, Screen.safeArea
+            return safe;
         }
         private static RectTransform Group(Transform parent, string name) { var r = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>(); r.SetParent(parent, false); return r; }
         private static RectTransform Img(Transform parent, string name, Sprite sprite, Color color)

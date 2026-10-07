@@ -28,7 +28,7 @@ namespace StoneSignal
         {
             var cells = new List<Vector2Int> { c };
             if (!s.grid.CanPlace(c) || s.Validator.ValidatePlacement(cells) != null) return false;
-            s.grid.Commit(cells, CellState.Blocked); ArtVisual.Wall(s.config.palette, s.Blocks.PlacedRoot, s.grid.ToWorld(c), s.grid.cellSize);
+            s.grid.Commit(cells, CellState.Blocked); s.Blocks.SpawnWall(c);
             return true;
         }
         IEnumerator Run()
@@ -50,12 +50,20 @@ namespace StoneSignal
                         // multi-cell towers: raise a matching wall pad first (all cells free, off-route, route stays open)
                         var pad = grid.Footprint(o, size);
                         if (pad.TrueForAll(c => s.grid.CanPlace(c) && !OnRoute(c)) && s.Validator.ValidatePlacement(pad) == null)
-                        { s.grid.Commit(pad, CellState.Blocked); foreach (var c in pad) ArtVisual.Wall(s.config.palette, s.Blocks.PlacedRoot, s.grid.ToWorld(c), s.grid.cellSize); }
+                        { s.grid.Commit(pad, CellState.Blocked); foreach (var c in pad) s.Blocks.SpawnWall(c); }
                     }
                     if (s.Towers.Validate(o, t, 0) != null) continue;
                     if (s.Towers.TryBuild(o, t, 0)) { built++; x += 3; }
                 }
             }
+            // runes: blade under the first tower, resonance under its neighbour-most tower, frost inlaid on a free wall
+            var tw = s.Towers.Towers;
+            if (tw.Count > 0) s.Blocks.InlayRune(tw[0].Cells[0], (int)StoneSignal.VFX.RuneId.Blade);
+            if (tw.Count > 1) s.Blocks.InlayRune(tw[1].Cells[0], (int)StoneSignal.VFX.RuneId.Resonance);
+            foreach (var c in s.Blocks.WallCells) if (grid.Get(c) == CellState.Blocked) { s.Blocks.InlayRune(c, (int)StoneSignal.VFX.RuneId.Frost); break; }
+            // hand: identical cards -> one stacked xN card; one rune-carrying card
+            var h = s.Blocks.Hand; if (h.Cards.Count > 0) { var first = h.Cards[0]; h.AddCard(first, h.Runes[0]); h.AddCard(first, h.Runes[0]); h.AddCard(h.Cards[h.Cards.Count - 1], (int)StoneSignal.VFX.RuneId.Swift); }
+            s.Blocks.NotifyChanged();
             s.Blocks.MergeWalls();
             s.Waves.StartWave();
             yield return new WaitForSecondsRealtime(6f);
@@ -72,7 +80,7 @@ namespace StoneSignal
             s.Blocks.Pinned = true; s.Blocks.SetToolActive(true); if (fv) s.Blocks.Preview(valid);
             if (fv) Label("VALID", s.grid.ToWorld(valid), new Color(.55f, 1f, .6f));
             if (fb) Label("BLOCKED", s.grid.ToWorld(blocked), new Color(1f, .45f, .55f));
-            StoneSignal.VFX.HitStop.Cancel(); Time.timeScale = 1;
+            TimeController.ResetAll();
             yield return null; yield return null;
             yield return new WaitForEndOfFrame();
             string stats = Stats();
