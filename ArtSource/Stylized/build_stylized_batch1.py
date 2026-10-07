@@ -834,7 +834,7 @@ def foam_ring():  # 4x4 squircle band at water level, scale per island
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     for f in bm.faces:
         if f.normal.z < 0: f.normal_flip()
-    return [to_object("SM_Env_FoamRing_01", [_finish(bm, "Foam")])]
+    return [to_object("SM_Env_FoamRing_01", [_finish(bm, "WaterDeep")])]
 
 def core():  # signal core the enemies walk to (2x2, ally colours, outlined)
     base = plinth(2, 2, .2) + [cyl(.8, .7, .3, 10, (0, 0, .35), "MechWhite", bevel=.04)]
@@ -1134,10 +1134,10 @@ if DO_RENDER:
         put("SM_Env_RockPile_01", ix - 1.1 * sc, iy - .8 * sc, .55, lr.random() * 6)
     islet(10.2, -7.4, .75, .3, 3)                                     # TL
     put("SM_Env_Dock_Post_01", 9.0, -6.0, 0, 0); put("SM_Env_Bridge_Plank_01", 8.7, -6.3, .35, .6, (.55, 1, 1))
-    islet(-10.0, -7.6, .7, 1.9, 3)                                    # TR
-    put("SM_Env_Rock_Small_01", -8.6, -6.4, .0, 1.0, (2.2, 2.2, 2.2))
-    islet(10.6, 8.0, 1.0, 2.2, 3, (1.4, 1.75))                        # BL foreground framing (big trees)
-    put("SM_Env_RockPile_01", 9.0, 7.0, .1, 2.0, (1.6, 1.6, 1.6)); put("SM_Env_Rock_Small_01", 8.4, 8.6, 0, .4, (2.6, 2.6, 2.6))
+    islet(-11.8, -4.6, .7, 1.9, 3)                                    # right-mid (kept below the top-right speed buttons)
+    put("SM_Env_Rock_Small_01", -10.4, -3.6, .0, 1.0, (2.2, 2.2, 2.2))
+    islet(13.2, 9.6, .9, 2.2, 2, (1.0, 1.25))                         # BL foreground framing, pushed out of the card-hand UI zone
+    put("SM_Env_RockPile_01", 11.8, 8.6, .1, 2.0, (1.4, 1.4, 1.4))
     islet(-10.2, 7.6, .7, .9, 1)                                      # BR islet + ruin lighthouse (stacked stones + lantern)
     for k3, (dx, dy, z) in enumerate([(0, 0, .55), (.04, .03, 1.15), (-.03, .05, 1.75)]):
         put("SM_Env_Rock_1x1_01", -10.4 + dx, 7.3 + dy, z, .3 * k3, (.75 - .1 * k3, .75 - .1 * k3, 1))
@@ -1148,7 +1148,7 @@ if DO_RENDER:
             fx, fy = lr.uniform(-12, 12), lr.uniform(-9, 9)
             if abs(fx) > 9 or abs(fy) > 7: break
         put("SM_Env_Leaves_01" if k4 % 3 else "SM_Env_Rock_Small_01", fx, fy, .02 if k4 % 3 else -.05, lr.uniform(0, 6), (1, 1, 1))
-    for x, y in [(-8.6, 5.6), (-8.7, -5.6), (8.6, 5.6), (8.7, -5.6), (-6.0, 6.7), (5.8, 6.7), (-5.5, -6.7), (3.5, -6.7)]:
+    for x, y in [(-8.7, -5.6), (8.7, -5.6), (-5.5, -6.7), (3.5, -6.7)]:  # v12: only far-side edge trees (front ones occluded the board/UI)
         put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), x, y, .55, lr.uniform(0, 6), (lr.uniform(.9, 1.15),) * 3)
     put("SM_Prop_Brazier_01", 1.5, -1.5, .8); put("SM_Prop_Brazier_01", -1.5, 1.5 + 1, .8)
     with open(os.path.join(SRC, "level_layout.json"), "w") as f:

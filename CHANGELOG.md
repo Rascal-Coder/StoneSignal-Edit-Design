@@ -199,3 +199,10 @@ Changed:
 - HUD sprites imported as Sprites + HUD.spriteatlas; ArtCatalog ui* fields; TowerData.icon wired.
 - GameplayShot (-stonesignal-shot <png>): 1920x1080 in-game capture with real UI.
 
+
+## Stylized art v12 (2026-10-07)
+- PF_Env_LevelDressing_16x12: meshes merged per region x material (board + 4 quadrants, env/foliage) into Generated/MSH_Dressing_*.asset; shadows off for env/rock/skirt chunks and water, foliage keeps shadows; particle FX/lights preserved under FX.
+- Foreground trees: removed front edge trees, BL islet pushed out and trees scaled down, TR islet moved below top-right UI.
+- Foam ring geometry recolored to WaterDeep (thick white rims), only shader glow line remains.
+- New 9-slice UI sprites ui9_* (navy button normal/pressed/selected, orange BATTLE, red wave banner, gold pill, panel) + ui_draw_pile, borders set in .meta.
+

@@ -324,7 +324,7 @@ public static class StylizedArtIntegration
         cam.fieldOfView = 32;
         cam.transform.position = new Vector3(9f, 21f, 25f); cam.transform.LookAt(new Vector3(0, .5f, .5f));
         EditorSceneManager.SaveScene(scene, ScenePath);
-        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v11.png"))) File.Delete(old);
+        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v12.png"))) File.Delete(old);
         Capture(cam, PreviewDir + "unity_demo.png");
         var ls = light.shadows; light.shadows = LightShadows.None;
         Capture(cam, PreviewDir + "unity_demo_noshadow.png");
@@ -335,11 +335,11 @@ public static class StylizedArtIntegration
         var wide = (cam.transform.position, cam.transform.rotation, cam.fieldOfView);
         cam.orthographic = true; cam.orthographicSize = GameCamOrthoV10; cam.transform.rotation = gRot; cam.transform.position = GameCamTargetV10 - fwd * 30f;  // v10 framing
         cam.farClipPlane = 200;
-        Capture(cam, PreviewDir + "level_gamecam_v11.png"); Capture(cam, PreviewDir + "level_compose_v11.png");
+        Capture(cam, PreviewDir + "level_gamecam_v12.png"); Capture(cam, PreviewDir + "level_compose_v12.png");
         cam.orthographic = false; cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
-        Capture(cam, PreviewDir + "level_wide_v11.png");
+        Capture(cam, PreviewDir + "level_wide_v12.png");
         cam.transform.position = new Vector3(3.2f, 3.4f, -5.2f); cam.transform.LookAt(new Vector3(-.3f, .2f, -8.6f)); cam.fieldOfView = 40;
-        Capture(cam, PreviewDir + "shore_closeup_v11.png");
+        Capture(cam, PreviewDir + "shore_closeup_v12.png");
         cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
         EditorSceneManager.SaveScene(scene, ScenePath);
     }
@@ -398,6 +398,55 @@ public static class StylizedArtIntegration
         so.ApplyModifiedPropertiesWithoutUndo(); m.shaderKeywords = new string[0];
     }
 
+    /// Merge all dressing meshes into a few chunks: (region x material family). Regions = board + 4 screen quadrants.
+    /// Env/rock/skirt chunks don't cast shadows (WebGL); foliage chunks do. Meshes saved under Art/Stylized/Generated.
+    static int CombineDressing(Transform root, GameObject water)
+    {
+        const string GenDir = ArtDir + "Generated";
+        if (!AssetDatabase.IsValidFolder(GenDir)) AssetDatabase.CreateFolder(ArtDir.TrimEnd('/'), "Generated");
+        var groups = new Dictionary<string, List<CombineInstance>>(); var mats = new Dictionary<string, Material>();
+        var w2l = root.worldToLocalMatrix;
+        foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+        {
+            if (mf.gameObject == water || !mf.sharedMesh) continue;
+            var r = mf.GetComponent<MeshRenderer>(); if (!r || !r.enabled) continue;
+            var p = mf.transform.position;
+            bool board = mf.sharedMesh.name.Contains("Board_Cliff");
+            string region = board ? "Board" : (p.x < 0 ? "L" : "R") + (p.z < 0 ? "Front" : "Back");
+            for (int sm = 0; sm < mf.sharedMesh.subMeshCount; sm++)
+            {
+                var m = r.sharedMaterials[Mathf.Min(sm, r.sharedMaterials.Length - 1)];
+                bool fol = m && m.shader && m.shader.name.Contains("Foliage");
+                string fam = fol ? "Foliage" : "Env"; string key = region + "_" + fam;
+                if (!groups.ContainsKey(key)) { groups[key] = new List<CombineInstance>(); }
+                if (!mats.ContainsKey(key) || (fol && !m.name.Contains("_Warm") && !m.name.Contains("_Gold") && !m.name.Contains("_Deep"))) mats[key] = m;
+                groups[key].Add(new CombineInstance { mesh = mf.sharedMesh, subMeshIndex = sm, transform = w2l * mf.transform.localToWorldMatrix });
+            }
+        }
+        var fx = new GameObject("FX").transform; fx.SetParent(root, false);
+        foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true).Where(x => !x.transform.parent || !x.transform.parent.GetComponent<ParticleSystem>()).ToArray()) ps.transform.SetParent(fx, true);
+        foreach (var lt in root.GetComponentsInChildren<Light>(true).ToArray()) lt.transform.SetParent(fx, true);
+        // drop originals (everything except water / FX)
+        foreach (Transform c in root.Cast<Transform>().ToArray()) if (c.gameObject != water && c != fx) UnityEngine.Object.DestroyImmediate(c.gameObject);
+        var parent = new GameObject("Merged").transform; parent.SetParent(root, false);
+        foreach (var kv in groups)
+        {
+            var mesh = new Mesh { name = "MSH_Dressing_" + kv.Key };
+            if (kv.Value.Sum(ci => ci.mesh.vertexCount) > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.CombineMeshes(kv.Value.ToArray(), true, true); mesh.RecalculateBounds(); mesh.UploadMeshData(false);
+            string mp = GenDir + "/" + mesh.name + ".asset";
+            var old = AssetDatabase.LoadAssetAtPath<Mesh>(mp);
+            if (old) { EditorUtility.CopySerialized(mesh, old); mesh = old; } else AssetDatabase.CreateAsset(mesh, mp);
+            var go = new GameObject(kv.Key); go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = mats[kv.Key];
+            mr.shadowCastingMode = kv.Key.EndsWith("Foliage") ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+        water.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        AssetDatabase.SaveAssets();
+        return groups.Count;
+    }
+
     public static void BuildLevelDressing()
     {
         var mats = new Dictionary<string, Material> { ["Water"] = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_Env_Water_Flat.mat") };
@@ -421,6 +470,10 @@ public static class StylizedArtIntegration
             go.transform.localScale = new Vector3(it.scale[0], it.scale[2], it.scale[1]);
             if (it.asset.Contains("Bridge")) bridges++;
         }
+        int rBefore = root.GetComponentsInChildren<Renderer>().Length;
+        int mBefore = root.GetComponentsInChildren<Renderer>().SelectMany(r => r.sharedMaterials).Distinct().Count();
+        int chunks = CombineDressing(root.transform, water);
+        Debug.Log($"LEVEL DRESSING merge: renderers {rBefore} -> {chunks + 2} (incl. water + snow), materials {mBefore} -> {root.GetComponentsInChildren<Renderer>().SelectMany(r => r.sharedMaterials).Distinct().Count() + 1}");
         var snow = new GameObject("FX_Weather_Snow").AddComponent<ParticleSystem>();
         snow.transform.SetParent(root.transform); snow.transform.position = new Vector3(0, 9, 0); snow.transform.rotation = Quaternion.Euler(90, 0, 0);
         var main = snow.main; main.loop = true; main.prewarm = true; main.startLifetime = 9; main.startSpeed = .9f; main.startSize = .035f; main.maxParticles = 400;

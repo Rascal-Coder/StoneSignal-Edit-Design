@@ -38,7 +38,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _DepthRange: 0.28
+    - _DepthRange: 0.08
     m_Colors:
     - _BaseColor: {r: 0.039215688, g: 0.29803923, b: 0.61960787, a: 1}
     - _DeepColor: {r: 0.039215688, g: 0.29803923, b: 0.61960787, a: 1}
