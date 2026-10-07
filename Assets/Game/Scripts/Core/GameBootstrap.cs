@@ -26,6 +26,8 @@ namespace StoneSignal
         private System.Action<string, int> arrived;
         private void OnDestroy() { if (arrived != null) StoneSignal.VFX.RewardFlyFx.Arrived -= arrived; }
         public const int CardsPerDraw = 3;
+        // NextDraw reward: the next draw's 3 cards contain at least one rune block (one charge per reward).
+        private bool TakeNextDrawRune() { if (Modifiers.NextDraw <= 0) return false; Modifiers.NextDraw--; return true; }
         /// DRAW pile click (max 2 per wave, 3 cards each): 1st FREE, 2nd after the rewarded ad. Hand full (7) -> no draw is spent.
         public bool Draw()
         {
@@ -33,12 +35,12 @@ namespace StoneSignal
             var offer = Draws.Next;
             if (offer == DrawRules.Offer.Free)
             {
-                Draws.Consume(false); Blocks.DrawCards(CardsPerDraw);
+                Draws.Consume(false); Blocks.DrawCards(CardsPerDraw, TakeNextDrawRune());
                 DrawsChanged?.Invoke(); return true;
             }
             if (offer != DrawRules.Offer.Ad || AdServices.Current == null || !AdServices.Current.IsReady) return false;
             bool granted = false;
-            AdServices.Current.ShowRewarded("draw", ok => { if (ok && Draws.Consume(true)) { granted = true; Blocks.DrawCards(CardsPerDraw); } DrawsChanged?.Invoke(); });
+            AdServices.Current.ShowRewarded("draw", ok => { if (ok && Draws.Consume(true)) { granted = true; Blocks.DrawCards(CardsPerDraw, TakeNextDrawRune()); } DrawsChanged?.Invoke(); });
             return granted;
         }
         private T Service<T>(string label) where T : Component
@@ -76,7 +78,7 @@ namespace StoneSignal
             Towers.RuneRulesConfig = Runes;
             var spawner = Service<EnemySpawner>("Enemy spawner"); spawner.Initialize(Enemies);
             Waves = Service<WaveManager>("Waves"); Waves.Initialize(Game,config,Enemies,spawner,Modifiers);
-            Game.StateChanged += state => { if(state==GameState.Combat) Economy.AddGold(Modifiers.WaveGold); if(state==GameState.Build) { Draws.BeginIntermission(); DrawsChanged?.Invoke(); } };
+            Game.StateChanged += state => { if(state==GameState.Combat) Economy.AddGold(Modifiers.WaveGold); if(state==GameState.Build) { Draws.BeginIntermission(Modifiers.ExtraDraw > 0); Modifiers.ExtraDraw = 0; DrawsChanged?.Invoke(); } }; // ExtraDraw reward: this wave's 2nd draw needs no ad
             Waves.Completed += () => Economy.Heal(Modifiers.WaveHeal);
             Enemies.SpeedMultiplier = () => Modifiers.EnemySpeed;
             Blocks.Modifiers = Modifiers;

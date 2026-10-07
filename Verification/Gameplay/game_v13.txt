@@ -1,0 +1,38 @@
+source=player frame (ProfilerRecorder, 1920x1080 screen, URP quality Ultra)
+drawCalls=135
+batches=132
+setPassCalls=105
+triangles=111167
+activeRenderers=112
+visibleRenderers=81
+visibleShadowCasters=23
+uniqueMaterialsVisible=29
+canvases=4
+enemies=2 towers=6
+budget drawCalls<150 tris<150000 -> OK
+
+breakdown (draw calls removed when the group is hidden; base 132):
+probe line renderers:
+  FX_Proj_Tesla_Arc(Clone) mpb_Speed=0 pts=13 w=0.1215 col=RGBA(0.957, 0.941, 1.000, 1.000) mat=M_FX_Add_Trail (-1.50, 2.06, -1.50)->(-2.81, 1.15, 0.50)
+  StoneSignal bootstrap/Tower placement/Needle Beacon/PF_UI_TowerBuffIcons/Link0 mpb_Speed=0 pts=2 w=0.08 col=RGBA(0.949, 0.933, 0.902, 0.902) mat=M_FX_Add_Trail (1.50, 1.20, -4.50)->(1.50, 1.75, -4.50)
+  StoneSignal bootstrap/Tower placement/Needle Beacon/PF_UI_TowerBuffIcons/Link0 mpb_Speed=0 pts=2 w=0.08 col=RGBA(0.851, 0.282, 0.231, 0.902) mat=M_FX_Add_Trail (-4.50, 1.20, -4.50)->(-4.50, 1.75, -4.50)
+  StoneSignal bootstrap/Map visuals/Route flow/PF_Path_FlowSegment mpb_Speed=-0.8 pts=7 w=0.55 col=RGBA(1.000, 1.000, 1.000, 1.000) mat=M_Path_Flow (0.50, 0.89, -0.50)->(-0.50, 0.89, -5.50)
+  StoneSignal bootstrap/Map visuals/Route flow/PF_Path_FlowSegment mpb_Speed=-0.8 pts=10 w=0.55 col=RGBA(1.000, 1.000, 1.000, 1.000) mat=M_Path_Flow (-0.50, 0.89, 0.50)->(-7.50, 0.89, 2.50)
+  StoneSignal bootstrap/Map visuals/Route flow/PF_Path_FlowSegment mpb_Speed=-0.8 pts=10 w=0.55 col=RGBA(1.000, 1.000, 1.000, 1.000) mat=M_Path_Flow (0.50, 0.89, -0.50)->(7.50, 0.89, -2.50)
+probe renderers in screen box x1650-1920 y(bottom)150-330:
+rect BATTLE screen min (3.54, 15.00, -29.97) max (6.77, 15.97, -29.70)
+rect DrawPileRoot screen min (0.75, 15.00, -29.47) max (3.52, 17.50, -27.82)
+  UI canvas 'Overlays': 2 of 131 (1 objects)
+  UI canvas 'Hand': 7 of 133 (1 objects)
+  UI canvas 'HUD': 15 of 130 (1 objects)
+  UI all canvases: 26 of 131 (3 objects)
+  tower buff icons: 3 of 133 (4 objects)
+  resonance aura: 1 of 130 (1 objects)
+  rune walls (MPB): 7 of 132 (3 objects)
+  placed walls (renderers left): -4 of 129 (0 objects)
+  towers: 42 of 130 (14 objects)
+  enemies: 8 of 143 (4 objects)
+  dressing: 3 of 140 (7 objects)
+  ghosts/labels: 16 of 142 (15 objects)
+  particles/VFX: 14 of 139 (47 objects)
+  instanced batches (ground/walls/flow): 7 of 135 (2 objects)

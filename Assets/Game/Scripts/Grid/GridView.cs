@@ -127,21 +127,42 @@ namespace StoneSignal
         // Route flow: the art flow segment (PF_Path_FlowSegment, M_Path_Flow untouched) on every edge of every entry->core route,
         // drawn through MeshMerge/InstancedBatch (GPU instanced: one draw call per material). Shared route tails are drawn once.
         private Transform flowRoot;
+        /// Line point order so M_Path_Flow animates entry -> core (enemy travel). path is entry -> core; the flow material
+        /// scrolls toward the line start, so the points run core -> entry when scrollsTowardStart is set.
+        public static readonly int FlowSpeedId = Shader.PropertyToID("_Speed");
+        /// Scroll speed so the pattern moves toward the core: lines whose points run core -> entry need the pattern to move toward the
+        /// line start (uv.x decreasing) = negative _Speed.
+        public static float FlowScrollSpeed(float materialSpeed, bool linesRunCoreToEntry) => linesRunCoreToEntry ? -Mathf.Abs(materialSpeed) : Mathf.Abs(materialSpeed);
+        /// Position along the line (uv.x, 0..1 per dash period) of one chevron at time t, per the shader phase uv.x*k - t*speed = n.
+        public static float ChevronU(float t, float speed, float dashes, int n = 0) => (n + t * speed) / (dashes * .1f);
+        public static List<Vector2Int> FlowOrder(IReadOnlyList<Vector2Int> entryToCore, bool scrollsTowardStart)
+        {
+            var l = new List<Vector2Int>(entryToCore); if (scrollsTowardStart) l.Reverse(); return l;
+        }
         private void DrawFlow()
         {
             if (flowRoot != null) PrimitiveVisual.DestroyObject(flowRoot.gameObject);
             flowRoot = new GameObject("Route flow").transform; flowRoot.SetParent(transform, false);
-            var seen = new HashSet<(Vector2Int, Vector2Int)>();
+            // PF_Path_FlowSegment is a world-space LineRenderer (authored points (-2,.82,0)->(2,.82,0)): placing copies by transform left
+            // every copy on the same short line next to the core. One line per route through its cells instead (art material/width unchanged).
             foreach (var path in pathfinding.CurrentPaths)
-                for (int i = 0; i < path.Count - 1; i++)
+            {
+                if (path.Count < 2) continue;
+                var seg = ArtVisual.Create(art.pathFlowSegment, flowRoot, grid.ToWorld(path[0]), 1);
+                var lr = seg.GetComponentInChildren<LineRenderer>(true);
+                if (lr == null) continue;
+                var pts = FlowOrder(path, art.flowScrollsTowardStart); lr.useWorldSpace = true; lr.positionCount = pts.Count;
+                for (int i = 0; i < pts.Count; i++) lr.SetPosition(i, grid.ToWorld(pts[i]) + Vector3.up * art.pathFlowY);
+                lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; lr.receiveShadows = false;
+                // SS_PlaceFX chevrons: phase = uv.x*k - _Time*_Speed, so the pattern travels toward +uv.x (line end) for _Speed > 0.
+                // Lines run core -> entry (arrow orientation), so scroll with the opposite sign: per-renderer block, art material untouched.
+                var mat = lr.sharedMaterial;
+                if (mat != null && mat.HasProperty(FlowSpeedId))
                 {
-                    if (!seen.Add((path[i], path[i + 1]))) continue;
-                    Vector3 a = grid.ToWorld(path[i]), b = grid.ToWorld(path[i + 1]);
-                    var seg = ArtVisual.Create(art.pathFlowSegment, flowRoot, (a + b) * .5f + Vector3.up * art.pathFlowY, grid.cellSize);
-                    seg.transform.rotation = Quaternion.LookRotation(b - a, Vector3.up);
-                    foreach (var r in seg.GetComponentsInChildren<Renderer>(true)) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; }
+                    var mpb = new MaterialPropertyBlock(); lr.GetPropertyBlock(mpb);
+                    mpb.SetFloat(FlowSpeedId, FlowScrollSpeed(mat.GetFloat(FlowSpeedId), art.flowScrollsTowardStart)); lr.SetPropertyBlock(mpb);
                 }
-            MeshMerge.Rebuild(flowRoot, "Route flow", UnityEngine.Rendering.ShadowCastingMode.Off);
+            }
         }
         private void DrawPath()
         {

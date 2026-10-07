@@ -42,7 +42,7 @@ namespace StoneSignal.EditorTools
             {
                 var a = new RngStream(5); var b = new RngStream(5); int runes = 0; bool same = true;
                 for (int i = 0; i < 2000; i++) { int x = RuneRules.Roll(c, a), y = RuneRules.Roll(c, b); same &= x == y; if (x != RuneRules.NoRune) runes++; }
-                return same && runes > 450 && runes < 750; // 30% of 2000
+                return same && runes > 350 && runes < 650; // 25% of 2000
             });
             Case("rune roll chance 0 -> never", () => { var z = RuneConfig.CreateDefault(); z.runeChance = 0; var r = new RngStream(1); bool none = true; for (int i = 0; i < 200; i++) none &= RuneRules.Roll(z, r) == RuneRules.NoRune; UnityEngine.Object.DestroyImmediate(z); return none; });
             Case("DRAW: 1st free, 2nd needs ad, no 3rd", () =>
@@ -52,6 +52,41 @@ namespace StoneSignal.EditorTools
                 bool b = d.Next == DrawRules.Offer.Ad && !d.Consume(false) && d.Consume(true);
                 bool e = d.Next == DrawRules.Offer.None && !d.Consume(true) && !d.Consume(false);
                 d.BeginIntermission(); return a && b && e && d.Next == DrawRules.Offer.Free;
+            });
+            Case("roll table: none 750 / rune 250; weights 180x5 + resonance 100", () =>
+            {
+                var r = new RngStream(9); var n = new int[6]; int none = 0;
+                for (int i = 0; i < 20000; i++) { int x = RuneRules.Roll(c, r); if (x < 0) none++; else n[x]++; }
+                bool w = true; for (int i = 0; i < 5; i++) w &= n[i] > n[5] * 1.4f;
+                return c.runeChance == 250 && none > 14400 && none < 15600 && w && n[5] > 0;
+            });
+            Case("ExtraDraw: 2nd draw of this intermission is free (no ad); resets next intermission", () =>
+            {
+                var d = new DrawRules(); d.BeginIntermission(true);
+                bool a = d.Consume(false) && d.Next == DrawRules.Offer.Free && d.Consume(false) && d.Next == DrawRules.Offer.None;
+                d.BeginIntermission(); d.Consume(false); return a && d.Next == DrawRules.Offer.Ad;
+            });
+            Case("NextDraw: drawn cards contain at least one rune", () =>
+            {
+                var t = ScriptableObject.CreateInstance<BlockShapeData>(); t.cells = new[] { Vector2Int.zero };
+                var deck = new BlockDeckManager(new[] { t }); var h = new BlockHandManager();
+                h.Add(deck, 3, () => RuneRules.NoRune, () => (int)RuneId.Frost); bool g = h.Runes[0] == (int)RuneId.Frost && h.Runes[1] == -1;
+                h.Add(deck, 3, () => (int)RuneId.Blade, () => (int)RuneId.Frost); g &= h.Runes[3] == 0 && h.Runes[4] == 0; // already had runes: untouched
+                h.Add(deck, 1, () => RuneRules.NoRune); g &= h.Runes[6] == -1; // no guarantee
+                UnityEngine.Object.DestroyImmediate(t); return g;
+            });
+            Case("flow line runs entry -> core (material scrolls toward line start: first point = core)", () =>
+            {
+                var path = new[] { new Vector2Int(15, 3), new Vector2Int(14, 3), new Vector2Int(8, 5) }; // entry ... core
+                var p = GridView.FlowOrder(path, true); var q = GridView.FlowOrder(path, false);
+                return p[0] == path[2] && p[p.Count - 1] == path[0] && q[0] == path[0] && path[0] == new Vector2Int(15, 3);
+            });
+            Case("flow chevrons move toward the core (sampled over two frames)", () =>
+            {
+                float speed = GridView.FlowScrollSpeed(.8f, true); // lines run core (u=0) -> entry
+                float u0 = GridView.ChevronU(10f, speed, 4, 20), u1 = GridView.ChevronU(10f + 1 / 60f, speed, 4, 20);
+                float w0 = GridView.ChevronU(10f, GridView.FlowScrollSpeed(.8f, false), 4, 20), w1 = GridView.ChevronU(10f + 1 / 60f, GridView.FlowScrollSpeed(.8f, false), 4, 20);
+                return speed < 0 && u1 < u0 && w1 > w0; // core->entry lines: u decreases = toward the core; entry->core lines: u increases = toward the core
             });
             Case("placeholder ad succeeds and releases the pause", () =>
             {

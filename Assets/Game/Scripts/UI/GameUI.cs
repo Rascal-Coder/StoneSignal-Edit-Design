@@ -141,7 +141,8 @@ namespace StoneSignal
                 float u = towers.Length > 1 ? i / (float)(towers.Length - 1) : .5f;
                 card.SetParent(towerHand, false);
                 card.anchorMin = card.anchorMax = Vector2.zero; card.pivot = new Vector2(.5f, 0); card.sizeDelta = new Vector2(CW, CH);
-                card.anchoredPosition = new Vector2(24 + CW * .5f + i * 212, 24 + (selected ? 12 : 0));
+                float arc = -Mathf.Abs(u - .5f) * 2f * 14f; // staggered fan: outer cards sit 14 px lower than the centre pair (with the +-4 deg tilt)
+                card.anchoredPosition = new Vector2(24 + CW * .5f + i * 212, 24 + 14 + arc + (selected ? 12 : 0));
                 card.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(4, -4, u));
                 var face = Img(card, "Frame", art ? art.uiCardTower : null, art && art.uiCardTower ? Color.white : Red); Full(face);
                 face.GetComponent<Image>().type = Image.Type.Sliced; // 9-slice L28 B64 R28 T28 (sprite borders from art .meta)

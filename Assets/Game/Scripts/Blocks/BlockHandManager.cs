@@ -15,7 +15,12 @@ namespace StoneSignal {
   /// Replace the hand (run start).
   public void Draw(BlockDeckManager deck,int count,System.Func<int> rollRune=null) { cards.Clear(); runes.Clear(); Selected=0; Add(deck,count,rollRune); }
   /// Append drawn cards (DRAW pile during an intermission).
-  public void Add(BlockDeckManager deck,int count,System.Func<int> rollRune=null) { for(int i=0;i<count&&cards.Count<MaxCards;i++) { var card=deck.Draw(); if(card!=null) { cards.Add(card); runes.Add(rollRune!=null?rollRune():RuneRules.NoRune); } } }
+  /// guaranteedRune (NextDraw reward): if none of the drawn cards rolled a rune, the first one gets guaranteedRune().
+  public void Add(BlockDeckManager deck,int count,System.Func<int> rollRune=null,System.Func<int> guaranteedRune=null) {
+   int start=cards.Count;
+   for(int i=0;i<count&&cards.Count<MaxCards;i++) { var card=deck.Draw(); if(card!=null) { cards.Add(card); runes.Add(rollRune!=null?rollRune():RuneRules.NoRune); } }
+   if(guaranteedRune!=null&&cards.Count>start&&!runes.GetRange(start,cards.Count-start).Exists(r=>r!=RuneRules.NoRune)) runes[start]=guaranteedRune();
+  }
   public void AddCard(BlockShapeData shape,int rune) { if(shape!=null&&cards.Count<MaxCards) { cards.Add(shape); runes.Add(rune); } }
   public bool Select(int i) { if(i<0||i>=cards.Count) return false; Selected=i; return true; }
   public void Consume() { if(cards.Count==0)return; cards.RemoveAt(Selected); runes.RemoveAt(Selected); Selected=System.Math.Min(Selected,System.Math.Max(0,cards.Count-1)); }

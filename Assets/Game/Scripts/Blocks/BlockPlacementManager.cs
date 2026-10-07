@@ -51,7 +51,7 @@ namespace StoneSignal
         /// Rune reward: one wall block from the deck carrying the rune (dropped if the hand is full).
         public void AddRuneCard(int rune) { var shape = Deck.Draw(); if (shape != null) Hand.AddCard(shape, rune); RebuildGhost(); Changed?.Invoke(); }
         public void NotifyChanged() => Changed?.Invoke();
-        public void DrawCards(int count) { Hand.Add(Deck, count, RollRune); RebuildGhost(); Changed?.Invoke(); }
+        public void DrawCards(int count, bool guaranteeRune = false) { Hand.Add(Deck, count, RollRune, guaranteeRune && Runes != null ? () => RuneRules.RollType(Runes, GameRng.Rewards) : (Func<int>)null); RebuildGhost(); Changed?.Invoke(); }
         /// Highlight the real wall blocks under a footprint (art WallHighlight) and keep them out of the instanced batch.
         public void HighlightWalls(Vector2Int[] cells, bool[] valid)
         {

@@ -46,6 +46,8 @@ namespace StoneSignal
         public GameObject pathFlowSegment;
         [Tooltip("Flow segment height over the grid plane (demo 0.82 - 0.55).")]
         public float pathFlowY = .27f;
+        [Tooltip("M_Path_Flow UV scroll moves toward the LineRenderer start (verified in game_v13): points are fed core -> entry so the flow reads entry -> core.")]
+        public bool flowScrollsTowardStart = true;
         public GameObject placeGhostBlock, placeGhostTower;
         [Tooltip("Marks wall-top cells that can take a tower while a tower is selected (pooled).")]
         public GameObject slotHighlight;

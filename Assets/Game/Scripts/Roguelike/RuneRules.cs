@@ -25,9 +25,9 @@ namespace StoneSignal
         public int resonanceRadiusCells = 1;
         [Header("Drawn block rune roll (PLACEHOLDER table for the gameplay designer)")]
         [Tooltip("Per-mille chance a drawn wall block carries a rune.")]
-        public int runeChance = 300;
+        public int runeChance = 250;      // designers v12 review: none 750 / rune 250
         [Tooltip("Relative weights Blade, Swift, Sight, Frost, Bounty, Resonance.")]
-        public int[] runeWeights = { 20, 20, 20, 20, 12, 8 };
+        public int[] runeWeights = { 180, 180, 180, 180, 180, 100 };
         public static RuneConfig CreateDefault() { var c = CreateInstance<RuneConfig>(); c.hideFlags = HideFlags.DontSave; return c; }
     }
 
@@ -75,9 +75,10 @@ namespace StoneSignal
         public static bool InResonance(RuneConfig c, Vector2Int srcMin, Vector2Int srcSize, Vector2Int tgtMin, Vector2Int tgtSize)
             => Gap(srcMin, srcSize, tgtMin, tgtSize) <= c.resonanceRadiusCells;
         /// Roll a rune for a drawn wall block from the rewards stream: NoRune or a RuneId index.
-        public static int Roll(RuneConfig c, RngStream rng)
+        public static int Roll(RuneConfig c, RngStream rng) => rng.Permille(c.runeChance) ? RollType(c, rng) : NoRune;
+        /// Rune type only (weights), used when a rune is guaranteed (NextDraw reward, rune reward option).
+        public static int RollType(RuneConfig c, RngStream rng)
         {
-            if (!rng.Permille(c.runeChance)) return NoRune;
             int total = 0; foreach (int w in c.runeWeights) total += Mathf.Max(0, w);
             if (total <= 0) return NoRune;
             int pick = rng.Range(0, total);
@@ -91,8 +92,10 @@ namespace StoneSignal
     {
         public enum Offer { Free, Ad, None }
         public int Used { get; private set; }
-        public Offer Next => Used == 0 ? Offer.Free : Used == 1 ? Offer.Ad : Offer.None;
-        public void BeginIntermission() { Used = 0; }
+        /// ExtraDraw reward: this intermission's 2nd draw needs no ad.
+        public bool FreeSecond { get; private set; }
+        public Offer Next => Used == 0 ? Offer.Free : Used == 1 ? (FreeSecond ? Offer.Free : Offer.Ad) : Offer.None;
+        public void BeginIntermission(bool freeSecond = false) { Used = 0; FreeSecond = freeSecond; }
         /// Consumes the next offer; ad offers only after the ad reported success.
         public bool Consume(bool adWatched)
         {

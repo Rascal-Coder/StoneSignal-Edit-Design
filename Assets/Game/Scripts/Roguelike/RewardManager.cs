@@ -34,7 +34,7 @@ namespace StoneSignal
                 int index = GameRng.Rewards.Range(0,pool.Count);
                 choices.Add(pool[index]); pool.RemoveAt(index);
                 int rune = RuneRules.NoRune;
-                if (Runes != null && GameRng.Rewards.Permille(Runes.rewardRuneChance)) { var only = RuneConfig.CreateDefault(); only.runeChance = 1000; only.runeWeights = Runes.runeWeights; rune = RuneRules.Roll(only, GameRng.Rewards); Destroy(only); }
+                if (Runes != null && GameRng.Rewards.Permille(Runes.rewardRuneChance)) rune = RuneRules.RollType(Runes, GameRng.Rewards);
                 runeChoices.Add(rune);
             }
             Offered?.Invoke();

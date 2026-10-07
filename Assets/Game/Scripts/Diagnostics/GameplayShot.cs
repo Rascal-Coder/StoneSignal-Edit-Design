@@ -85,9 +85,63 @@ namespace StoneSignal
             yield return new WaitForEndOfFrame();
             string stats = Stats();
             Capture();
+            yield return Breakdown(r => stats += r);
             File.WriteAllText(Path.ChangeExtension(path, ".txt"), stats);
             Debug.Log("GAMEPLAY SHOT " + path + "\n" + stats);
             Application.Quit(0);
+        }
+        // Draw-call breakdown: switch one group off at a time and read the profiler delta (2 frames later).
+        IEnumerator Breakdown(System.Action<string> add)
+        {
+            long Dc() => draws.LastValue;
+            for (int f = 0; f < 6; f++) yield return null; long baseDc = Dc();
+            var report = new System.Text.StringBuilder("\nbreakdown (draw calls removed when the group is hidden; base " + baseDc + "):");
+            IEnumerator Try(string name, List<Behaviour> beh, List<Renderer> rs)
+            {
+                yield return null; yield return null; long b0 = Dc(); // fresh baseline per group (capture renders inflate earlier frames)
+                foreach (var b in beh) if (b) b.enabled = false; foreach (var r in rs) if (r) r.enabled = false;
+                yield return null; yield return null; long d = Dc();
+                foreach (var b in beh) if (b) b.enabled = true; foreach (var r in rs) if (r) r.enabled = true;
+                report.Append("\n  " + name + ": " + (b0 - d) + " of " + b0 + " (" + (beh.Count + rs.Count) + " objects)");
+                yield return null; yield return null;
+            }
+            string Path(Transform t) { var n = t.name; for (var q = t.parent; q != null; q = q.parent) n = q.name + "/" + n; return n; }
+            report.Append("\nprobe line renderers:");
+            foreach (var lr in FindObjectsOfType<LineRenderer>()) if (lr.enabled && lr.gameObject.activeInHierarchy && lr.isVisible)
+            {   var pb = new MaterialPropertyBlock(); lr.GetPropertyBlock(pb);
+                report.Append("\n  " + Path(lr.transform) + " mpb_Speed=" + pb.GetFloat(GridView.FlowSpeedId) + " pts=" + lr.positionCount + " w=" + lr.startWidth + " col=" + lr.startColor + " mat=" + (lr.sharedMaterial ? lr.sharedMaterial.name : "-") + (lr.positionCount > 1 ? " " + lr.GetPosition(0) + "->" + lr.GetPosition(lr.positionCount - 1) : "")); }
+            report.Append("\nprobe renderers in screen box x1650-1920 y(bottom)150-330:");
+            foreach (var r in FindObjectsOfType<Renderer>())
+            {
+                if (!r.enabled || !r.gameObject.activeInHierarchy || r is ParticleSystemRenderer) continue;
+                var sp = s.viewCamera.WorldToScreenPoint(r.bounds.center);
+                if (sp.z > 0 && sp.x > 1650 && sp.y > 150 && sp.y < 330) report.Append("\n  " + Path(r.transform) + " at " + r.bounds.center);
+            }
+            foreach (var n in new[] { "BATTLE", "DrawPileRoot" })
+            {
+                var go = GameObject.Find(n); if (go == null) { foreach (var rt in FindObjectsOfType<RectTransform>()) if (rt.name.StartsWith(n)) { go = rt.gameObject; break; } }
+                if (go == null) continue; var c = new Vector3[4]; ((RectTransform)go.transform).GetWorldCorners(c);
+                report.Append("\nrect " + n + " screen min " + c[0] + " max " + c[2]);
+            }
+            var all = new List<Renderer>(FindObjectsOfType<Renderer>()); var none = new List<Behaviour>(); var noR = new List<Renderer>();
+            List<Renderer> R(System.Func<Renderer, bool> f) => all.FindAll(r => r.enabled && r.gameObject.activeInHierarchy && f(r));
+            bool Under(Component c, string n) { for (var t = c.transform; t != null; t = t.parent) if (t.name.Contains(n)) return true; return false; }
+            var canv = new List<Behaviour>(); foreach (var c in FindObjectsOfType<Canvas>()) if (c.isRootCanvas) canv.Add(c);
+            foreach (var c in FindObjectsOfType<Canvas>()) if (c.isRootCanvas)
+            { var one = new List<Behaviour> { c }; yield return Try("UI canvas '" + c.name + "'", one, noR); }
+            yield return Try("UI all canvases", canv, noR);
+            yield return Try("tower buff icons", none, R(r => r.GetComponentInParent<StoneSignal.VFX.TowerBuffIcons>() != null));
+            yield return Try("resonance aura", none, R(r => Under(r, "ResonanceAura")));
+            yield return Try("rune walls (MPB)", none, R(r => StoneSignal.VFX.RuneInlay.HasRune(r)));
+            yield return Try("placed walls (renderers left)", none, R(r => Under(r, "Placed blocks") && !StoneSignal.VFX.RuneInlay.HasRune(r)));
+            yield return Try("towers", none, R(r => r.GetComponentInParent<Tower>() != null && r.GetComponentInParent<StoneSignal.VFX.TowerBuffIcons>() == null && !Under(r, "ResonanceAura")));
+            yield return Try("enemies", none, R(r => r.GetComponentInParent<Enemy>() != null));
+            yield return Try("dressing", none, R(r => Under(r, "LevelDressing") || Under(r, "Dressing")));
+            yield return Try("ghosts/labels", none, R(r => Under(r, "Ghost") || Under(r, "label") || Under(r, "Range")));
+            yield return Try("particles/VFX", none, R(r => r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer));
+            var inst = new List<Behaviour>(FindObjectsOfType<InstancedBatch>());
+            yield return Try("instanced batches (ground/walls/flow)", inst, noR);
+            add(report.ToString() + "\n");
         }
         void Label(string text, Vector3 at, Color color)
         {
