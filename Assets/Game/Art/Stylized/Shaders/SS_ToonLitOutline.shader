@@ -29,6 +29,9 @@ Shader "StoneSignal/ToonLitOutline"
         _Dissolve ("Dissolve", Range(0,1)) = 0
         _DissolveEdge ("Dissolve Edge Width", Range(0.01,0.3)) = 0.08
         [HDR] _DissolveColor ("Dissolve Edge Color", Color) = (4,2.2,0.8,1)
+        _Mottle ("World Mottle (weathering)", Range(0,1)) = 0
+        _BaseAO ("Base AO Strength", Range(0,1)) = 0
+        _BaseAOHeight ("Base AO Height (m, object Y)", Float) = 0.3
         _Wobble ("Vertex Wobble (Shard)", Range(0,2)) = 0
         _WobbleFreq ("Wobble Frequency", Range(0,12)) = 5
         _OutlineColor ("Outline Color", Color) = (0.118,0.102,0.227,1)

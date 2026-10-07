@@ -160,6 +160,10 @@ ModelImporter:
       meshName: SM_Tower_Tesla_1x1_01_Base
       lodLevel: 0
       meshGeometryBuffer: 0
+    - index: 1
+      meshName: SM_Tower_Tesla_1x1_01_Head
+      lodLevel: 0
+      meshGeometryBuffer: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0

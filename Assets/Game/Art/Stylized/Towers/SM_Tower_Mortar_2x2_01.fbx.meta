@@ -156,6 +156,10 @@ ModelImporter:
       lodLevel: 0
       meshGeometryBuffer: 0
     - index: 1
+      meshName: SM_Tower_Mortar_2x2_01_Barrel
+      lodLevel: 0
+      meshGeometryBuffer: 0
+    - index: 2
       meshName: SM_Tower_Mortar_2x2_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0
@@ -165,6 +169,10 @@ ModelImporter:
       lodLevel: 0
       meshGeometryBuffer: 0
     - index: 1
+      meshName: SM_Tower_Mortar_2x2_01_Barrel
+      lodLevel: 0
+      meshGeometryBuffer: 0
+    - index: 2
       meshName: SM_Tower_Mortar_2x2_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0

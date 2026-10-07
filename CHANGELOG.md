@@ -94,6 +94,16 @@ Validation：引擎编译、美术引用/尺度/URP/无碰撞器检查、第二�
 - 26 VFX prefabs in Assets/Game/VFX/Stylized (+ Resources/StylizedVFX/PF_FX_DamageNumber); showcase scene Assets/Game/Scenes/StylizedVFXShowcase.unity.
 - Added com.unity.textmeshpro 3.0.9 + TMP Essential Resources (Assets/TextMesh Pro).
 
+## Stylized art - level quality pass (2026-10-07)
+- Dense clustered maple canopies with tint variants (M_Foliage_Warm/Gold/Deep); island cliff rebuilt (grass/leaf-litter top, mounds, 5 rock strata, uneven rim).
+- New StoneSignal/Water shader (depth gradient, caustics, depth foam, sparkle) on M_Env_Water_Flat; warmer earthy ground tiles, lighter lavender walls, base AO (_BaseAO) on blocks/tiles/towers.
+- StylizedArtDemo: warm key light, global post volume (Assets/Game/Settings/Stylized/VP_StylizedDemo.asset: bloom, warm WB, saturation, vignette); captures with Game.unity ortho camera. Game.unity/ArtCatalog untouched.
+
+## Stylized art - level pass v4 (2026-10-07)
+- StylizedArtDemo board enlarged to 16x12 (layout only), islands/spawn pushed out, wooden dock walkways + posts at board edges; old foam ring instances removed from the layout (SM_Env_FoamRing_01/PF kept).
+- Water: more teal shallows, deeper range, visible toon ripple lines. Snow smaller/sparser.
+- Glowing tower-slot rings and core glow rings (M_FX_SlotGlow, visual only). Game.unity/ArtCatalog/URP renderer untouched.
+
 ## 2026-10-07 — Stylized 美术接入玩法（塔 / 敌人 / 核心 / 战斗特效）
 
 Added:
@@ -111,3 +121,25 @@ Changed:
 - 伤害数字改为 `DamageNumbers.Spawn`（按塔伤害类型着色，暴击放大）；敌人抵达核心播放 FX_Hit_Core + Heavy 震屏；Seismic 爆炸 Light 震屏；Needle 暴击 0.03s HitStop；普通子弹不震屏。`Time.timeScale` 改动前先 `HitStop.Cancel()`。
 
 Validation：Tuanjie 2022.3.62t16 batchmode 编译通过；`StylizedGameplayWiring.BatchWire` problems=0；`Stage2Validation.Run` 全部 MILESTONE 与 SCENE REFERENCES PASS。Play 模式 VFX 尺寸未目检。
+
+## Stylized art - level pass v5 (2026-10-07)
+- StylizedArtDemo layout: serpentine dirt path through 22 tetromino walls (auto-placed, path-adjacent), 17 turrets (mortar on O, flamer on I, mixed 1x1), 20 enemies along the path. Layout only; no gameplay data changed.
+- Square slot plates (FX shape 8: gold border, fill, diamond icon; M_FX_SlotPlate) under every turret. Contact sheet save now retries.
+
+## Stylized art v6 (2026-10-07)
+- New SM_Env_Board_Cliff_16x12_01 / PF_Env_Board_Cliff_16x12: cliff footprint 0.12-0.3 m beyond the 16x12 grid (VALIDATE tiles-on-terrain).
+- Bridges fitted from the board edge to the measured island edge, both ends on land (VALIDATE bridge W/E/N).
+- Water: smooth depth foam band and soft animated shore wave lines, no hard steps. Island and board have underwater shelves.
+- Towers split into PF_Tower_X > Rig > SM_Tower_X_Base (static) + SM_Tower_X_Head (yaw) > SM_Tower_X_Barrel (pitch, Cannon/Mortar) > SM_Tower_X_Muzzle (+Z = fire direction).
+- Walls rebuilt from per-cell pillowy weathered stones; toon _Mottle world noise. Rough, uneven tiles (visual only).
+- Demo layout: 2x2 core at the centre, 3 routes (W/E/N) from spawn islands. Previews: level_gamecam_v6, level_wide_v6, shore_closeup_v6, blocks_v6.
+- Preview capture falls back to *_new.png if the file is locked.
+
+
+## Stylized art v7 (2026-10-07)
+- Water: kept our own SS_Water (orthographic-safe, no Opaque Texture or renderer change). It now has fine ripples (scale 2.4), fainter caustics and a thin soft shore foam. Evaluated: mozankatip/InteractiveStylizedWater (MIT, Shader Graph, needs Opaque Texture) and tojynick/bmjoy Stylized-Water-Shader-Unity-URP (MIT; depth foam broken with an ortho camera). Rejected: LazyToonShader (GPL-3).
+- Framing: 4 corner decoration islands only; demo game-cam ortho 6.4 (recommended for Game.unity, not applied).
+- Walls: removed the brown moss top faces. Tiles: closed the open top n-gons that read as dark holes.
+- Turrets: no gold slot plates; plinths are stone with metal trim.
+- Docs/ArtDirection.md: value hierarchy and palette retune (darker low-contrast ground, mid walls, desaturated foliage).
+

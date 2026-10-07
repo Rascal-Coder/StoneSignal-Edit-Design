@@ -13,7 +13,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _BaseColor, _ShadowColor, _LitColor, _RimColor, _InnerTint, _OuterTint, _EmissionColor, _FlashColor, _OutlineColor;
     half _UseRamp, _ShadowThreshold, _ShadowSmooth, _ShadowStrength, _AmbientStrength;
     half _RimMin, _RimMax, _RimIntensity, _RimLitBias, _LayerTint, _WindStrength, _HitFlash;
-    half _Dissolve, _DissolveEdge, _Wobble, _WobbleFreq;
+    half _Dissolve, _DissolveEdge, _Wobble, _WobbleFreq, _BaseAO, _BaseAOHeight, _Mottle;
     half4 _DissolveColor;
     float _OutlineWidthPx, _OutlineZOffset;
 CBUFFER_END
@@ -114,6 +114,8 @@ half4 ToonFrag(Varyings i) : SV_Target
     float fres = 1 - saturate(dot(N, V));
     half3 rim = smoothstep(_RimMin, _RimMax, fres) * saturate(ndl + _RimLitBias) * _RimColor.rgb * _RimIntensity;
     half3 c = diffuse + ambient + rim + _EmissionColor.rgb;
+    c *= 1 + (SS_Noise(i.positionWS * 2.3) * 0.7 + SS_Noise(i.positionWS * 7.1) * 0.3 - 0.5) * _Mottle; // weathered mottling
+    c *= lerp(1 - _BaseAO, 1, saturate(i.positionOS.y / max(_BaseAOHeight, 1e-3))); // contact AO at object base
     c = lerp(c, _FlashColor.rgb, _HitFlash);
     c = lerp(c, _DissolveColor.rgb, edge);
     c = MixFog(c, i.fog);

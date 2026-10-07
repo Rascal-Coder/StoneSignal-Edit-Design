@@ -35,10 +35,13 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientStrength: 0.35
+    - _BaseAO: 0.2
+    - _BaseAOHeight: 0.22
     - _Dissolve: 0
     - _DissolveEdge: 0.08
     - _HitFlash: 0
     - _LayerTint: 0
+    - _Mottle: 0.18
     - _OutlineWidthPx: 3
     - _OutlineZOffset: 0.0004
     - _RimIntensity: 0.25

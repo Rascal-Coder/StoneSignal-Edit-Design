@@ -24,17 +24,18 @@ for d in (ART, SRC, PREVIEW_DIR, os.path.join(ART, "Environment"), os.path.join(
 
 # ------------------------------------------------------------------ palette (spec ch.2 / 7.2)
 PALETTE = [
-    ("LeafOrange", "E3713A"), ("LeafRed", "BF4D37"), ("LeafGold", "F0A352"), ("LeafHighlight", "F5D27A"),
+    ("LeafOrange", "D27A4A"), ("LeafRed", "B05442"), ("LeafGold", "DCA060"), ("LeafHighlight", "E6C98A"),
     ("LeafCore", "8E3436"), ("LeafShadow", "64273B"), ("Trunk", "6D3646"), ("Wood", "B07A55"),
-    ("StoneTopWarm", "C599C1"), ("StoneTopCool", "AC95C5"), ("StoneSide", "A38E89"), ("StoneDark", "503E5D"),
+    ("StoneTopWarm", "C6B4DE"), ("StoneTopCool", "BCAAD8"), ("StoneSide", "A38E89"), ("StoneDark", "503E5D"),
     ("Ground", "A4514C"), ("GroundDark", "874A4A"), ("Sand", "F6D692"), ("Brick", "E9A47B"),
     ("MechWhite", "D9D4DA"), ("Indigo", "2B3A63"), ("AllyYellow", "F2B330"), ("OutlineIndigo", "1E1A3A"),
     ("Skin", "F3C9A0"), ("Metal", "6E6A80"), ("WaterDeep", "0754A0"), ("WaterShallow", "1C7CD0"),
     ("Foam", "E6F0FF"), ("GrassDry", "D9A441"),
-    ("GroundLavTop", "7E6A80"), ("GroundLavSide", "5A4560"), ("EnemyRed", "D21C36"), ("EnemyDark", "3B1E2E"),
+    ("GroundLavTop", "8C6C54"), ("GroundLavSide", "5E4236"), ("EnemyRed", "D21C36"), ("EnemyDark", "3B1E2E"),
     ("EnemyWhite", "F0F0F0"), ("EnemyEye", "FFE45C"), ("SlotKinetic", "FFE7A0"), ("SlotHE", "FFB52E"),
     ("SlotFire", "FF7A1F"), ("SlotIce", "7FE3FF"), ("SlotElec", "C77DFF"), ("SteelBlue", "C8D6FF"),
-    ("GroundLavTop2", "746079"), ("Dirt", "9A6A5A"), ("DirtDark", "7A5048"), ("Moss", "B8743A"),
+    ("GroundLavTop2", "84664F"), ("Dirt", "967259"), ("DirtDark", "7A5444"), ("Moss", "A4784C"),
+    ("WallSide", "A08CC0"), ("WallSideDark", "7E6CA4"), ("StrataA", "9A5A4E"), ("StrataB", "7A4A52"), ("StrataC", "B07A68"), ("GrassTop", "B4844A"),
 ]
 PIDX = {n: i for i, (n, _) in enumerate(PALETTE)}
 def hex_rgb(h): return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -138,6 +139,31 @@ def jitter_bm(bm, amount):
     for v in bm.verts: v.co += Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1))) * amount
 
 # ------------------------------------------------------------------ assets
+def rough_tile(bm, ztop):
+    """Uneven, rounded, gently undulating tile top (visual only; stays within +-2 cm so walls sit stably)."""
+    top_e = [e for e in bm.edges if all(v.co.z > ztop - .05 for v in e.verts)]
+    bmesh.ops.subdivide_edges(bm, edges=top_e, cuts=2, use_grid_fill=True)
+    # grid fill can leave the inner top n-gon open (read as a dark 'hole'): close any open boundary on the top
+    holes = [e for e in bm.edges if e.is_boundary and all(v.co.z > ztop - .05 for v in e.verts)]
+    if holes:
+        new = bmesh.ops.holes_fill(bm, edges=holes, sides=0)["faces"]
+        for f in new: f.material_index = PIDX["GroundLavTop"]
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    ph = rng.uniform(0, 6)
+    for v in bm.verts:
+        if v.co.z > ztop - .06:
+            v.co.z += .012 * math.sin(v.co.x * 5 + ph) * math.cos(v.co.y * 4 - ph) + rng.uniform(-.004, .004)
+        if abs(abs(v.co.x) - .49) < .06 or abs(abs(v.co.y) - .49) < .06:  # irregular edges
+            v.co.x += rng.uniform(-.015, .015); v.co.y += rng.uniform(-.015, .015)
+def tile_detail(parts, ztop):
+    for k in range(rng.randint(2, 5)):  # pebbles
+        parts.append(ico(rng.uniform(.03, .06), 1, (rng.uniform(-.4, .4), rng.uniform(-.4, .4), ztop), (1.3, 1, .5), (0, 0, rng.random() * 6),
+                         rng.choice(["StoneSide", "DirtDark", "GroundLavSide"]), jitter=.01))
+    if rng.random() < .6:  # dirt patch
+        parts.append(ico(rng.uniform(.12, .22), 1, (rng.uniform(-.3, .3), rng.uniform(-.3, .3), ztop - .005), (1.5, 1, .08), (0, 0, rng.random() * 6), "Dirt", jitter=.02))
+    if rng.random() < .5:  # crack
+        parts.append(box((rng.uniform(.18, .35), .014, .01), (rng.uniform(-.2, .2), rng.uniform(-.2, .2), ztop + .002), "GroundLavSide", rot=(0, 0, rng.uniform(0, 3.14))))
+
 def tile(variant):
     top = "GroundLavTop"
     bm = box((.98, .98, .25), (0, 0, .125), "GroundLavSide")
@@ -148,7 +174,8 @@ def tile(variant):
     for f in bm.faces:
         if f.normal.z > .5: f.material_index = PIDX[top]
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z < -.9], context='FACES_ONLY')
-    parts = [bm]
+    rough_tile(bm, .25)
+    parts = [bm]; tile_detail(parts, .255)
     if variant == "B":  # worn tile: a chipped inset slab
         parts.append(box((.36, .30, .02), (.18, -.2, .255), "GroundLavSide", bevel=.01))
     return [to_object(f"SM_Env_Tile_Stone_{variant}_01", parts)]
@@ -158,32 +185,43 @@ TETRIS = {"1x1": [(0, 0)], "TetrisI": [(0, 0), (0, 1), (0, 2), (0, 3)], "TetrisO
           "TetrisZ": [(0, 1), (1, 1), (1, 0), (2, 0)], "TetrisL": [(0, 0), (0, 1), (0, 2), (1, 0)],
           "TetrisJ": [(1, 0), (1, 1), (1, 2), (0, 0)]}
 def stone_block(shape, warm):
-    bm = bmesh.new()
-    for (x, y) in TETRIS[shape]:
-        tmp = bmesh.new(); bmesh.ops.create_cube(tmp, size=1.0)
-        bmesh.ops.scale(tmp, vec=Vector((1, 1, .6)), verts=tmp.verts)
-        bmesh.ops.translate(tmp, vec=Vector((x, -y, .3)), verts=tmp.verts)
-        me = bpy.data.meshes.new("t"); tmp.to_mesh(me); tmp.free(); bm.from_mesh(me); bpy.data.meshes.remove(me)
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
-    seen = {}
-    for f in bm.faces: seen.setdefault(frozenset(v.index for v in f.verts), []).append(f)
-    inner = [f for fs in seen.values() if len(fs) > 1 for f in fs]
-    bmesh.ops.delete(bm, geom=inner, context='FACES_ONLY')
-    bmesh.ops.dissolve_limit(bm, angle_limit=math.radians(1), verts=bm.verts, edges=bm.edges)
-    # shrink 0.92 per cell footprint look: inset outline by scaling about each cell is costly; keep 1 cell
-    bmesh.ops.scale(bm, vec=Vector((.96, .96, 1)), verts=bm.verts)
-    edges = [e for e in bm.edges if e.is_manifold and e.calc_face_angle(0) > math.radians(30)]
-    bmesh.ops.bevel(bm, geom=edges, offset=.04, offset_type='OFFSET', segments=1, profile=.5, affect='EDGES', clamp_overlap=True)
+    """Player tetromino wall: one chunky pillowy stone per cell (visible seams), size/rotation jitter, chipped corners,
+    cracks, moss/dirt patches, per-cell colour variation (vertex B) - shader adds world-space mottling (_Mottle)."""
+    parts = []
     top = "StoneTopWarm" if warm else "StoneTopCool"
-    for f in bm.faces:
-        n = f.normal
-        f.material_index = PIDX[top] if n.z > .5 else (PIDX["StoneDark"] if (n.x > .5 or n.y > .5) else PIDX["StoneSide"])
-        f.smooth = False
-    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z < -.9], context='FACES_ONLY')
-    layer = bm.loops.layers.float_color.new("Color")
-    for f in bm.faces:
-        for l in f.loops: l[layer] = (0, 1, 1, 1)
-    return [to_object(f"SM_Env_Rock_{shape}_01", [bm])]
+    for (x, y) in TETRIS[shape]:
+        sz = rng.uniform(.86, .91); h = rng.uniform(.56, .62)
+        bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
+        bmesh.ops.scale(bm, vec=Vector((sz, sz, h)), verts=bm.verts)
+        bmesh.ops.bevel(bm, geom=list(bm.edges), offset=.11, offset_type='OFFSET', segments=3, profile=.62, affect='EDGES', clamp_overlap=True)
+        for v in bm.verts:  # pillowy bulge + weathering jitter, chipped corners
+            v.co.x *= 1 + .04 * (1 - abs(v.co.z) / (h / 2)); v.co.y *= 1 + .04 * (1 - abs(v.co.z) / (h / 2))
+            v.co += Vector((rng.uniform(-.012, .012), rng.uniform(-.012, .012), rng.uniform(-.01, .01)))
+        for k in range(rng.randint(1, 3)):  # chips: push a random corner region inward
+            c = Vector((rng.choice((-1, 1)) * sz / 2, rng.choice((-1, 1)) * sz / 2, h / 2))
+            for v in bm.verts:
+                d = (v.co - c).length
+                if d < .16: v.co += (Vector((0, 0, 0)) - v.co).normalized() * (.16 - d) * .5
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(rng.uniform(-4, 4)), 3, 'Z'))
+        bmesh.ops.translate(bm, vec=Vector((x + rng.uniform(-.015, .015), -y + rng.uniform(-.015, .015), h / 2)), verts=bm.verts)
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().z < .02 and f.normal.z < -.9], context='FACES_ONLY')
+        mossy = rng.random() < .45; vb = rng.uniform(.25, 1.0)
+        layer = bm.loops.layers.float_color.new("Color")
+        for f in bm.faces:
+            n = f.normal; cz = f.calc_center_median().z
+            if n.z > .6: f.material_index = PIDX[top]  # v7: no brown moss lids, mottle comes from the shader
+            elif cz < .12: f.material_index = PIDX["DirtDark"] if rng.random() < .5 else PIDX["WallSideDark"]  # dirt at the foot
+            else: f.material_index = PIDX["WallSideDark"] if (n.x > .5 or n.y > .5) else PIDX["WallSide"]
+            for l in f.loops: l[layer] = (0, 1, vb, rng.random())
+        parts.append(bm)
+        for k in range(rng.randint(0, 2)):  # cracks: thin dark slivers on a side face
+            side = rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
+            cx = x + side[0] * (sz / 2 + .004); cy = -y + side[1] * (sz / 2 + .004)
+            off = rng.uniform(-.2, .2)
+            parts.append(box((.012 if side[0] else .18, .18 if side[0] else .012, .012), (cx + (0 if side[0] else off), cy + (off if side[0] else 0), rng.uniform(.2, .45)),
+                             "StoneDark", rot=(0, 0, 0) if True else None))
+            parts[-1].transform(Matrix.Translation((cx, cy, 0)) @ Matrix.Rotation(math.radians(rng.uniform(-50, 50)), 4, 'X' if side[0] else 'Y') @ Matrix.Translation((-cx, -cy, 0)))
+    return [to_object(f"SM_Env_Rock_{shape}_01", parts)]
 
 def leaf_tuft(center, normal, r, color, vc):
     """Serrated maple-leaf tuft: 5-point star card, cupped outward (10 tris)."""
@@ -299,26 +337,35 @@ def grass_tuft():
 
 # ---------------------------------------------------------------- turrets (mount on block top; pivot = footprint base centre)
 def plinth(fx, fy, h=.16):
-    return [box((fx * .9, fy * .9, h), (0, 0, h / 2), "Indigo", bevel=.03),
-            box((fx * .9 + .02, fy * .9 + .02, .04), (0, 0, h - .02), "AllyYellow", bevel=.01)]
+    return [box((fx * .9, fy * .9, h), (0, 0, h / 2), "StoneSide", bevel=.03),
+            box((fx * .9 + .02, fy * .9 + .02, .04), (0, 0, h - .02), "Metal", bevel=.01)]
 
-def turret(name, base, head, pivot):
+def turret(name, base, head, pivot, barrel=None, bpivot=None, muzzle=None):
+    """Hierarchy (Unity): <SM>_Base (static) and <SM>_Head (yaw pivot, centred) > <SM>_Barrel (pitch pivot) > <SM>_Muzzle (empty).
+    Blender keeps Head parented to Base for export convenience; StylizedArtIntegration re-parents Base/Head as siblings."""
     b = to_object(name + "_Base", base)
-    objs = [b]
+    objs = [b]; last = b
     if head:
-        h = to_object(name + "_Head", head, origin=tuple(pivot)); h.parent = b; objs.append(h)
+        h = to_object(name + "_Head", head, origin=tuple(pivot)); h.parent = b; objs.append(h); last = h
+        if barrel:
+            br = to_object(name + "_Barrel", barrel, origin=tuple(bpivot)); br.parent = b; br.matrix_parent_inverse = b.matrix_world.inverted()  # flat under Base (FBX bake breaks depth-3); Unity re-nests
+            objs.append(br); last = br
+    if muzzle:
+        m = bpy.data.objects.new(name + "_Muzzle", None); m.empty_display_size = .1
+        bpy.context.scene.collection.objects.link(m); m.location = muzzle
+        m.parent = b; m.matrix_parent_inverse = b.matrix_world.inverted(); objs.append(m)
     return objs
 
 def cannon():
     base = plinth(1, 1) + [box((.58, .58, .3), (0, 0, .31), "MechWhite", bevel=.07, seg=2)]
     for (x, y) in ((-.29, -.15), (-.29, .15), (.29, -.15), (.29, .15)):
         base.append(uv_sphere(.04, 8, 5, (x * 1.02, y, .34), (.35, 1, 1), "Indigo"))
-    head = [uv_sphere(.27, 14, 8, (0, 0, .62), (1, 1, .82), "MechWhite"), cyl(.2, .2, .08, 12, (0, 0, .52), "Indigo"),
-            cyl(.11, .12, .5, 12, (0, -.38, .64), "Indigo", rot=(math.radians(90), 0, 0), smooth=True),
-            cyl(.15, .15, .1, 12, (0, -.62, .64), "OutlineIndigo", rot=(math.radians(90), 0, 0), bevel=.015),
-            cyl(.125, .125, .06, 12, (0, -.2, .64), "SlotHE", rot=(math.radians(90), 0, 0))]
+    head = [uv_sphere(.27, 14, 8, (0, 0, .62), (1, 1, .82), "MechWhite"), cyl(.2, .2, .08, 12, (0, 0, .52), "Indigo")]
+    barrel = [cyl(.11, .12, .5, 12, (0, -.38, .64), "Indigo", rot=(math.radians(90), 0, 0), smooth=True),
+              cyl(.15, .15, .1, 12, (0, -.62, .64), "OutlineIndigo", rot=(math.radians(90), 0, 0), bevel=.015),
+              cyl(.125, .125, .06, 12, (0, -.2, .64), "SlotHE", rot=(math.radians(90), 0, 0))]
     for side in (-1, 1): head.append(box((.08, .3, .14), (side * .27, 0, .62), "MechWhite", bevel=.025))
-    return turret("SM_Tower_Cannon_1x1_01", base, head, (0, 0, .6))
+    return turret("SM_Tower_Cannon_1x1_01", base, head, (0, 0, .46), barrel, (0, -.15, .64), (0, -.68, .64))
 
 def gatling():
     base = plinth(1, 1) + [box((.5, .5, .26), (0, 0, .29), "MechWhite", bevel=.06, seg=2)]
@@ -329,18 +376,18 @@ def gatling():
         a = k * math.tau / 6
         head.append(cyl(.035, .035, .42, 6, (math.cos(a) * .09, -.42, .58 + math.sin(a) * .09), "Metal", rot=(math.radians(90), 0, 0)))
     head.append(box((.1, .16, .06), (.12, .1, .74), "AllyYellow", bevel=.015))
-    return turret("SM_Tower_Gatling_1x1_01", base, head, (0, 0, .46))
+    return turret("SM_Tower_Gatling_1x1_01", base, head, (0, 0, .46), muzzle=(0, -.66, .58))
 
-def tesla():
+def tesla():  # static base; Head = coil stack (may spin about Y)
     base = plinth(1, 1) + [cyl(.3, .24, .22, 10, (0, 0, .27), "MechWhite", bevel=.02)]
-    z = .38
+    head = []; z = .38
     for k in range(4):
-        base.append(cyl(.17 - k * .02, .17 - k * .02, .06, 10, (0, 0, z), "Metal" if k % 2 else "Indigo")); z += .06
-        base.append(cyl(.1, .1, .07, 8, (0, 0, z), "MechWhite")); z += .07
-    base.append(cyl(.03, .03, .2, 6, (0, 0, z + .08), "Metal"))
-    base.append(uv_sphere(.14, 12, 8, (0, 0, z + .26), (1, 1, 1), "SlotElec"))
-    base.append(cyl(.2, .2, .03, 12, (0, 0, z + .26), "Metal"))
-    return turret("SM_Tower_Tesla_1x1_01", base, None, None)
+        head.append(cyl(.17 - k * .02, .17 - k * .02, .06, 10, (0, 0, z), "Metal" if k % 2 else "Indigo")); z += .06
+        head.append(cyl(.1, .1, .07, 8, (0, 0, z), "MechWhite")); z += .07
+    head.append(cyl(.03, .03, .2, 6, (0, 0, z + .08), "Metal"))
+    head.append(uv_sphere(.14, 12, 8, (0, 0, z + .26), (1, 1, 1), "SlotElec"))
+    head.append(cyl(.2, .2, .03, 12, (0, 0, z + .26), "Metal"))
+    return turret("SM_Tower_Tesla_1x1_01", base, head, (0, 0, .38), muzzle=(0, 0, z + .26))
 
 def frost():
     base = plinth(1, 1) + [cyl(.32, .26, .24, 6, (0, 0, .28), "MechWhite", bevel=.02)]
@@ -349,7 +396,7 @@ def frost():
             cyl(.06, 0.0, .26, 6, (.17, -.06, .6), "SlotIce", rot=(0, math.radians(25), 0)),
             cyl(.06, 0.0, .24, 6, (-.16, .05, .58), "SlotIce", rot=(0, math.radians(-28), 0)),
             box((.1, .3, .08), (0, -.24, .48), "MechWhite", bevel=.02)]
-    return turret("SM_Tower_Frost_1x1_01", base, head, (0, 0, .42))
+    return turret("SM_Tower_Frost_1x1_01", base, head, (0, 0, .42), muzzle=(0, -.4, .48))
 
 def flamer():  # 1x2 footprint, long axis = Blender Y
     base = plinth(1, 2) + [box((.7, 1.5, .24), (0, 0, .28), "MechWhite", bevel=.07, seg=2)]
@@ -360,7 +407,7 @@ def flamer():  # 1x2 footprint, long axis = Blender Y
             cyl(.08, .2, .34, 10, (0, -.7, .58), "Indigo", rot=(math.radians(90), 0, 0)),
             cyl(.15, .15, .04, 10, (0, -.86, .58), "SlotFire", rot=(math.radians(90), 0, 0)),
             cyl(.04, .04, .3, 6, (0, -.1, .6), "Metal", rot=(math.radians(90), 0, 0))]
-    return turret("SM_Tower_Flamer_1x2_01", base, head, (0, -.3, .44))
+    return turret("SM_Tower_Flamer_1x2_01", base, head, (0, -.3, .44), muzzle=(0, -.9, .58))
 
 def mortar():  # 2x2
     base = plinth(2, 2, .18) + [cyl(.75, .7, .26, 12, (0, 0, .31), "MechWhite", bevel=.04)]
@@ -370,11 +417,11 @@ def mortar():  # 2x2
     head = [uv_sphere(.55, 16, 8, (0, 0, .44), (1, 1, .6), "MechWhite", hemi=True), cyl(.58, .58, .06, 16, (0, 0, .46), "Indigo")]
     br = [cyl(.26, .3, .7, 14, (0, 0, .35), "Indigo", smooth=True), cyl(.3, .3, .1, 14, (0, 0, .7), "OutlineIndigo"),
           cyl(.27, .27, .08, 14, (0, 0, .3), "SlotHE")]
-    for bm_ in br:
-        bm_.transform(Matrix.Translation((0, -.1, .6)) @ Matrix.Rotation(math.radians(-28), 4, 'X'))
-        head.append(bm_)
-    for side in (-1, 1): head.append(box((.14, .34, .3), (side * .34, -.05, .72), "MechWhite", bevel=.03))
-    return turret("SM_Tower_Mortar_2x2_01", base, head, (0, 0, .44))
+    for bm_ in br:  # barrel leans FORWARD (-Y = Unity +Z) 28 deg
+        bm_.transform(Matrix.Translation((0, .1, .6)) @ Matrix.Rotation(math.radians(28), 4, 'X'))
+    for side in (-1, 1): head.append(box((.14, .34, .3), (side * .34, .05, .72), "MechWhite", bevel=.03))
+    tip = (0, .1 - .78 * math.sin(math.radians(28)), .6 + .78 * math.cos(math.radians(28)))
+    return turret("SM_Tower_Mortar_2x2_01", base, head, (0, 0, .44), br, (0, .1, .6), tip)
 
 # ---------------------------------------------------------------- enemies: skeletal rigs + SS_Move / SS_Hit / SS_Death
 FPS = 30
@@ -578,13 +625,15 @@ def tile_c():
     for f in bm.faces:
         if f.normal.z > .5: f.material_index = PIDX["GroundLavTop2"]
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z < -.9], context='FACES_ONLY')
-    return [to_object("SM_Env_Tile_Stone_C_01", [bm, box((.2, .14, .02), (-.22, .25, .255), "GroundLavTop", bevel=.006)])]
+    rough_tile(bm, .25); parts = [bm, box((.2, .14, .02), (-.22, .25, .255), "GroundLavTop", bevel=.006)]; tile_detail(parts, .255)
+    return [to_object("SM_Env_Tile_Stone_C_01", parts)]
 
 def tile_dirt():
     bm = box((1.0, 1.0, .22), (0, 0, .11), "DirtDark")
     for f in bm.faces:
         if f.normal.z > .5: f.material_index = PIDX["Dirt"]
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z < -.9], context='FACES_ONLY')
+    rough_tile(bm, .22)
     parts = [bm]
     for k in range(4):  # pebbles
         parts.append(ico(.05, 1, (rng.uniform(-.35, .35), rng.uniform(-.35, .35), .23), (1.3, 1, .5), (0, 0, rng.random()), "DirtDark"))
@@ -595,7 +644,7 @@ def island():
     parts = []
     def slab(w, z0, z1, top, side, jit):
         bm = bmesh.new()
-        bmesh.ops.create_circle(bm, cap_ends=True, segments=16, radius=1.0)
+        bmesh.ops.create_circle(bm, cap_ends=True, segments=26, radius=1.0)
         for v in bm.verts:
             a = math.atan2(v.co.y, v.co.x)
             sq = 1 / max(abs(math.cos(a)), abs(math.sin(a))) ** .75  # squircle
@@ -613,14 +662,72 @@ def island():
         for fc in bm.faces:
             for l in fc.loops: l[layer] = (0, 1, rng.random(), 1)
         return bm
-    parts.append(slab(4.1, .25, .55, "LeafRed", "GroundDark", .03))
-    parts.append(slab(4.0, -.35, .27, "GroundDark", "StoneSide", .06))
-    parts.append(slab(3.7, -.95, -.33, "StoneSide", "StoneDark", .08))
-    parts.append(slab(3.2, -1.6, -.93, "StoneDark", "StoneDark", .1))
-    for k in range(10):  # rock chunks sticking out of the strata
-        a = rng.uniform(0, math.tau); z = rng.uniform(-1.0, .1)
-        parts.append(ico(rng.uniform(.18, .32), 1, (math.cos(a) * 1.95, math.sin(a) * 1.95, z), (1.3, 1, .8), (0, 0, a), "StoneSide", jitter=.04))
+    # leafy/grassy top with uneven rim, then 5 jittered rock strata stepping in/out (spec: layered cliff, strata)
+    top = slab(4.15, .3, .55, "GrassTop", "StrataC", .07)
+    for v in top.verts:
+        if v.co.z > .5: v.co.z += rng.uniform(-.05, .12) if v.co.xy.length > .3 else 0
+    parts.append(top)
+    global ISLAND_TOP
+    ISLAND_TOP = [(v.co.x, v.co.y) for v in top.verts if v.co.z > .4]
+    parts.append(slab(5.4, -2.0, -.42, "StrataB", "StrataB", .1))  # underwater shelf -> shallow depth falloff ring
+    for (w, z0, z1, c1, c2, j) in [(4.05, .02, .32, "StrataA", "StrataA", .08), (4.2, -.3, .04, "StrataB", "StrataC", .1),
+                                    (3.85, -.7, -.28, "StrataC", "StrataA", .1), (3.95, -1.05, -.68, "StrataA", "StrataB", .12),
+                                    (3.4, -1.6, -1.03, "StoneDark", "StoneDark", .12)]:
+        parts.append(slab(w, z0, z1, c1, c2, j))
+    for k in range(14):  # rock chunks sticking out of the strata
+        a = rng.uniform(0, math.tau); z = rng.uniform(-1.1, .15)
+        parts.append(ico(rng.uniform(.18, .36), 1, (math.cos(a) * 1.98, math.sin(a) * 1.98, z), (1.4, 1, .7), (0, 0, a), rng.choice(["StoneSide", "StrataC", "StrataB"]), jitter=.05))
+    for k in range(16):  # grass / leaf mounds -> height variation on top
+        a = rng.uniform(0, math.tau); r = rng.uniform(0, 1.75)
+        parts.append(ico(rng.uniform(.3, .65), 1, (math.cos(a) * r, math.sin(a) * r, .55), (1.2, 1, .32), (0, 0, a),
+                         rng.choice(["GrassTop", "Moss", "LeafOrange", "LeafRed", "GrassDry"]), jitter=.06))
+    for k in range(40):  # leaf litter
+        a = rng.uniform(0, math.tau); r = rng.uniform(.2, 1.95)
+        parts.append(ico(rng.uniform(.05, .1), 1, (math.cos(a) * r, math.sin(a) * r, .62), (1.4, 1, .25), (0, 0, a),
+                         rng.choice(["LeafGold", "LeafOrange", "LeafHighlight", "LeafRed"])))
     return [to_object("SM_Env_Island_Cliff_4x4_01", parts)]
+
+ISLAND_TOP = []
+def rect_poly(w, h, step, out_lo, out_hi):
+    """Closed rectangle perimeter (CCW), sampled every ~step, each point pushed outward by U(out_lo, out_hi); corners pushed diagonally."""
+    corners = [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
+    pts = []
+    for i in range(4):
+        (ax, ay), (bx, by) = corners[i], corners[(i + 1) % 4]
+        L = math.hypot(bx - ax, by - ay); nx, ny = (by - ay) / L, -(bx - ax) / L  # outward normal for CCW
+        n = max(1, int(round(L / step)))
+        for k in range(n):
+            t = k / n; o = rng.uniform(out_lo, out_hi); x, y = ax + (bx - ax) * t, ay + (by - ay) * t
+            if k == 0: pts.append((x + math.copysign(o, x), y + math.copysign(o, y)))
+            else: pts.append((x + nx * o, y + ny * o))
+    return pts
+def prism(poly, z0, z1, top, side):
+    bm = bmesh.new(); vs = [bm.verts.new((x, y, z1)) for x, y in poly]; f = bm.faces.new(vs)
+    ext = bmesh.ops.extrude_face_region(bm, geom=[f])
+    for g in ext["geom"]:
+        if isinstance(g, bmesh.types.BMVert): g.co.z = z0
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for fc in bm.faces: fc.material_index = PIDX[top] if fc.normal.z > .5 else (PIDX[side] if fc.normal.z > -.5 else PIDX["StoneDark"])
+    layer = bm.loops.layers.float_color.new("Color")
+    for fc in bm.faces:
+        for l in fc.loops: l[layer] = (0, 1, rng.random(), 1)
+    return bm
+BOARD_W, BOARD_H = 16.0, 12.0
+BOARD_TOP = []
+def board_cliff():
+    """Base under the 16x12 tile grid: top outline always outside the grid (+0.12..0.3 m), jittered strata below, underwater shelf."""
+    global BOARD_TOP
+    parts = []
+    BOARD_TOP = rect_poly(BOARD_W, BOARD_H, .5, .12, .3)
+    parts.append(prism(BOARD_TOP, .2, .55, "GrassTop", "StrataC"))
+    for (dw, z0, z1, lo, hi, c) in [(0, -.2, .22, -.02, .3, "StrataA"), (.2, -.6, -.18, -.1, .3, "StrataB"), (-.2, -1.0, -.58, -.15, .2, "StrataC"),
+                                    (0, -1.4, -.98, -.2, .25, "StrataA"), (-.6, -1.8, -1.38, -.2, .1, "StoneDark"), (2.2, -2.2, -.45, 0, .5, "StrataB")]:
+        parts.append(prism(rect_poly(BOARD_W + dw, BOARD_H + dw, .6, lo, hi), z0, z1, c, c))
+    for k in range(30):
+        side = rng.randrange(4); t = rng.uniform(-.48, .48)
+        x, y = [(t * BOARD_W, -BOARD_H / 2 - .15), (BOARD_W / 2 + .15, t * BOARD_H), (t * BOARD_W, BOARD_H / 2 + .15), (-BOARD_W / 2 - .15, t * BOARD_H)][side]
+        parts.append(ico(rng.uniform(.2, .4), 1, (x, y, rng.uniform(-1.2, .1)), (1.4, 1, .7), (0, 0, rng.random() * 6), rng.choice(["StoneSide", "StrataC", "StrataB"]), jitter=.05))
+    return [to_object("SM_Env_Board_Cliff_16x12_01", parts)]
 
 def bridge():  # 1 m segment, walk axis = X, deck top z 0.8
     parts = []
@@ -755,7 +862,7 @@ oe.inputs[0].default_value = (0.013, 0.010, 0.04, 1); on.links.new(oe.outputs[0]
 ASSETS = [
     ("Environment", "SM_Env_Tile_Stone_A_01", lambda: tile("A")), ("Environment", "SM_Env_Tile_Stone_B_01", lambda: tile("B")),
     ("Environment", "SM_Env_Tile_Stone_C_01", tile_c), ("Environment", "SM_Env_Tile_Dirt_01", tile_dirt),
-    ("Environment", "SM_Env_Island_Cliff_4x4_01", island), ("Environment", "SM_Env_Bridge_Plank_01", bridge),
+    ("Environment", "SM_Env_Island_Cliff_4x4_01", island), ("Environment", "SM_Env_Board_Cliff_16x12_01", board_cliff), ("Environment", "SM_Env_Bridge_Plank_01", bridge),
     ("Environment", "SM_Env_Dock_Post_01", dock_post), ("Environment", "SM_Prop_Brazier_01", brazier),
     ("Environment", "SM_Prop_Campfire_01", campfire), ("Environment", "SM_Prop_Lantern_01", lantern),
     ("Environment", "SM_Env_RockPile_01", rock_pile), ("Environment", "SM_Env_Stump_01", stump), ("Environment", "SM_Env_Log_01", log),
@@ -825,8 +932,11 @@ def place(name, loc, rotz=0.0, scale=1.0, outline=0.0):
     inst.location = Vector(loc) + root.location; inst.rotation_euler = (0, 0, rotz); inst.scale = (scale,) * 3
     pv.objects.link(inst)
     kids = []
+    cmap = {root: inst}
     for c in objs[1:]:
-        k = c.copy(); k.data = c.data.copy() if outline else c.data; k.parent = inst; pv.objects.link(k); kids.append(k)
+        k = c.copy()
+        if c.data is not None: k.data = c.data.copy() if outline else c.data
+        k.parent = cmap.get(c.parent, inst); pv.objects.link(k); kids.append(k); cmap[c] = k
         for m in k.modifiers:
             if m.type == 'ARMATURE': m.object = inst
     if inst.type == 'ARMATURE' and inst.animation_data: inst.animation_data.use_nla = False
@@ -880,57 +990,115 @@ if DO_RENDER:
     def put(n, x, y, z, rz=0.0, sc=(1, 1, 1)):
         L.append({"asset": n, "pos": [round(x, 3), round(y, 3), round(z, 3)], "rotZ": round(math.degrees(rz), 2), "scale": list(sc)})
     lr = random.Random(7)
-    PATH = {(x + .5, -.5) for x in range(-6, 5)} | {(4.5, -1.5)}
-    WALLS = [("L", -4.5, 2.5), ("O", -1.5, 1.5), ("T", 1.5, 2.5), ("I", 5.5, 2.5), ("S", -4.5, -1.5), ("Z", -.5, -1.5), ("J", 2.5, -1.5)]
-    put("SM_Env_Island_Cliff_4x4_01", 0, 0, 0, 0, (3.05, 2.05, 1))
-    for x in range(-6, 6):
-        for y in range(-4, 4):
+    # Core (Ember) 2x2 at board centre; 3 enemy paths enter from W / E / N edges (bridges from spawn islands) and wind to the core.
+    def put(n, x, y, z, rz=0.0, sc=(1, 1, 1), rx=0.0, ry=0.0):
+        d = {"asset": n, "pos": [round(x, 3), round(y, 3), round(z, 3)], "rotZ": round(math.degrees(rz), 2), "scale": list(sc)}
+        if rx or ry: d["rotX"] = round(math.degrees(rx), 2); d["rotY"] = round(math.degrees(ry), 2)
+        L.append(d)
+    def poly_line(pts):
+        out = []
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            n = int(abs(bx - ax) + abs(by - ay))
+            for k in range(n): out.append((ax + (bx - ax) * k / n, ay + (by - ay) * k / n))
+        out.append(pts[-1]); return out
+    ROUTES = {"W": [(-7.5, 2.5), (-4.5, 2.5), (-4.5, -2.5), (-1.5, -2.5), (-1.5, -.5)],
+              "E": [(7.5, -2.5), (4.5, -2.5), (4.5, 2.5), (1.5, 2.5), (1.5, .5)],
+              "N": [(.5, 5.5), (.5, 4.5), (-2.5, 4.5), (-2.5, 1.5), (-1.5, 1.5), (-1.5, .5)]}
+    PATHS = {k: poly_line(v) for k, v in ROUTES.items()}
+    PATH = set(c for v in PATHS.values() for c in v)
+    CORE = (0.0, 0.0); CORE_CELLS = {(-.5, -.5), (.5, -.5), (-.5, .5), (.5, .5)}
+    put("SM_Env_Board_Cliff_16x12_01", 0, 0, 0)
+    def inside(pt, poly):
+        x, y = pt; c = False
+        for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]):
+            if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1: c = not c
+        return c
+    occ = set(PATH) | CORE_CELLS | {(CORE[0] + dx, CORE[1] + dy) for dx in (-1.5, 1.5) for dy in (-1.5, -.5, .5, 1.5)} | {(dx, dy) for dx in (-.5, .5) for dy in (-1.5, 1.5)}
+    # walls first (tiles under walls stay perfectly flat so walls sit stably)
+    def near_path(cells): return any(abs(cx - px) + abs(cy - py) <= 1 for (cx, cy) in cells for (px, py) in PATH)
+    shapes = ["TetrisO", "TetrisT", "TetrisL", "TetrisI", "TetrisS", "TetrisJ", "TetrisZ", "TetrisO", "1x1"]
+    walls = []; wr = random.Random(11); tries = 0; wallcells = set()
+    while len(walls) < 22 and tries < 6000:
+        tries += 1
+        sh = shapes[len(walls) % len(shapes)]
+        px, py = wr.randint(-8, 7) + .5, wr.randint(-6, 5) + .5
+        if math.hypot(px, py) > 6.5 and wr.random() < .6: continue   # bias walls (and turrets) around the core
+        cells = [(px + cx, py - cy) for (cx, cy) in TETRIS[sh]]
+        if any(not (-8 < cx < 8 and -6 < cy < 6) for cx, cy in cells): continue
+        if any(c in occ for c in cells) or not near_path(cells): continue
+        occ |= set(cells); wallcells |= set(cells); walls.append((sh, px, py))
+        put("SM_Env_Rock_%s_01" % sh, px, py, .8)
+    tile_fail = 0
+    for x in range(-8, 8):
+        for y in range(-6, 6):
             c = (x + .5, y + .5)
-            if c in PATH: put("SM_Env_Tile_Dirt_01", c[0], c[1], .55, lr.choice([0, math.pi / 2]))
+            for corner in [(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)]:
+                if not inside(corner, BOARD_TOP): tile_fail += 1
+            flat = c in wallcells or c in CORE_CELLS
+            dz = 0 if flat else lr.uniform(-.03, .03); tx = 0 if flat else math.radians(lr.uniform(-1.5, 1.5)); ty = 0 if flat else math.radians(lr.uniform(-1.5, 1.5))
+            if c in PATH: put("SM_Env_Tile_Dirt_01", c[0], c[1], .55 + dz * .5, lr.choice([0, math.pi / 2]), rx=tx * .5, ry=ty * .5)
             else: put(lr.choice(["SM_Env_Tile_Stone_A_01"] * 4 + ["SM_Env_Tile_Stone_B_01", "SM_Env_Tile_Stone_C_01", "SM_Env_Tile_Stone_C_01"]),
-                      c[0], c[1], .55, lr.choice([0, math.pi / 2, math.pi, -math.pi / 2]))
-    for k, x, y in WALLS: put("SM_Env_Rock_Tetris%s_01" % k, x, y, .8)
-    put("SM_Env_Rock_1x1_01", -2.5, -3.5, .8)
-    T = 1.4
-    for n, x, y, r in [("SM_Tower_Cannon_1x1_01", -4.5, 2.5, -.4), ("SM_Tower_Mortar_2x2_01", -1.0, 1.0, .3), ("SM_Tower_Gatling_1x1_01", 2.5, 2.5, .6),
-                       ("SM_Tower_Flamer_1x2_01", 5.5, 1.0, 0), ("SM_Tower_Tesla_1x1_01", -3.5, -2.5, 0), ("SM_Tower_Frost_1x1_01", .5, -1.5, .5),
-                       ("SM_Tower_Cannon_1x1_01", 3.5, -2.5, 2.6), ("SM_Tower_Gatling_1x1_01", -2.5, -3.5, 1.2)]:
-        put(n, x, y, T, r)
-    put("SM_Prop_Core_01", 5.0, -2.0, .8)
-    for n, x in [("SM_Enemy_Shard_01", -5.2), ("SM_Enemy_Shard_01", -4.8), ("SM_Enemy_Drifter_01", -3.4), ("SM_Enemy_Skimmer_01", -2.0),
-                 ("SM_Enemy_Splitter_01", -.6), ("SM_Enemy_Bulwark_01", 1.0), ("SM_Enemy_Flyer_01", 2.4), ("SM_Enemy_Drifter_01", 3.6),
-                 ("SM_Enemy_Boss_01", -9.8)]:
-        put(n, x, -.5, .8 if x > -6 else .55, math.radians(90))
-    # spawn island + bridge (enemy path enters from the west)
-    put("SM_Env_Island_Cliff_4x4_01", -10.2, -.5, 0, .3)
-    put("SM_Env_FoamRing_01", -10.2, -.5, 0, .3)
-    for bx in (-7.7, -6.7, -8.7 + .2): put("SM_Env_Bridge_Plank_01", bx, -.5, 0)
-    put("SM_Env_Bridge_Plank_01", -7.7 + 1.0 + .0, -.5, 0) if False else None
-    put("SM_Prop_Lantern_01", -8.3, .2, .55); put("SM_Prop_Lantern_01", -8.3, -1.2, .55, math.pi)
-    put("SM_Prop_Campfire_01", -10.6, 1.0, .55); put("SM_Env_Log_01", -11.2, .5, .55, .6); put("SM_Env_Stump_01", -9.8, 1.4, .55)
+                      c[0], c[1], .55 + dz, lr.choice([0, math.pi / 2, math.pi, -math.pi / 2]), rx=tx, ry=ty)
+    assert tile_fail == 0, "tiles overhang board cliff: %d corners" % tile_fail
+    print("VALIDATE tiles-on-terrain OK: 192 tiles, all corners inside board cliff top")
+    T = 1.4; small = ["SM_Tower_Cannon_1x1_01", "SM_Tower_Gatling_1x1_01", "SM_Tower_Tesla_1x1_01", "SM_Tower_Frost_1x1_01"]
+    walls.sort(key=lambda w: math.hypot(w[1], w[2]))
+    for i, (sh, px, py) in enumerate(walls[:17]):  # closest walls to the core get turrets
+        if sh == "TetrisO": n, x, y = "SM_Tower_Mortar_2x2_01", px + .5, py - .5
+        elif sh == "TetrisI": n, x, y = "SM_Tower_Flamer_1x2_01", px, py - .5
+        else: n, x, y = small[i % 4], px, py
+        put(n, x, y, T, wr.uniform(0, math.tau))   # rotZ here = HEAD yaw (Unity keeps Base grid-aligned)
+    put("SM_Prop_Core_01", CORE[0], CORE[1], .8)
+    roster = ["SM_Enemy_Drifter_01", "SM_Enemy_Shard_01", "SM_Enemy_Skimmer_01", "SM_Enemy_Splitter_01", "SM_Enemy_Bulwark_01", "SM_Enemy_Flyer_01", "SM_Enemy_Drifter_01"]
+    k = 0
+    for route in PATHS.values():
+        for i in range(0, len(route) - 2, 2):
+            ex, ey = route[i]; nx, ny = route[i + 1]
+            put(roster[k % len(roster)], ex + wr.uniform(-.12, .12), ey + wr.uniform(-.12, .12), .8, math.atan2(ny - ey, nx - ex) + math.pi / 2); k += 1
+    # spawn islands + measured, validated bridges (board edge -> island edge, both ends on land)
+    SPAWNS = {"W": (-12.6, 2.5, 1.0, .3), "E": (12.6, -2.5, 1.0, 2.0), "N": (.5, 10.6, 1.0, 1.1)}
+    def island_poly(ix, iy, sc, rz):
+        c, s_ = math.cos(rz), math.sin(rz)
+        return [(ix + (x * c - y * s_) * sc * .96, iy + (x * s_ + y * c) * sc * .96) for (x, y) in ISLAND_TOP]
+    bridge_ok = 0
+    for key, (ix, iy, sc, rz) in SPAWNS.items():
+        put("SM_Env_Island_Cliff_4x4_01", ix, iy, 0, rz, (sc, sc, 1))
+        ipoly = island_poly(ix, iy, sc, rz)
+        ex, ey = ROUTES[key][0]
+        d = (ix - ex, iy - ey); dl = math.hypot(*d); d = (d[0] / dl, d[1] / dl)
+        # board edge exit along d, then march to the island shore
+        t = 0
+        while inside((ex + d[0] * t, ey + d[1] * t), BOARD_TOP): t += .02
+        start_t = t - .45
+        while not inside((ex + d[0] * t, ey + d[1] * t), ipoly): t += .02
+        end_t = t + .45
+        p0 = (ex + d[0] * start_t, ey + d[1] * start_t); p1 = (ex + d[0] * end_t, ey + d[1] * end_t)
+        assert inside(p0, BOARD_TOP) and inside(p1, ipoly), "bridge %s not grounded" % key
+        Lb = end_t - start_t; n = max(1, math.ceil(Lb / 1.0)); seg = Lb / n; ang = math.atan2(d[1], d[0])
+        for j in range(n):
+            m = start_t + seg * (j + .5)
+            put("SM_Env_Bridge_Plank_01", ex + d[0] * m, ey + d[1] * m, 0, ang, (seg, 1, 1))
+        for side in (-1, 1):
+            for tt in (start_t + .1, end_t - .1):
+                put("SM_Env_Dock_Post_01", ex + d[0] * tt - d[1] * .62 * side, ey + d[1] * tt + d[0] * .62 * side, 0, lr.uniform(0, 6))
+        put("SM_Prop_Lantern_01", ex + d[0] * (end_t + .3) - d[1] * .8, ey + d[1] * (end_t + .3) + d[0] * .8, .55, ang)
+        print("VALIDATE bridge %s OK: len %.2f m, %d segments, ends on board and island" % (key, Lb, n)); bridge_ok += 1
+        for q in range(8):  # trees on the far side of spawn islands
+            a = ang + lr.uniform(-1.6, 1.6); r = lr.uniform(.6, 1.6)
+            put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, 6), (lr.uniform(.8, 1.3),) * 3)
+    put("SM_Enemy_Boss_01", SPAWNS["W"][0], SPAWNS["W"][1], .55, math.radians(90))
+    put("SM_Prop_Campfire_01", SPAWNS["E"][0] + .6, SPAWNS["E"][1] - .9, .55)
     # surrounding islands with dense layered trees
-    isles = [(-8.5, 7.0, 1.25, .2), (2.0, 8.5, 1.4, .9), (10.5, 5.0, 1.15, 1.6), (11.0, -5.5, 1.3, 2.4), (-1.0, -9.0, 1.2, 3.0), (-11.0, -7.0, 1.0, .5)]
+    isles = [(-12.2, 9.6, 1.3, .2), (12.6, 9.2, 1.2, 1.6), (12.8, -9.8, 1.1, 2.4), (-12.6, -9.4, 1.0, .5)]  # v7: 4 corner framing islands, partly off-screen
     for (ix, iy, sc, rz) in isles:
         put("SM_Env_Island_Cliff_4x4_01", ix, iy, 0, rz, (sc, sc, 1))
-        put("SM_Env_FoamRing_01", ix, iy, 0, rz, (sc, sc, 1))
-        for k in range(int(7 * sc)):
-            a = lr.uniform(0, math.tau); r = lr.uniform(0, 1.45 * sc)
-            put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, math.tau), (lr.uniform(.85, 1.2),) * 3)
-        put("SM_Env_Leaves_01", ix + .5, iy - .4, .55, lr.random() * 6, (sc, sc, 1))
+        for k2 in range(int(16 * sc)):
+            a = lr.uniform(0, math.tau); r = (1.0 - lr.random() ** 2) * 1.75 * sc
+            put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, math.tau), (lr.uniform(.8, 1.45),) * 3)
         put(lr.choice(["SM_Env_RockPile_01", "SM_Env_Stump_01", "SM_Env_Log_01"]), ix - 1.2 * sc, iy - 1.0 * sc, .55, lr.random() * 6)
-    for ix, iy in [(-10.2, -.5)]:
-        for k in range(4):
-            a = lr.uniform(1.2, 5.2); put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * 1.4, iy + math.sin(a) * 1.4, .55, lr.uniform(0, 6))
-    # board edge trees + props
-    for x, y in [(-6.6, 3.2), (-6.7, -3.4), (6.6, 3.4), (6.7, -3.6), (-2.0, 4.6), (2.8, 4.7), (0.5, -4.7)]:
+    for x, y in [(-8.6, 5.6), (-8.7, -5.6), (8.6, 5.6), (8.7, -5.6), (-6.0, 6.7), (5.8, 6.7), (-5.5, -6.7), (3.5, -6.7)]:
         put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), x, y, .55, lr.uniform(0, 6), (lr.uniform(.9, 1.15),) * 3)
-    put("SM_Env_FoamRing_01", 0, 0, 0, 0, (3.05, 2.05, 1))
-    put("SM_Prop_Brazier_01", 3.5, -3.5, .8); put("SM_Prop_Brazier_01", 5.5, -3.5, .8)
-    put("SM_Prop_Barrel_01", -5.5, 3.5, .8); put("SM_Prop_Crate_01", -5.4, 2.7, .8, .3); put("SM_Env_RockPile_01", 5.5, 3.5, .8)
-    put("SM_Env_Grass_Tuft_01", -3.3, .2, .8); put("SM_Env_Grass_Tuft_01", 1.4, -3.5, .8); put("SM_Env_Leaves_01", -1.0, -3.3, .8, 1)
-    put("SM_Env_Rock_Small_01", 4.4, 3.5, .8)
-    for (px, py) in [(-7.2, .6), (-7.2, -1.6), (-8.9, .7), (7.0, -1.0), (7.3, 1.5), (-4.0, 5.2), (4.5, -5.0), (-6.5, -5.5)]:
-        put("SM_Env_Dock_Post_01", px, py, 0, lr.uniform(0, 6))
+    put("SM_Prop_Brazier_01", 1.5, -1.5, .8); put("SM_Prop_Brazier_01", -1.5, 1.5 + 1, .8)
     with open(os.path.join(SRC, "level_layout.json"), "w") as f:
         json.dump({"note": "Blender coords (Z up). Unity: pos=(-x, z, -y), yaw=-rotZ, scale=(sx, sz, sy)", "items": L}, f, indent=1)
     clear()
@@ -948,6 +1116,14 @@ if DO_RENDER:
             "SM_Enemy_Boss_01"], "enemies_lineup.png", 1.9)
     lineup(["SM_Env_Rock_TetrisI_01", "SM_Env_Rock_TetrisO_01", "SM_Env_Rock_TetrisT_01", "SM_Env_Rock_TetrisS_01",
             "SM_Env_Rock_TetrisZ_01", "SM_Env_Rock_TetrisL_01", "SM_Env_Rock_TetrisJ_01", "SM_Env_Tile_Stone_A_01"], "blocks_lineup.png", 3.2)
+    # close-up: per-cell weathered tetromino stones on rough ground tiles
+    clear()
+    for gx in range(-4, 4):
+        for gy in range(-3, 3):
+            place(lr_tile := random.choice(["SM_Env_Tile_Stone_A_01", "SM_Env_Tile_Stone_B_01", "SM_Env_Tile_Stone_C_01"]), (gx + .5, gy + .5, 0))
+    for n, x, y in [("SM_Env_Rock_TetrisT_01", -2.5, 1.5), ("SM_Env_Rock_TetrisO_01", .5, .5), ("SM_Env_Rock_TetrisL_01", 2.5, 1.5), ("SM_Env_Rock_1x1_01", -1.5, -1.5), ("SM_Env_Rock_TetrisS_01", 1.5, -1.5)]:
+        place(n, (x, y, .25))
+    shoot("blocks_v7.png", (-2.5, -6.5, 4.2), (0, 0, .4), 42)
     clear()
     for i, n in enumerate(["SM_Env_Tree_Maple_A_01", "SM_Env_Tree_Maple_B_01", "SM_Env_Tree_Maple_C_01"]):
         place(n, ((i - 1) * 2.4, 0, 0), rotz=i * .8)
@@ -984,7 +1160,15 @@ if DO_RENDER:
             sheet[y0:y0 + H, ci * W:(ci + 1) * W] = px
             bpy.data.images.remove(im)
     out = bpy.data.images.new("anim_sheet", W * len(cols), H * len(names), alpha=True)
-    out.pixels = sheet.ravel(); out.filepath_raw = os.path.join(PREVIEW_DIR, "anim_contact_sheet.png"); out.file_format = 'PNG'; out.save()
+    out.pixels = sheet.ravel(); out.file_format = 'PNG'
+    dst = os.path.join(PREVIEW_DIR, "anim_contact_sheet.png")
+    for attempt in range(5):
+        try:
+            if os.path.exists(dst): os.remove(dst)
+            out.filepath_raw = dst; out.save(); break
+        except Exception as ex:
+            print("contact sheet save retry", attempt, ex); import time; time.sleep(1.5)
+            out.filepath_raw = os.path.join(PREVIEW_DIR, "anim_contact_sheet_%d.png" % attempt)
     print("RENDERED anim_contact_sheet.png", names, [c[0] for c in cols])
     bg.inputs[0].default_value = old_bg
     if ground.name in pv.objects: pv.objects.unlink(ground)

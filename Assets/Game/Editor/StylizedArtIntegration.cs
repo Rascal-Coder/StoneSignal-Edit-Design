@@ -62,6 +62,7 @@ public static class StylizedArtIntegration
         ("Environment", "SM_Env_Tile_Stone_C_01", "PF_Env_Tile_Stone_C", "Env"),
         ("Environment", "SM_Env_Tile_Dirt_01", "PF_Env_Tile_Dirt", "Env"),
         ("Environment", "SM_Env_Island_Cliff_4x4_01", "PF_Env_Island_Cliff_4x4", "Env"),
+        ("Environment", "SM_Env_Board_Cliff_16x12_01", "PF_Env_Board_Cliff_16x12", "Env"),
         ("Environment", "SM_Env_Bridge_Plank_01", "PF_Env_Bridge_Plank", "Env"),
         ("Environment", "SM_Env_Dock_Post_01", "PF_Env_Dock_Post", "Env"),
         ("Environment", "SM_Prop_Brazier_01", "PF_Prop_Brazier", "Env"),
@@ -135,7 +136,17 @@ public static class StylizedArtIntegration
         string wp = MatDir + "M_Env_Water_Flat.mat";
         var water = AssetDatabase.LoadAssetAtPath<Material>(wp);
         if (water == null) { water = new Material(Shader.Find("Universal Render Pipeline/Unlit")); AssetDatabase.CreateAsset(water, wp); }
-        water.SetColor("_BaseColor", Hex("0754A0")); EditorUtility.SetDirty(water);
+        water.shader = Shader.Find("StoneSignal/Water"); water.renderQueue = 2950;
+        water.SetColor("_ShallowColor", Hex("33C7C2")); water.SetColor("_DeepColor", Hex("0B4A9A")); water.SetFloat("_DepthRange", 4.5f); water.SetFloat("_CausticStrength", .45f); water.SetColor("_BaseColor", Hex("0754A0"));
+        EditorUtility.SetDirty(water);
+        block.SetFloat("_BaseAO", .5f); block.SetFloat("_BaseAOHeight", .45f); block.SetFloat("_Mottle", .35f);
+        env.SetFloat("_Mottle", .18f); water.SetFloat("_FoamDepth", .22f); water.SetFloat("_RippleScale", 2.4f);
+        env.SetFloat("_BaseAO", .2f); env.SetFloat("_BaseAOHeight", .22f);
+        tower.SetFloat("_BaseAO", .3f); tower.SetFloat("_BaseAOHeight", .35f);
+        foreach (var (n, tint) in new[] { ("M_Foliage_Warm", "FFC8A8"), ("M_Foliage_Gold", "FFF0A0"), ("M_Foliage_Deep", "E8A0A0") })
+        {
+            var fv = Mat(n, false); fv.CopyPropertiesFromMaterial(fol); fv.SetColor("_BaseColor", Hex(tint)); EditorUtility.SetDirty(fv);
+        }
         return new Dictionary<string, Material> { ["Env"] = env, ["Foliage"] = fol, ["Grass"] = grass, ["Tower"] = tower,
             ["Enemy"] = enemy, ["Shard"] = shard, ["Block"] = block, ["Cliff"] = cliff, ["Water"] = water };
     }
@@ -157,6 +168,7 @@ public static class StylizedArtIntegration
             r.shadowCastingMode = a.mat == "Grass" ? ShadowCastingMode.Off : ShadowCastingMode.On;
             if (r is SkinnedMeshRenderer smr) { smr.updateWhenOffscreen = false; }
         }
+        if (a.folder == "Towers") RestructureTower(rig.transform, mesh, a.fbx);
         if (a.folder == "Enemies")
         {
             var clips = AssetDatabase.LoadAllAssetsAtPath(ArtDir + a.folder + "/" + a.fbx + ".fbx").OfType<AnimationClip>()
@@ -201,6 +213,27 @@ public static class StylizedArtIntegration
         UnityEngine.Object.DestroyImmediate(root);
     }
 
+    /// Tower contract for gameplay: PF_Tower_X > Rig > {fbx}_Base (static, grid aligned)
+    ///                                              > {fbx}_Head (yaw pivot) > {fbx}_Barrel (pitch pivot, Cannon/Mortar) > {fbx}_Muzzle (+Z = fire dir)
+    static void RestructureTower(Transform rig, GameObject mesh, string fbx)
+    {
+        PrefabUtility.UnpackPrefabInstance(mesh, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        Transform Find(string suf) => mesh.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.EndsWith(suf));
+        var head = Find("_Head"); var muzzle = Find("_Muzzle"); var baseT = Find("_Base");
+        var barrel = Find("_Barrel");
+        if (head != null && barrel != null) barrel.SetParent(head, true);
+        if (muzzle != null) muzzle.SetParent(barrel != null ? barrel : head != null ? head : muzzle.parent, true);
+        if (baseT == null) { baseT = mesh.transform; }
+        if (head != null) head.SetParent(rig, true);
+        if (baseT != mesh.transform) { baseT.SetParent(rig, true); if (mesh.transform.childCount == 0 && mesh.GetComponent<Renderer>() == null) UnityEngine.Object.DestroyImmediate(mesh); }
+        baseT.name = fbx + "_Base";
+        if (muzzle != null)
+        {
+            var dir = fbx.Contains("Mortar") ? new Vector3(0, Mathf.Cos(28 * Mathf.Deg2Rad), Mathf.Sin(28 * Mathf.Deg2Rad)) : fbx.Contains("Tesla") ? Vector3.up : Vector3.forward;
+            muzzle.rotation = Quaternion.LookRotation(dir, dir == Vector3.up ? Vector3.forward : Vector3.up);
+        }
+    }
+
     static GameObject Place(string prefab, Transform parent, Vector3 pos, float yaw = 0, float scale = 1)
     {
         var p = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + prefab + ".prefab");
@@ -214,16 +247,19 @@ public static class StylizedArtIntegration
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         var light = new GameObject("Directional Light").AddComponent<Light>();
-        light.type = LightType.Directional; light.color = Hex("FFE9CC"); light.intensity = 1.3f; light.shadows = LightShadows.Soft;
-        light.transform.rotation = Quaternion.Euler(50, -40, 0);
+        // warm key light, cool sky fill (ambient trilight), reference golden-hour mood
+        light.type = LightType.Directional; light.color = Hex("FFD3A0"); light.intensity = 1.45f; light.shadows = LightShadows.Soft;
+        light.transform.rotation = Quaternion.Euler(48, -35, 0);
         RenderSettings.ambientMode = AmbientMode.Trilight;
-        RenderSettings.ambientSkyColor = Hex("9FB8E0"); RenderSettings.ambientEquatorColor = Hex("8A7FA0"); RenderSettings.ambientGroundColor = Hex("4A3A55");
+        RenderSettings.ambientSkyColor = Hex("86A6E8"); RenderSettings.ambientEquatorColor = Hex("A88C9C"); RenderSettings.ambientGroundColor = Hex("4A3A55");
         RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear; RenderSettings.fogStartDistance = 45; RenderSettings.fogEndDistance = 90;
         RenderSettings.fogColor = Hex("6A8CC8");
         var cam = new GameObject("Main Camera").AddComponent<Camera>(); cam.tag = "MainCamera";
         cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = Hex("03357A"); cam.fieldOfView = 30;
         cam.transform.position = new Vector3(-6.5f, 13.5f, -14f); cam.transform.LookAt(new Vector3(0, .6f, 0));
-        cam.gameObject.AddComponent<UniversalAdditionalCameraData>();
+        var camData = cam.gameObject.AddComponent<UniversalAdditionalCameraData>();
+        camData.renderPostProcessing = true; camData.requiresDepthTexture = true; cam.allowHDR = true;
+        BuildPostFx();
 
         var world = new GameObject("StylizedBatch1").transform;
         var water = GameObject.CreatePrimitive(PrimitiveType.Plane); water.name = "Water";
@@ -241,15 +277,35 @@ public static class StylizedArtIntegration
         foreach (var it in layout.items)
         {
             if (!byFbx.TryGetValue(it.asset, out var pf)) { Debug.LogWarning("Layout asset without prefab " + it.asset); continue; }
-            var go = Place(pf, world, new Vector3(-it.pos[0], it.pos[2], -it.pos[1]), -it.rotZ);
+            bool tower = pf.StartsWith("PF_Tower");
+            var go = Place(pf, world, new Vector3(-it.pos[0], it.pos[2], -it.pos[1]), tower ? 0 : -it.rotZ);
+            if (it.rotX != 0 || it.rotY != 0) go.transform.rotation = Quaternion.Euler(-it.rotX, -it.rotZ, -it.rotY);
             go.transform.localScale = new Vector3(it.scale[0], it.scale[2], it.scale[1]);
+            if (tower)  // base stays grid aligned; only the head yaws (and barrel pitches) - verifies the split
+            {
+                var head = go.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name.EndsWith("_Head"));
+                if (head) head.localRotation = Quaternion.Euler(0, -it.rotZ, 0) * head.localRotation;
+                var barrel = go.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name.EndsWith("_Barrel"));
+                if (barrel) barrel.localRotation = barrel.localRotation * Quaternion.Euler(-8f, 0, 0);
+            }
+            // v7: no gold slot plates under turrets (turret plinth is stone/metal now)
+            if (pf == "PF_Prop_Core") { SlotMarker(world, go.transform.position + Vector3.up * .02f, new Vector2(3.2f, 3.2f), Hex("5FD0FF"), 1); SlotMarker(world, go.transform.position + Vector3.up * .03f, new Vector2(2.2f, 2.2f), Hex("A8ECFF"), 1); }
+            if (pf.Contains("Tree"))  // tint variation (material variants, serialized as prefab overrides)
+            {
+                int h = Mathf.Abs((int)(it.pos[0] * 73 + it.pos[1] * 131)) % 4;
+                if (h > 0)
+                {
+                    var vm = AssetDatabase.LoadAssetAtPath<Material>(MatDir + new[] { "", "M_Foliage_Warm", "M_Foliage_Gold", "M_Foliage_Deep" }[h] + ".mat");
+                    foreach (var r in go.GetComponentsInChildren<Renderer>()) r.sharedMaterials = Enumerable.Repeat(vm, r.sharedMaterials.Length).ToArray();
+                }
+            }
         }
         // snow (spec 8.x weather): soft white flakes over the whole level
         var snow = new GameObject("FX_Weather_Snow").AddComponent<ParticleSystem>();
         snow.transform.SetParent(world); snow.transform.position = new Vector3(0, 9, 0); snow.transform.rotation = Quaternion.Euler(90, 0, 0);
-        var main = snow.main; main.loop = true; main.prewarm = true; main.startLifetime = 9; main.startSpeed = .9f; main.startSize = .07f;
+        var main = snow.main; main.loop = true; main.prewarm = true; main.startLifetime = 9; main.startSpeed = .9f; main.startSize = .035f;
         main.startColor = Hex("F4F8FF"); main.maxParticles = 1500; main.simulationSpace = ParticleSystemSimulationSpace.World;
-        var em = snow.emission; em.rateOverTime = 120;
+        var em = snow.emission; em.rateOverTime = 40;
         var sh = snow.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(36, 26, 1);
         var noise = snow.noise; noise.enabled = true; noise.strength = .4f; noise.frequency = .3f;
         string smp = MatDir + "M_FX_Snow.mat";
@@ -260,14 +316,61 @@ public static class StylizedArtIntegration
         cam.fieldOfView = 32;
         cam.transform.position = new Vector3(9f, 21f, 25f); cam.transform.LookAt(new Vector3(0, .5f, .5f));
         EditorSceneManager.SaveScene(scene, ScenePath);
-        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png")) File.Delete(old);
+        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v7.png"))) File.Delete(old);
         Capture(cam, PreviewDir + "unity_demo.png");
         var ls = light.shadows; light.shadows = LightShadows.None;
         Capture(cam, PreviewDir + "unity_demo_noshadow.png");
         light.shadows = ls;
+        // Game.unity Main Camera (read-only copy): orthographic size 9.2, same rotation, same offset to the board centre
+        var gRot = new Quaternion(0.3691325f, 0.13881999f, -0.05586581f, 0.91725093f); var gPos = new Vector3(-3.2f, 17.4f, -18.4f);
+        var fwd = gRot * Vector3.forward; float tHit = (.8f - gPos.y) / fwd.y;
+        var wide = (cam.transform.position, cam.transform.rotation, cam.fieldOfView);
+        cam.orthographic = true; cam.orthographicSize = GameCamOrthoV7;  // tighter framing so the board fills the screen cam.transform.rotation = gRot; cam.transform.position = new Vector3(0, .8f, 0) - fwd * tHit;
+        cam.farClipPlane = 200;
+        Capture(cam, PreviewDir + "level_gamecam_v7.png");
+        cam.orthographic = false; cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
+        Capture(cam, PreviewDir + "level_wide_v7.png");
+        cam.transform.position = new Vector3(3.2f, 3.4f, -5.2f); cam.transform.LookAt(new Vector3(-.3f, .2f, -8.6f)); cam.fieldOfView = 40;
+        Capture(cam, PreviewDir + "shore_closeup_v7.png");
+        cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
+        EditorSceneManager.SaveScene(scene, ScenePath);
     }
 
-    [Serializable] class LayoutItem { public string asset; public float[] pos; public float rotZ; public float[] scale; }
+    // Glowing slot / core ring decal: additive procedural ring quad lying on the surface (visual only, no collider).
+    // Recommended Game.unity Main Camera orthographic size (Game.unity is read-only for art; 程序开发 to apply). Was 9.2.
+    public const float GameCamOrthoV7 = 6.4f;
+
+    static void SlotMarker(Transform parent, Vector3 pos, Vector2 size, Color c, int shape)
+    {
+        string mp = MatDir + (shape == 8 ? "M_FX_SlotPlate.mat" : "M_FX_SlotGlow.mat");
+        var m = AssetDatabase.LoadAssetAtPath<Material>(mp);
+        if (m == null) { m = new Material(Shader.Find("StoneSignal/FXAdditive")); AssetDatabase.CreateAsset(m, mp); }
+        m.SetFloat("_Shape", shape); m.SetFloat("_RingWidth", .14f); m.SetFloat("_Intensity", shape == 8 ? 3.2f : 1.6f); m.SetColor("_TintColor", Color.white);
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad); q.name = "FX_SlotGlow"; UnityEngine.Object.DestroyImmediate(q.GetComponent<Collider>());
+        q.transform.SetParent(parent); q.transform.position = pos + Vector3.up * .015f; q.transform.rotation = Quaternion.Euler(90, 0, 0);
+        q.transform.localScale = new Vector3(size.x, size.y, 1);
+        var mesh = UnityEngine.Object.Instantiate(q.GetComponent<MeshFilter>().sharedMesh); var cols = new Color[mesh.vertexCount];
+        for (int i = 0; i < cols.Length; i++) cols[i] = c; mesh.colors = cols; q.GetComponent<MeshFilter>().sharedMesh = mesh;
+        var r = q.GetComponent<MeshRenderer>(); r.sharedMaterial = m; r.shadowCastingMode = ShadowCastingMode.Off;
+    }
+
+    static void BuildPostFx()
+    {
+        const string vpPath = "Assets/Game/Settings/Stylized/VP_StylizedDemo.asset";
+        Directory.CreateDirectory("Assets/Game/Settings/Stylized");
+        AssetDatabase.DeleteAsset(vpPath);
+        var prof = ScriptableObject.CreateInstance<VolumeProfile>(); AssetDatabase.CreateAsset(prof, vpPath);
+        var bloom = prof.Add<Bloom>(true); bloom.intensity.Override(.7f); bloom.threshold.Override(.9f); bloom.scatter.Override(.65f);
+        var ca = prof.Add<ColorAdjustments>(true); ca.saturation.Override(16); ca.contrast.Override(10); ca.postExposure.Override(.1f);
+        var wb = prof.Add<WhiteBalance>(true); wb.temperature.Override(12); wb.tint.Override(4);
+        var vg = prof.Add<Vignette>(true); vg.intensity.Override(.3f); vg.smoothness.Override(.45f); vg.color.Override(Hex("1A1030"));
+        var tm = prof.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
+        foreach (var c in prof.components) { c.name = c.GetType().Name; AssetDatabase.AddObjectToAsset(c, prof); }
+        EditorUtility.SetDirty(prof); AssetDatabase.SaveAssets();
+        var vol = new GameObject("PostFX_Volume").AddComponent<Volume>(); vol.isGlobal = true; vol.sharedProfile = prof;
+    }
+
+    [Serializable] class LayoutItem { public string asset; public float[] pos; public float rotZ; public float rotX; public float rotY; public float[] scale; }
     [Serializable] class Layout { public LayoutItem[] items; }
 
     internal static void Capture(Camera cam, string file)
@@ -277,7 +380,9 @@ public static class StylizedArtIntegration
         var prev = RenderTexture.active; RenderTexture.active = rt;
         var img = new Texture2D(1600, 900, TextureFormat.RGB24, false);
         img.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0); img.Apply();
-        File.WriteAllBytes(file, img.EncodeToPNG());
+        var png = img.EncodeToPNG();
+        try { File.WriteAllBytes(file, png); }
+        catch (IOException) { var alt = Path.ChangeExtension(file, null) + "_new.png"; File.WriteAllBytes(alt, png); Debug.LogWarning("Preview locked by another app, wrote " + alt); }
         RenderTexture.active = prev; cam.targetTexture = null;
         UnityEngine.Object.DestroyImmediate(img); UnityEngine.Object.DestroyImmediate(rt);
         Debug.Log("STYLIZED CAPTURE " + file);
@@ -306,7 +411,7 @@ public static class StylizedArtIntegration
             var probe = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + a.prefab + ".prefab"));
             var b = probe.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
             UnityEngine.Object.DestroyImmediate(probe);
-            bool waterPivot = a.fbx.Contains("Island") || a.fbx.Contains("Bridge") || a.fbx.Contains("Dock"); // pivot = water level by design
+            bool waterPivot = a.fbx.Contains("Island") || a.fbx.Contains("Board_Cliff") || a.fbx.Contains("Bridge") || a.fbx.Contains("Dock"); // pivot = water level by design
             if (!waterPivot && b.min.y < -.08f) errors.Add($"{a.fbx} pivot not at base (min y {b.min.y:F3})");
             bool outline = a.folder != "Environment";
             if (a.folder == "Enemies" && a.mat != "Shard")

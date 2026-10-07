@@ -45,8 +45,8 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    totalVerticesCount: 92
-    totalTrianglesCount: 42
+    totalVerticesCount: 348
+    totalTrianglesCount: 170
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1

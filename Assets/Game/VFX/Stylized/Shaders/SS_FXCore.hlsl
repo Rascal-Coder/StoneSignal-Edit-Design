@@ -23,6 +23,10 @@ half FXShape(float2 uv)
                       return saturate(saturate(1 - r / star) * 1.6 + saturate(1 - r * 2.2)); }
     if (shape == 5) { float n = FXNoise(uv * 5) * 0.35; return smoothstep(1.0, 0.45, r + n) * 0.85; }             // scorch decal
     if (shape == 6) { return step(r, 0.92) * lerp(1, 0.72, step(r, 0.62)); }                                      // coin disc with rim
+    if (shape == 8) { float2 a = abs(p); float m = max(a.x, a.y);                                                 // slot plate: gold border + fill + diamond icon
+                      float border = step(m, 0.97) * step(0.8, m); float fill = step(m, 0.8) * 0.28;
+                      float d = a.x + a.y; float icon = step(d, 0.34) * step(0.2, d) + step(d, 0.08);
+                      return saturate(border + fill + icon * 0.85); }
     if (shape == 7) { return saturate(1 - abs(p.y)) ; }                                                           // trail / line strip
     return smoothstep(1, 1 - max(s, 0.02), r);                                                                    // soft/toon dot
 }
