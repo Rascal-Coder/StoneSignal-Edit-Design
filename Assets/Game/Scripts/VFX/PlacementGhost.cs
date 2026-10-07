@@ -10,7 +10,7 @@ namespace StoneSignal.VFX
     /// v17.5: puffs 0.5-0.8 m growing 1.6x, #D9B48A a 1, life ~0.55 s, at the block base just outside the outer edges, slight outward
     /// push (dustSpeed) + upward drift (dustRise); still max DustMax (12), pooled (StylizedPlacementFX FX_DropDust).
     /// v17.4: PlayDrop is called once per placed cell in the same frame; the cells are collected and ONE soft dust ring is emitted
-    /// in LateUpdate around the outer edges of the whole shape (max DustMax particles, world space, pooled system, no Instantiate,
+    /// on the drop-in landing (v18.2, art-requested) around the outer edges of the whole shape (max DustMax particles, world space, pooled system, no Instantiate,
     /// no material instances).
     public class PlacementGhost : MonoBehaviour
     {
@@ -97,8 +97,7 @@ namespace StoneSignal.VFX
             if (!placed) return;
             if (dust)
             {
-                if (dustCells.Count == 0) dustWait = dustDelay;   // first cell of this placement
-                dustCells.Add(placed.position);                   // before Drop() lifts it (only x/z are used)
+                dustCells.Add(placed.position);                   // before Drop() lifts it (only x/z are used); emitted by the first cell's landing callback
             }
             StartCoroutine(Drop(placed));
         }
@@ -108,15 +107,20 @@ namespace StoneSignal.VFX
         [Tooltip("v17.5: outward puff speed (m/s, drag slows it) - slight push, v17.4 was 0.7-1.15")] public Vector2 dustSpeed = new Vector2(.45f, .8f);
         [Tooltip("v17.5: upward drift speed (m/s)")] public Vector2 dustRise = new Vector2(.25f, .45f);
         [Tooltip("v17.5: puff centre height above the ghost's base (m) - at the block base (v17.4 0.12)")] public float dustLift = .06f;
-        [Tooltip("v17.4: seconds after PlayDrop = when the dropping block touches down (Drop: 0.35 m drop over 0.11 s)")] public float dustDelay = .06f;   // art-requested fix: 0.1 -> 0.06 s
-        float dustWait;
+        // art-requested (v18.2): the dust is emitted from the drop-in animation's landing callback (Drop -> Landed, the frame the block
+        // reaches its rest height), not after a hard-coded delay, so it stays aligned if the animation changes. Landing = DropTime * DropFall.
+        public const float DropTime = .28f, DropFall = .4f, DropHeight = .35f;
+        /// Seconds from PlayDrop to touchdown (currently 0.28 * 0.4 = 0.112 s).
+        public static float LandTime => DropTime * DropFall;
+        /// Diagnostics: Time.time of the last landing callback that emitted dust.
+        public float LastLandTime { get; private set; } = -1f;
         static readonly HashSet<Vector2Int> dustKeys = new HashSet<Vector2Int>();
         readonly List<Vector3> dustCells = new List<Vector3>(8);
         readonly List<Vector3> dustEdges = new List<Vector3>(24);   // xyz = edge midpoint, paired with dustNormals
         readonly List<Vector3> dustNormals = new List<Vector3>(24);
         static readonly Vector2Int[] Dirs = { new Vector2Int(1, 0), new Vector2Int(-1, 0), new Vector2Int(0, 1), new Vector2Int(0, -1) };
 
-        void LateUpdate() { if (dustCells.Count > 0 && (dustWait -= Time.deltaTime) <= 0) EmitDust(); }
+        void Landed() { if (dustCells.Count == 0) return; LastLandTime = Time.time; EmitDust(); }   // one ring per placement (cells of the same frame)
         void OnDisable() { dustCells.Clear(); }
 
         void EmitDust()
@@ -150,16 +154,19 @@ namespace StoneSignal.VFX
 
         IEnumerator Drop(Transform t)
         {
-            var s0 = t.localScale; var p0 = t.localPosition;
-            for (float k = 0; k < .28f; k += Time.deltaTime)
+            var s0 = t.localScale; var p0 = t.localPosition; bool landed = false;
+            for (float k = 0; k < DropTime; k += Time.deltaTime)
             {
-                float u = k / .28f;
+                if (!t) { Landed(); yield break; }
+                float u = k / DropTime, fall = Mathf.Min(1, u / DropFall);
                 float sq = Mathf.Sin(u * Mathf.PI) * .18f * (1 - u);       // squash then settle
                 t.localScale = new Vector3(s0.x * (1 + sq), s0.y * (1 - sq * 1.4f), s0.z * (1 + sq));
-                t.localPosition = p0 + Vector3.up * (1 - Mathf.Min(1, u * 2.5f)) * .35f;  // short drop-in
+                t.localPosition = p0 + Vector3.up * (1 - fall) * DropHeight;  // short drop-in
+                if (!landed && fall >= 1) { landed = true; Landed(); }    // touchdown frame -> landing dust
                 yield return null;
             }
-            t.localScale = s0; t.localPosition = p0;
+            if (!landed) Landed();
+            if (t) { t.localScale = s0; t.localPosition = p0; }
         }
     }
 }

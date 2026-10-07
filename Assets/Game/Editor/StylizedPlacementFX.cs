@@ -68,7 +68,7 @@ public static class StylizedPlacementFX
         // v17.4 landing dust: short, soft, light-tan puff ring at the block's base, readable ~0.4 s at gameplay zoom.
         // v17.5: bigger + more opaque: start 0.5-0.8 m growing 1.6x, life ~0.55 s, #D9B48A a 1, slight outward push + upward drift (PlacementGhost).
         // One pooled system per ghost prefab, world space, max 12 particles, no emission module: PlacementGhost.PlayDrop queues the
-        // placed cells and emits once per frame along the outer edges of the whole shape (EmitParams). Own material
+        // placed cells and emits once, from the drop-in landing callback (v18.2 art-requested; was a fixed delay), along the outer edges of the whole shape (EmitParams). Own material
         // M_VFX_LandingDust (was M_FX_Snow, shared with snow: white, 0.12-0.26 m, burst at the last cell in ghost-local space).
         var dustMat = LandingDustMaterial();
         GameObject Dust(Transform parent)
