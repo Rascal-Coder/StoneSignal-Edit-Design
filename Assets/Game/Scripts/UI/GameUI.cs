@@ -119,7 +119,7 @@ namespace StoneSignal
             goldCounter.SetValue(session.Economy.Gold - session.GoldInFlight);
             battle.interactable = session.Game.State == GameState.Build;
             if (handDirty) RebuildHands();
-            if (session.Game.State != GameState.Reward) rewardPanel.SetActive(false);
+            if (session.Game.State != GameState.Reward) { rewardPanel.SetActive(false); if (pickUi != null && !picking) pickUi.gameObject.SetActive(false); }
             overPanel.SetActive(session.Game.State == GameState.GameOver);
         }
         private void RebuildHands()
@@ -273,8 +273,60 @@ namespace StoneSignal
             Center((RectTransform)restart.transform, 0, 60, 300, 84);
             overPanel.SetActive(false);
         }
+        private StoneSignal.UI.RewardPickUI pickUi; private StoneSignal.UI.RewardGlow pickGlow; private bool picking;
+        public StoneSignal.UI.RewardPickUI PickUi => pickUi; public StoneSignal.UI.RewardGlow PickGlow => pickGlow;
+        // v16.2 RewardPickUI (art): Show(options, rarity) -> OnPicked(i) -> PlayPick(i, target, onDone) -> Rewards.Choose(i).
+        /// Diagnostics (gameplay shot): show the reward cards with forced rarities and placeholder content.
+        public bool DebugShowRewardPick(StoneSignal.UI.RewardRarity[] rar)
+        {
+            debugRarity = rar; try { return ShowRewardPick(); } finally { debugRarity = null; }
+        }
+        private StoneSignal.UI.RewardRarity[] debugRarity;
+        private bool ShowRewardPick()
+        {
+            if (!ArtSteps.On(5) || art == null || art.UiSprite("ui9_reward_frame_common") == null) return false;
+            if (pickUi == null)
+            {
+                var cv = Canvas("Reward pick", 20);
+                pickUi = cv.gameObject.AddComponent<StoneSignal.UI.RewardPickUI>();
+                string[] tier = { "common", "rare", "epic", "legendary" };
+                // v17 (Docs/reward_pick_v17.md): frames[4] / bands[4] / tierPill / ember / burst / font
+                for (int i = 0; i < 4; i++) { pickUi.frames[i] = art.UiSprite("ui9_reward_frame_" + tier[i]); pickUi.bands[i] = art.UiSprite("ui9_reward_band_" + tier[i]); }
+                pickUi.tierPill = art.UiSprite("ui9_reward_tier_pill"); pickUi.ember = art.UiSprite("ui_reward_ember"); pickUi.burst = art.UiSprite("ui_reward_burst");
+                for (int i = 0; i < 4; i++) if (pickUi.frames[i] == null || pickUi.bands[i] == null) Debug.LogError("REWARD PICK: missing ui9_reward_frame/band_" + tier[i] + " in ArtCatalog.uiSprites");
+                if (pickUi.tierPill == null) Debug.LogError("REWARD PICK: missing ui9_reward_tier_pill in ArtCatalog.uiSprites");
+                pickGlow = cv.gameObject.AddComponent<StoneSignal.UI.RewardGlow>();
+                pickGlow.glow = art.UiSprite("ui_rune_socket_glow") ?? art.UiSprite("ui_counter_glow_ring");
+                Debug.Log("REWARD GLOW sprite=" + (pickGlow.glow ? pickGlow.glow.name + " tex=" + pickGlow.glow.texture.name + " packed=" + pickGlow.glow.packed : "MISSING") +
+                          " | frame tex=" + (pickUi.frames[0] ? pickUi.frames[0].texture.name + " packed=" + pickUi.frames[0].packed : "-") + " sameTexture=" + (pickGlow.glow && pickUi.frames[0] && pickGlow.glow.texture == pickUi.frames[0].texture));
+                pickUi.font = TMP_Settings.defaultFontAsset;
+                if ((float)Screen.width / Mathf.Max(1, Screen.height) < 1.5f) pickUi.cardSize = new Vector2(380, 540); // 4:3
+                pickUi.OnPicked += i =>
+                {
+                    if (picking) return; picking = true; if (pickGlow != null) pickGlow.Pick(i);
+                    pickUi.PlayPick(i, new Vector2(Screen.width * .5f, Screen.height * .12f), () => { picking = false; session.Rewards.Choose(i); pickUi.gameObject.SetActive(false); });
+                };
+            }
+            if (debugRarity != null)
+            {
+                var dn = new[] { "Common", "Rare", "Epic", "Legendary" }; var dopts = new StoneSignal.UI.RewardOption[debugRarity.Length];
+                for (int i = 0; i < dopts.Length; i++) dopts[i] = new StoneSignal.UI.RewardOption { title = dn[(int)debugRarity[i]] + " reward", desc = "Debug card (" + dn[(int)debugRarity[i]] + ")", icon = art.UiSprite("ui_card_reward_rune") };
+                pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(dopts, debugRarity); if (pickGlow != null) pickGlow.Begin(debugRarity); return true;
+            }
+            int n = Mathf.Min(3, session.Rewards.Choices.Count);
+            var opts = new StoneSignal.UI.RewardOption[n]; var rar = new StoneSignal.UI.RewardRarity[n];
+            for (int i = 0; i < n; i++)
+            {
+                int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
+                if (rune != RuneRules.NoRune) { opts[i] = new StoneSignal.UI.RewardOption { title = "Rune: " + RuneRules.Names[rune], desc = RuneRules.Effects[rune], icon = art.UiSprite("ui_card_reward_rune") }; rar[i] = StoneSignal.UI.RewardRarity.Rare; }
+                else { var r = session.Rewards.Choices[i]; opts[i] = new StoneSignal.UI.RewardOption { title = r.displayName, desc = r.effectText }; rar[i] = StoneSignal.UI.RewardRarity.Common; } // rarity placeholder until gameplay assigns tiers
+            }
+            pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(opts, rar); if (pickGlow != null) pickGlow.Begin(rar); Refresh();
+            return true;
+        }
         private void ShowRewards()
         {
+            if (ShowRewardPick()) return;
             for (int i = 0; i < 3 && i < session.Rewards.Choices.Count; i++)
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;

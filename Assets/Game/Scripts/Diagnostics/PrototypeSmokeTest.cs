@@ -49,6 +49,8 @@ namespace StoneSignal
             texture.Create();
             foreach(var canvas in canvases) { canvas.renderMode=RenderMode.ScreenSpaceCamera; canvas.worldCamera=camera; canvas.planeDistance=.3f; }
             Canvas.ForceUpdateCanvases();
+            InstancedBatch.SubmitAll(); // tiles/walls are LateUpdate instanced draws: queue them for this Update-time render
+            if(name=="03-combat") RenderDiag.Log(name);
             RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest { destination=texture });
             var previous=RenderTexture.active; RenderTexture.active=texture;
             var image=new Texture2D(texture.width,texture.height,TextureFormat.RGB24,false);

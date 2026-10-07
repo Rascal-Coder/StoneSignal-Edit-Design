@@ -22,6 +22,8 @@ MonoBehaviour:
   coreOrigin: {x: 7, y: 5}
   coreSize: {x: 2, y: 2}
   levelDressing: {fileID: 1387278729300035126, guid: 3181ca58c48926a4fa160e94fa3b1858, type: 3}
+  entryIslandDistance: 5.1
+  entryIslandHeight: 0
   levelDressingOffset: {x: 0, y: 0, z: 0}
   levelDressingReplacesCliff: 1
   surroundings: []

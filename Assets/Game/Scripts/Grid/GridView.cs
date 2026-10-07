@@ -5,6 +5,11 @@ namespace StoneSignal
 {
     public sealed class GridView : MonoBehaviour
     {
+        readonly System.Collections.Generic.Dictionary<Vector2Int, StoneSignal.VFX.SpawnPortal> portals = new System.Collections.Generic.Dictionary<Vector2Int, StoneSignal.VFX.SpawnPortal>();
+        public StoneSignal.VFX.SpawnPortal PortalAt(Vector2Int cell) => portals.TryGetValue(cell, out var p) ? p : null;
+        public void SetPortalsActive(bool on) { foreach (var p in portals.Values) if (p != null) p.SetActive(on); }
+        public StoneSignal.VFX.CoreDamageFx CoreFx { get; private set; }
+
         private GridManager grid;
         private PathfindingManager pathfinding;
         private readonly List<LineRenderer> routes = new List<LineRenderer>();
@@ -32,9 +37,34 @@ namespace StoneSignal
                     else SetGround(p, art.tile);
                 }
                 MergeGround();
-                foreach (var s in grid.Spawns) ArtVisual.Create(art.spawnPortal, transform, grid.ToWorld(s));
-                ArtVisual.Create(art.signalCore, transform, grid.CoreCenter);
+                foreach (var s in grid.Spawns)
+                {
+                    if (ArtSteps.On(2) && art.spawnPortalFx != null)
+                    {
+                        var go = ArtVisual.Create(art.spawnPortalFx, transform, PortalPoint(s)); portalGos[s] = go;
+                        var sp = go.GetComponentInChildren<StoneSignal.VFX.SpawnPortal>(); if (sp != null) { portals[s] = sp; sp.SetActive(false); }
+                        if (!art.portalShowRunestones) { Transform stones = null; foreach (var t in go.GetComponentsInChildren<Transform>(true)) if (t.name == "Runestones") { stones = t; break; } if (stones != null) foreach (var r in stones.GetComponentsInChildren<Renderer>(true)) r.enabled = false; else Debug.LogWarning("SPAWN PORTAL: no 'Runestones' child to hide"); }
+                    }
+                    else
+                    {
+                        if (art.spawnPortalFx == null) Debug.LogError("SPAWN PORTAL: ArtCatalog.spawnPortalFx (PF_VFX_SpawnPortal) is MISSING - placeholder portal used. Run BatchWire.");
+                        portalGos[s] = ArtVisual.Create(art.spawnPortal, transform, PortalPoint(s));
+                    }
+                }
+                var coreGo = ArtVisual.Create(art.signalCore, transform, grid.CoreCenter);
+                if (ArtSteps.On(4) && coreGo != null && art.coreEnclosureIntact != null)
+                {
+                    // v16.2 core enclosure (no generator): one MeshFilter swapped by CoreDamageFx at 0.70 / 0.40 / 0.15
+                    var enc = new GameObject("Core enclosure", typeof(MeshFilter), typeof(MeshRenderer)); enc.transform.SetParent(coreGo.transform, false);
+                    enc.GetComponent<MeshFilter>().sharedMesh = art.coreEnclosureIntact;
+                    var mr = enc.GetComponent<MeshRenderer>(); mr.sharedMaterial = art.coreEnclosureMaterial; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    var cores = new System.Collections.Generic.List<Renderer>(); foreach (var r in coreGo.GetComponentsInChildren<Renderer>()) if (r != mr) cores.Add(r);
+                    CoreFx = coreGo.AddComponent<StoneSignal.VFX.CoreDamageFx>();
+                    CoreFx.enclosure = enc.GetComponent<MeshFilter>(); CoreFx.intactMesh = art.coreEnclosureIntact; CoreFx.crackedMesh = art.coreEnclosureCracked; CoreFx.brokenMesh = art.coreEnclosureBroken;
+                    CoreFx.coreRenderers = cores.ToArray(); // smoke/sparks: none delivered yet (null-safe)
+                }
                 if (art.boardCliff != null || (grid.layout != null && grid.layout.levelDressing != null)) BuildIsland();
+                foreach (var kv in portalGos) if (kv.Value != null) kv.Value.transform.position = PortalPoint(kv.Key); // after the island probe
                 else
                 {
                     var environment = new GameObject("Board decoration");
@@ -139,6 +169,8 @@ namespace StoneSignal
         {
             var l = new List<Vector2Int>(entryToCore); if (scrollsTowardStart) l.Reverse(); return l;
         }
+        [Tooltip("Route flow line ends this far from the portal centre (rune ring edge) so the chevrons do not cross the ring.")] public float portalFlowStop = 1.2f;
+        private Vector3 PortalPoint(Vector2Int s) => grid.TryPortalPoint(s, out var p) ? p : grid.ToWorld(s);
         private void DrawFlow()
         {
             if (flowRoot != null) PrimitiveVisual.DestroyObject(flowRoot.gameObject);
@@ -152,7 +184,10 @@ namespace StoneSignal
                 var lr = seg.GetComponentInChildren<LineRenderer>(true);
                 if (lr == null) continue;
                 var pts = FlowOrder(path, art.flowScrollsTowardStart); lr.useWorldSpace = true; lr.positionCount = pts.Count;
-                for (int i = 0; i < pts.Count; i++) lr.SetPosition(i, grid.ToWorld(pts[i]) + Vector3.up * art.pathFlowY);
+                var wp = new List<Vector3>(); foreach (var c in pts) wp.Add(grid.ToWorld(c) + Vector3.up * art.pathFlowY);
+                if (grid.TryPortalPoint(path[0], out var portal)) { var pv = new Vector3(portal.x, 0, portal.z); var e0 = grid.ToWorld(path[0]); e0.y = 0;
+                    pv += (e0 - pv).normalized * portalFlowStop; pv.y = (pts[0] == path[0] ? wp[0] : wp[wp.Count - 1]).y; /* stop at the rune ring edge, not across it */ if (pts[0] == path[0]) wp.Insert(0, pv); else wp.Add(pv); }
+                lr.positionCount = wp.Count; for (int i = 0; i < wp.Count; i++) lr.SetPosition(i, wp[i]);
                 lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; lr.receiveShadows = false;
                 // SS_PlaceFX chevrons: phase = uv.x*k - _Time*_Speed, so the pattern travels toward +uv.x (line end) for _Speed > 0.
                 // Lines run core -> entry (arrow orientation), so scroll with the opposite sign: per-renderer block, art material untouched.
@@ -198,6 +233,76 @@ namespace StoneSignal
             directionMesh.Clear(); directionMesh.SetVertices(vertices); directionMesh.SetTriangles(triangles, 0); directionMesh.RecalculateNormals();
         }
         // Stylized board: cliff island under the grid plus plank bridges leading out of each edge spawn.
+        private readonly Dictionary<Vector2Int, GameObject> portalGos = new Dictionary<Vector2Int, GameObject>();
+        /// Spawn portals sit on the walkable top of the shore island past each entry bridge. The dressing is merged per quadrant, so the
+        /// island is measured: temporary MeshColliders on the (readable) dressing meshes, a downward ray grid around the layout estimate,
+        /// flood-fill of the flat top connected to the estimate, centroid xz + median top y. Fallback: layout estimate (logged).
+        private void ProbeIslands(Transform dressing)
+        {
+            var cols = new List<MeshCollider>(); int unreadable = 0;
+            foreach (var mf in dressing.GetComponentsInChildren<MeshFilter>())
+            {
+                var n = mf.gameObject.name.ToLowerInvariant();
+                if (mf.sharedMesh == null || n.Contains("water") || n.Contains("fx") || n.Contains("snow")) continue;
+                if (!mf.sharedMesh.isReadable) { unreadable++; continue; }
+                var mc = mf.gameObject.AddComponent<MeshCollider>(); mc.sharedMesh = mf.sharedMesh; cols.Add(mc);
+            }
+            Physics.SyncTransforms();
+            const float step = .2f; const int R = 16; // +-3.2 m sample grid
+            foreach (var s in grid.Spawns)
+            {
+                var o = GridManager.OutwardOf(s, grid.width, grid.height); if (o == Vector3.zero || !grid.TryPortalPoint(s, out var est)) continue;
+                var entry = grid.ToWorld(s); var hy = new float?[2 * R + 1, 2 * R + 1];
+                for (int i = -R; i <= R; i++) for (int j = -R; j <= R; j++)
+                {
+                    var p = est + new Vector3(i * step, 0, j * step);
+                    if (Vector3.Dot(p - entry, o) < 3.6f * grid.cellSize) continue; // past the bridge
+                    var ray = new Ray(new Vector3(p.x, 30, p.z), Vector3.down); float best = float.NegativeInfinity; Vector3 nrm = Vector3.up;
+                    foreach (var c in cols) if (c.Raycast(ray, out var hit, 60) && hit.point.y > best) { best = hit.point.y; nrm = hit.normal; }
+                    if (best > .15f && nrm.y > .85f) hy[i + R, j + R] = best; // above water, flat
+                }
+                // flood fill from the sample nearest the estimate
+                int si = -1, sj = -1; float sd = float.MaxValue;
+                for (int i = 0; i <= 2 * R; i++) for (int j = 0; j <= 2 * R; j++) if (hy[i, j] != null) { float d = (i - R) * (i - R) + (j - R) * (j - R); if (d < sd) { sd = d; si = i; sj = j; } }
+                if (si < 0) { Debug.Log("ISLAND PROBE " + s + ": no island top hit (colliders=" + cols.Count + ", unreadable=" + unreadable + "), using layout estimate " + est.ToString("F2")); continue; }
+                var seen = new bool[2 * R + 1, 2 * R + 1]; var q = new Queue<(int, int)>(); q.Enqueue((si, sj)); seen[si, sj] = true;
+                var ys = new List<float>(); Vector3 sum = Vector3.zero;
+                while (q.Count > 0)
+                {
+                    var (i, j) = q.Dequeue(); float y = hy[i, j].Value; ys.Add(y); sum += new Vector3(est.x + (i - R) * step, 0, est.z + (j - R) * step);
+                    foreach (var (di, dj) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+                    {
+                        int a = i + di, b = j + dj; if (a < 0 || b < 0 || a > 2 * R || b > 2 * R || seen[a, b] || hy[a, b] == null || Mathf.Abs(hy[a, b].Value - y) > .2f) continue;
+                        seen[a, b] = true; q.Enqueue((a, b));
+                    }
+                }
+                ys.Sort(); var c0 = sum / ys.Count; var top = new Vector3(c0.x, ys[ys.Count / 2], c0.z);
+                // survey: what dressing geometry lies inside the portal decal radius (1.3 m) - object / material / height above the island top
+                var survey = new Dictionary<string, (int n, float lo, float hi)>(); float lowMax = 0;
+                for (float dx = -1.3f; dx <= 1.3f; dx += .1f) for (float dz = -1.3f; dz <= 1.3f; dz += .1f)
+                {
+                    if (dx * dx + dz * dz > 1.69f) continue;
+                    var ray = new Ray(new Vector3(top.x + dx, 30, top.z + dz), Vector3.down);
+                    foreach (var c in cols)
+                    {
+                        if (!c.Raycast(ray, out var hit, 60)) continue;
+                        var mesh = c.sharedMesh; var mats = c.GetComponent<MeshRenderer>().sharedMaterials; string mat = "?";
+                        int ti = hit.triangleIndex * 3; for (int sm = 0; sm < mesh.subMeshCount; sm++) { var d = mesh.GetSubMesh(sm); if (ti >= d.indexStart && ti < d.indexStart + d.indexCount) { mat = sm < mats.Length && mats[sm] ? mats[sm].name : "sub" + sm; break; } }
+                        string key = c.name + " / " + mat; float h = hit.point.y - top.y; if (h < .3f) lowMax = Mathf.Max(lowMax, h); // ground mounds, not trees
+                        survey[key] = survey.TryGetValue(key, out var v) ? (v.n + 1, Mathf.Min(v.lo, h), Mathf.Max(v.hi, h)) : (1, h, h);
+                    }
+                }
+                var sb = new System.Text.StringBuilder("PORTAL AREA SURVEY " + s + " (r 1.3 m, heights rel. island top " + top.y.ToString("F2") + "; portal decal at +0.02):");
+                foreach (var kv in survey) sb.Append("\n  " + kv.Key + ": hits=" + kv.Value.n + " h=" + kv.Value.lo.ToString("F3") + ".." + kv.Value.hi.ToString("F3"));
+                // The island top carries flattened grass/leaf mounds (SM_Env_Island_Cliff_4x4_01, up to ~+0.14) that hide a flat decal laid at the
+                // median height: lift the portal (decal + enemy start) to the highest ground mound inside the decal disc.
+                top.y += lowMax; grid.SetPortalPoint(s, top);
+                sb.Append("\n  -> portal lifted by " + lowMax.ToString("F3") + " to y " + top.y.ToString("F2"));
+                Debug.Log(sb.ToString());
+                Debug.Log("ISLAND PROBE " + s + ": estimate " + est.ToString("F2") + " -> island top centre " + top.ToString("F2") + " (" + ys.Count + " samples, y " + ys[0].ToString("F2") + ".." + ys[ys.Count - 1].ToString("F2") + ")");
+            }
+            foreach (var c in cols) PrimitiveVisual.DestroyObject(c);
+        }
         private void BuildIsland()
         {
             var layout = grid.layout;
@@ -207,6 +312,7 @@ namespace StoneSignal
                 // Authored around the world-space board centre at water level 0 (cliff top 0.55 = grid plane), independent of the grid height.
                 var c = grid.BoardCenter; var dressing = ArtVisual.Create(layout.levelDressing, transform, new Vector3(c.x, 0, c.z) + layout.levelDressingOffset);
                 dressing.transform.localRotation = Quaternion.identity; // prefab authored in game space
+                ProbeIslands(dressing.transform);
             }
             if (!dressed || !layout.levelDressingReplacesCliff)
             {

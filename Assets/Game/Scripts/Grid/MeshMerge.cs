@@ -51,7 +51,27 @@ namespace StoneSignal
             }
             return groups.Count;
         }
-        void LateUpdate()
+        void LateUpdate() => Submit();
+        static readonly List<InstancedBatch> all = new List<InstancedBatch>();
+        void OnEnable() { if (!all.Contains(this)) all.Add(this); }
+        void OnDisable() => all.Remove(this);
+        public static IReadOnlyList<InstancedBatch> All => all;
+        /// Re-queue every batch's instanced draws for cameras rendered after this call (e.g. an Update-time SubmitRenderRequest capture,
+        /// which runs before LateUpdate queues them and so would otherwise miss tiles and walls).
+        public static void SubmitAll() { foreach (var b in all) if (b != null && b.isActiveAndEnabled) b.Submit(); }
+        public string Describe()
+        {
+            var sb = new System.Text.StringBuilder(); int fb = 0;
+            foreach (var mr in GetComponentsInChildren<MeshRenderer>(true)) if (mr.enabled && mr.gameObject.activeInHierarchy) fb++;
+            sb.Append(name).Append(": groups=").Append(groups.Count).Append(" enabledRenderers=").Append(fb);
+            foreach (var g in groups)
+                sb.Append("\n  mesh=").Append(g.mesh != null ? g.mesh.name : "null").Append(" sub=").Append(g.sub).Append(" n=").Append(g.m.Count)
+                  .Append(" mat=").Append(g.mat != null ? g.mat.name : "null").Append(" shader=").Append(g.mat != null ? g.mat.shader.name : "-")
+                  .Append(" supported=").Append(g.mat != null && g.mat.shader.isSupported).Append(" instancing=").Append(g.mat != null && g.mat.enableInstancing)
+                  .Append(" keywords=[").Append(g.mat != null ? string.Join(",", g.mat.shaderKeywords) : "").Append("]");
+            return sb.ToString();
+        }
+        public void Submit()
         {
             foreach (var g in groups)
                 foreach (var chunk in g.chunks)

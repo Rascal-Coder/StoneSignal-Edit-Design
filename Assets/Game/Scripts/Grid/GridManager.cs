@@ -25,7 +25,7 @@ namespace StoneSignal
 
         public void Initialize()
         {
-            if (layout != null) { width = layout.width; height = layout.height; cellSize = layout.cellSize; }
+            if (layout != null) { width = layout.width; height = layout.height; cellSize = layout.cellSize; islandDistance = layout.entryIslandDistance; islandHeight = layout.entryIslandHeight; }
             cells = new CellState[width, height];
             spawns.Clear(); core.Clear();
             if (layout != null && layout.spawns != null)
@@ -50,6 +50,18 @@ namespace StoneSignal
         public bool IsCore(Vector2Int p) => Get(p) == CellState.Goal;
         public bool CanPlace(Vector2Int p) => InBounds(p) && Get(p) == CellState.Empty;
         public bool Walkable(Vector2Int p) => InBounds(p) && Get(p) != CellState.Blocked && Get(p) != CellState.TowerSlot;
+        public float islandDistance = 5.1f, islandHeight = 0f;
+        public static Vector3 OutwardOf(Vector2Int c, int w, int h) => c.x == 0 ? Vector3.left : c.x == w - 1 ? Vector3.right : c.y == 0 ? Vector3.back : c.y == h - 1 ? Vector3.forward : Vector3.zero;
+        /// <summary>Spawn portal position: centre of the shore island beyond the entry bridge. Enemies start here and walk the bridge to the entry cell.</summary>
+        readonly Dictionary<Vector2Int, Vector3> portalPoints = new Dictionary<Vector2Int, Vector3>();
+        /// Measured island-top centre (GridView island probe); overrides the layout distance estimate.
+        public void SetPortalPoint(Vector2Int entry, Vector3 p) => portalPoints[entry] = p;
+        public bool TryPortalPoint(Vector2Int entry, out Vector3 p)
+        {
+            if (portalPoints.TryGetValue(entry, out p)) return true;
+            var o = OutwardOf(entry, width, height); p = ToWorld(entry) + o * islandDistance * cellSize + Vector3.up * islandHeight;
+            return o != Vector3.zero && spawns.Contains(entry);
+        }
         public Vector3 ToWorld(Vector2Int p) => transform.position + new Vector3((p.x + .5f) * cellSize, 0, (p.y + .5f) * cellSize);
         public Vector3 CoreCenter
         {

@@ -85,6 +85,9 @@ namespace StoneSignal
             Capture();
             yield return Breakdown(r => stats += r);
             File.WriteAllText(Path.ChangeExtension(path, ".txt"), stats);
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-portalcloseups") >= 0) yield return PortalCloseups();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-flyershot") >= 0) yield return FlyerShot();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-rewardshot") >= 0) yield return RewardShots();
             Debug.Log("GAMEPLAY SHOT " + path + "\n" + stats);
             Application.Quit(0);
         }
@@ -172,17 +175,110 @@ namespace StoneSignal
                    "\ncanvases=" + FindObjectsOfType<Canvas>().Length + "\nenemies=" + s.Enemies.Active.Count + " towers=" + s.Towers.Towers.Count +
                    "\nbudget drawCalls<150 tris<150000 -> " + (dc > 0 && dc < 150 && tris.LastValue < 150000 ? "OK" : "OVER") + "\n";
         }
-        void Capture()
+        void Capture() => Capture(path);
+        // -rewardshot: forced reward cards (C,R,E then R,E,L), glow on/off draw-call + batch delta, mid-pick frame.
+        IEnumerator RewardShots()
+        {
+            var ui = FindObjectOfType<GameUI>(); if (ui == null) yield break;
+            string dir = Path.GetDirectoryName(path), info = "";
+            var sets = new[] { new[] { StoneSignal.UI.RewardRarity.Common, StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic },
+                               new[] { StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic, StoneSignal.UI.RewardRarity.Legendary } };
+            TimeController.SetSpeed(0);
+            for (int k = 0; k < sets.Length; k++)
+            {
+                if (!ui.DebugShowRewardPick(sets[k])) { info += "reward pick UI unavailable\n"; break; }
+                float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .8f) yield return null; // glow fade-in done
+                for (int f = 0; f < 4; f++) yield return null; long dOn = draws.LastValue, bOn = batches.LastValue;
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_" + (k == 0 ? "CRE" : "REL") + ".png"));
+                ui.PickGlow.enabled = false; for (int f = 0; f < 6; f++) yield return null; long dOff = draws.LastValue, bOff = batches.LastValue;
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_noglow_" + (k == 0 ? "CRE" : "REL") + ".png"));
+                ui.PickGlow.enabled = true; for (int f = 0; f < 4; f++) yield return null;
+                info += "set " + (k == 0 ? "Common,Rare,Epic" : "Rare,Epic,Legendary") + ": glow ON drawCalls=" + dOn + " batches=" + bOn + " | glow OFF drawCalls=" + dOff + " batches=" + bOff + " | delta DC=" + (dOn - dOff) + " batches=" + (bOn - bOff) + "\n";
+            }
+            // mid-pick: legendary card (index 2) flash
+            ui.PickUi.PlayPick(2, new Vector2(Screen.width * .5f, Screen.height * .12f), null); ui.PickGlow.Pick(2);
+            float p0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - p0 < .1f) yield return null;
+            yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_pick.png"));
+            File.WriteAllText(Path.Combine(dir, "reward_glow.txt"), info); Debug.Log("REWARD SHOTS\n" + info);
+        }
+        // -flyershot: step 1 (footprints + v17 flyer). A tanky flyer and a tanky walker from the first spawn; close-ups after they
+        // leave the portal (overlay UI hidden, world-space HP bars kept), heights logged (bar must ride FlyingMotion.CurrentHeight).
+        IEnumerator FlyerShot()
+        {
+            string dir = Path.GetDirectoryName(path), info = "";
+            EnemyData flyer = null, walker = null;
+            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) { if (d.flying) { if (flyer == null) flyer = d; } else if (walker == null && !d.name.Contains("Boss")) walker = d; }
+            if (s.config.waves.Length > 0 && s.config.waves[0].groups.Length > 0 && !s.config.waves[0].groups[0].enemy.flying) walker = s.config.waves[0].groups[0].enemy;
+            info += "flyer data=" + (flyer ? flyer.name : "NONE") + " walker data=" + (walker ? walker.name : "NONE") + "\n";
+            if (flyer == null) { File.WriteAllText(Path.Combine(dir, "flyer_shot.txt"), info); yield break; }
+            TimeController.ResetAll();
+            var ef = s.Enemies.Spawn(flyer, 30, 1, 0); yield return null; var ew = walker ? s.Enemies.Spawn(walker, 30, 1, 0) : null;
+            float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < 3.2f) yield return null;
+            captureNoUi = true; // HP bars are world cubes, unaffected
+            var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
+            if (cam.orthographic) cam.orthographicSize = ortho * .4f; else cam.fieldOfView = fov * .45f; // real close-up (moving an ortho camera only re-centres)
+            foreach (var pair in new[] { ("flyer", ef), ("walker", ew) })
+            {
+                var en = pair.Item2; if (en == null || !en.gameObject.activeInHierarchy) { info += pair.Item1 + ": not alive\n"; continue; }
+                cam.transform.position = en.transform.position - cam.transform.forward * 5f;
+                for (int f = 0; f < 4; f++) yield return null; long dc = draws.LastValue, bt = batches.LastValue;
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, pair.Item1 + "_close.png"));
+                var fm = en.GetComponentInChildren<StoneSignal.VFX.FlyingMotion>(true);
+                Transform bar = null; float best = 9;
+                foreach (Transform ch in s.Enemies.transform) if (ch.name == "HP background" && ch.gameObject.activeInHierarchy) { var dd = new Vector2(ch.position.x - en.transform.position.x, ch.position.z - en.transform.position.z).magnitude; if (dd < best) { best = dd; bar = ch; } }
+                info += pair.Item1 + " " + en.name + " root y=" + en.transform.position.y.ToString("F2") + " FlyingMotion=" + (fm ? "yes CurrentHeight=" + fm.CurrentHeight.ToString("F2") + " model y=" + fm.transform.position.y.ToString("F2") : "no") + " visual top y=" + VisualTop(en).ToString("F2") +
+                        " | HP bar y=" + (bar ? bar.position.y.ToString("F2") + " (above root " + (bar.position.y - en.transform.position.y).ToString("F2") + ")" : "not found") +
+                        " | frame drawCalls=" + dc + " batches=" + bt + RendererTops(en) + "\n";
+            }
+            cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
+            File.WriteAllText(Path.Combine(dir, "flyer_shot.txt"), info); Debug.Log("FLYER SHOT\n" + info);
+        }
+        static float VisualTop(Component en) { float t = float.MinValue; foreach (var r in StoneSignal.Enemy.ModelRenderers(en.transform)) t = Mathf.Max(t, StoneSignal.Enemy.MeshTop(r)); return t; }
+        static string RendererTops(Component en) { var sb = new System.Text.StringBuilder(); foreach (var r in en.GetComponentsInChildren<Renderer>()) sb.Append("\n    " + r.GetType().Name + " " + r.name + " enabled=" + r.enabled + " boundsTop=" + r.bounds.max.y.ToString("F2") + " meshTop=" + StoneSignal.Enemy.MeshTop(r).ToString("F2")); return sb.ToString(); }
+        // -portalcloseups: after the main shot, one close-up per spawn portal and one mid-spawn (UI hidden), next to the main png.
+        IEnumerator PortalCloseups()
+        {
+            RenderDiag.Log("shot");
+            var cam = s.viewCamera; var home = cam.transform.position; var canvases = FindObjectsOfType<Canvas>();
+            foreach (var c in canvases) c.enabled = false; captureNoUi = true;
+            string dir = Path.GetDirectoryName(path), info = "";
+            for (int i = 0; i < s.grid.Spawns.Count; i++)
+            {
+                var e = s.grid.Spawns[i]; if (!s.grid.TryPortalPoint(e, out var p)) continue;
+                cam.transform.position = p - cam.transform.forward * 7f; yield return null; yield return new WaitForEndOfFrame();
+                Capture(Path.Combine(dir, "portal_" + e.x + "_" + e.y + ".png")); info += "portal " + e + " at " + p.ToString("F2") + "\n";
+            }
+            int si = s.grid.Spawns.Count - 1; var e0 = s.grid.Spawns[si]; s.grid.TryPortalPoint(e0, out var p0); // bottom entry: not under trees
+            cam.transform.position = p0 - cam.transform.forward * 6f; float o0 = cam.orthographicSize, f0 = cam.fieldOfView;
+            if (cam.orthographic) cam.orthographicSize = o0 * .45f; else cam.fieldOfView = f0 * .5f; // mid-spawn frames as a real close-up
+            var en = s.Enemies.Spawn(s.config.waves[0].groups[0].enemy, 1, 1, si);
+            float t0 = Time.realtimeSinceStartup;
+            foreach (var at in new[] { .15f, .35f, .7f, .95f }) // .6 s rise, then the HP bar eases in over Enemy.BarFadeTime
+            {
+                while (Time.realtimeSinceStartup - t0 < at) yield return null;
+                yield return new WaitForEndOfFrame();
+                Capture(Path.Combine(dir, "portal_spawn_t" + Mathf.RoundToInt(at * 100).ToString("000") + ".png"));
+                info += "t=" + at + " enemy at " + (en != null ? en.transform.position.ToString("F2") : "-") + " held=" + (en != null && en.HeldBySpawn) + " hpBarVisible=" + (en != null && en.HpBarVisible) + "\n";
+            }
+            cam.orthographicSize = o0; cam.fieldOfView = f0;
+            File.WriteAllText(Path.Combine(dir, "portal_closeups.txt"), info); Debug.Log("PORTAL CLOSEUPS\n" + info);
+            cam.transform.position = home; foreach (var c in canvases) c.enabled = true; captureNoUi = false;
+        }
+        bool captureNoUi;
+        void Capture(string path)
         {
             var cam = s.viewCamera; var rt = new RenderTexture(1920, 1080, 24) { antiAliasing = 4 };
-            var canvases = FindObjectsOfType<Canvas>();
+            var hidden = new List<Canvas>(); // URP draws overlay UI into the camera target itself, so hide canvases synchronously around Render
+            if (captureNoUi) foreach (var c in FindObjectsOfType<Canvas>()) if (c.enabled) { c.enabled = false; hidden.Add(c); }
+            var canvases = captureNoUi ? new Canvas[0] : FindObjectsOfType<Canvas>();
             var modes = new RenderMode[canvases.Length];
-            for (int i = 0; i < canvases.Length; i++) { modes[i] = canvases[i].renderMode; canvases[i].renderMode = RenderMode.ScreenSpaceCamera; canvases[i].worldCamera = cam; canvases[i].planeDistance = cam.nearClipPlane + .3f - canvases[i].sortingOrder * .05f; }
+            for (int i = 0; i < canvases.Length; i++) { modes[i] = canvases[i].renderMode; canvases[i].renderMode = RenderMode.ScreenSpaceCamera; canvases[i].worldCamera = cam; canvases[i].planeDistance = cam.nearClipPlane + .3f - Mathf.Clamp(canvases[i].sortingOrder, 0, 20) * .01f; } /* was -order*.05: order-20 reward canvas went behind the near plane */
             cam.targetTexture = rt; Canvas.ForceUpdateCanvases(); cam.Render(); Canvas.ForceUpdateCanvases(); cam.Render();
             RenderTexture.active = rt; var tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false); tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); tex.Apply();
             Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllBytes(path, tex.EncodeToPNG());
             cam.targetTexture = null; RenderTexture.active = null;
             for (int i = 0; i < canvases.Length; i++) canvases[i].renderMode = modes[i];
+            foreach (var c in hidden) c.enabled = true;
         }
         void OnDestroy() { draws.Dispose(); batches.Dispose(); setPass.Dispose(); tris.Dispose(); }
     }

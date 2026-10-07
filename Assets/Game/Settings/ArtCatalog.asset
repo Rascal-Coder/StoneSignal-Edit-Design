@@ -50,6 +50,7 @@ MonoBehaviour:
   tileUndulation: 1
   pathFlowSegment: {fileID: 3585437777789776170, guid: 5087ceb7993693e4bb2760a9b381ea21, type: 3}
   pathFlowY: 0.34
+  flowScrollsTowardStart: 1
   placeGhostBlock: {fileID: 3235682694636928108, guid: 66f9747f005741a4d87393493963a003, type: 3}
   placeGhostTower: {fileID: 5797902941885729350, guid: 8d4d82d6d53b9514c8fb240b06c8cfc1, type: 3}
   slotHighlight: {fileID: 6079820617362110597, guid: 84dfc173270a585469a472398563ac7b, type: 3}
@@ -71,6 +72,15 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 04e11e0d28dd4919a66bad8bd4a86ead, type: 3}
   - {fileID: 21300000, guid: fb1a6ba8adaf4cdb803b91a2dbd88504, type: 3}
   - {fileID: 21300000, guid: 3d5f9bb799a74b248c5a4c749b175679, type: 3}
+  - {fileID: 21300000, guid: 61db249aa2dd7e44cbb5d1ae8685134b, type: 3}
+  - {fileID: 21300000, guid: 72c2890b047bf334298c7b4c1391b10d, type: 3}
+  - {fileID: 21300000, guid: fe9bbd03f1aeed943b1630e35ef2f1ac, type: 3}
+  - {fileID: 21300000, guid: 1f92f08f6e1028a469eb5168c6e7ecae, type: 3}
+  - {fileID: 21300000, guid: f5922c86573e3fd45af46ecd51f5ff24, type: 3}
+  - {fileID: 21300000, guid: b8ed1186e167898488b58e6659eec92b, type: 3}
+  - {fileID: 21300000, guid: 49c4cf7b640929d438c42b6e20978d50, type: 3}
+  - {fileID: 21300000, guid: 8ebea89064c679e43a225cdc63a482c1, type: 3}
+  - {fileID: 21300000, guid: eb9ff4c4a6ff2cb42aa95f3850d71de1, type: 3}
   - {fileID: 21300000, guid: f8bb91ab07dd5004ab6debe798935ec0, type: 3}
   - {fileID: 21300000, guid: bd069e5419c90594584734176ab1b3ac, type: 3}
   - {fileID: 21300000, guid: 9fb15730a710fbc4491d7d5e3711d47e, type: 3}
@@ -84,9 +94,14 @@ MonoBehaviour:
   - {fileID: 21300000, guid: ed1b183ccf44fdd44bf4add58d063cc0, type: 3}
   - {fileID: 21300000, guid: 9cd984cee80c4fb1b0b2acd6fe4ac111, type: 3}
   - {fileID: 21300000, guid: 62e1d97c6bfe429f9c93a9bb4f3fd995, type: 3}
+  - {fileID: 21300000, guid: 3fd1194fd95799742a765698172165ed, type: 3}
+  - {fileID: 21300000, guid: 479e4c4870693d647ac92e06788f705a, type: 3}
+  - {fileID: 21300000, guid: 32ff916a9511aa7488593172e22a9066, type: 3}
+  - {fileID: 21300000, guid: 577ac157f91c1824980de0c31c500587, type: 3}
   - {fileID: 21300000, guid: dac95fe4c264e4641bd3b9cfea3005a4, type: 3}
   - {fileID: 21300000, guid: f46c2e3d148a42e0b35655dadf43885e, type: 3}
   - {fileID: 21300000, guid: 3a94bb9476fed754f9641012f68e64e7, type: 3}
+  - {fileID: 21300000, guid: d5095e4710aef7149948fc72f1765d0c, type: 3}
   - {fileID: 21300000, guid: 0c7169095b1a484090456863aaa419a5, type: 3}
   - {fileID: 21300000, guid: d6a3da423b0544c0876127081c64ee47, type: 3}
   - {fileID: 21300000, guid: cad86d243917421a8180a0e7e024e125, type: 3}
@@ -100,6 +115,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: efd24ce3ebfc5ea40a7fc98ee82bd1b0, type: 3}
   - {fileID: 21300000, guid: 7ba2b1f3b905c3443b987cd229305159, type: 3}
   - {fileID: 21300000, guid: 165d8e7001d95f341b70a897b4d52e81, type: 3}
+  - {fileID: 21300000, guid: 8d50aba111275074491907c810a6e85f, type: 3}
+  - {fileID: 21300000, guid: ba5adcc3acbe18b459ee3baa8229d98f, type: 3}
   - {fileID: 21300000, guid: 6399ccc175744a0aafe54a14a11c02fe, type: 3}
   - {fileID: 21300000, guid: 781747cdc0c441edbc83ffaecc99a239, type: 3}
   - {fileID: 21300000, guid: 0211844f23844c62ac420e5acbb42028, type: 3}
@@ -111,9 +128,21 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 1c2c82ae33dd411289efc98b5455515e, type: 3}
   - {fileID: 21300000, guid: d699a52671cf47dd8ce471c9ba96d6a0, type: 3}
   - {fileID: 21300000, guid: c9ab5de01fa54232a6bdb3002bfcec7c, type: 3}
+  - {fileID: 21300000, guid: be87ce7051cf9294db597012585711a6, type: 3}
+  - {fileID: 21300000, guid: 3818db124355cb44ea72c8c90f42ee96, type: 3}
+  - {fileID: 21300000, guid: 45c41d5ac60580b4a83f66d3600b5ba5, type: 3}
+  - {fileID: 21300000, guid: 9f41561d04055f34e9a2422933fc19bf, type: 3}
+  - {fileID: 21300000, guid: f97300508fab57043876f39e9d171449, type: 3}
   runeAtlas: {fileID: 2800000, guid: a55735ed38027384eb5c29993d73a035, type: 3}
   towerBuffIcons: {fileID: 7366870144908848484, guid: 1b58cf74de171334896bec3fe4f4aa9e, type: 3}
   resonanceAura: {fileID: 116625877752293475, guid: 86db8de72dcfd864abca20155302bea4, type: 3}
+  enemyGround: {fileID: 3665994463482207982, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
+  spawnPortalFx: {fileID: 8755518914830713815, guid: 8ead1772b58ea774f97d9d8a0662dd84, type: 3}
+  portalShowRunestones: 0
+  coreEnclosureIntact: {fileID: -8936622394817868014, guid: a969fdcd6a8ff5e459c00d00aa747fa4, type: 3}
+  coreEnclosureCracked: {fileID: -8936622394817868014, guid: 5801fb8c72b4425428a14718389fc614, type: 3}
+  coreEnclosureBroken: {fileID: -8936622394817868014, guid: 23a13e304225d544e9712c90f9d8a5f4, type: 3}
+  coreEnclosureMaterial: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   enemyGroundSystem: {fileID: 6042952406824403819, guid: c1f957d00b09c7e4a9555bab3fb997bd, type: 3}
   rewardFlyGold: {fileID: 4663132577274263441, guid: 404ccb5c1f65df641a8ec7e01fc2fdd8, type: 3}
   coreHitVfx: {fileID: 6531622362749199158, guid: ddaceebcf3fae584f84a089110410510, type: 3}

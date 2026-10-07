@@ -160,6 +160,8 @@ MonoBehaviour:
   layout: {fileID: 11400000, guid: e0f7b7112c01b304eaa56dffd744ff17, type: 2}
   spawn: {x: 0, y: 4}
   goal: {x: 15, y: 4}
+  islandDistance: 5.1
+  islandHeight: 0
 --- !u!4 &330129754
 Transform:
   m_ObjectHideFlags: 0

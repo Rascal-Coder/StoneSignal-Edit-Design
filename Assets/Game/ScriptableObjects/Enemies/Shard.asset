@@ -20,6 +20,7 @@ MonoBehaviour:
   damageToBase: 1
   fast: 1
   kind: 1
+  flying: 0
   splitChild: {fileID: 0}
   splitCount: 0
   turnSpeed: 540

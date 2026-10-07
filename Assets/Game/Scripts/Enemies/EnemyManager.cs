@@ -19,6 +19,9 @@ namespace StoneSignal
         public event Action<Enemy, EnemyResolution> Resolved;
         public event Action<Enemy> Spawned;
         public event Action<int> ChildrenAdded;
+        /// Spawn portal at an entry cell (GridView, v16.2); split children never use it.
+        public Func<Vector2Int, StoneSignal.VFX.SpawnPortal> PortalAt;
+        bool splitting; public bool IsSplitting => splitting;
         public Func<float> SpeedMultiplier = () => 1;
         private int nextSpawn;
         public void Initialize(GridManager map, PathfindingManager paths, VisualPalette colors, Func<bool> allowed)
@@ -46,9 +49,22 @@ namespace StoneSignal
                 // Logical enemy height is +0.45 over the grid plane; the visual stands on the ground tile top.
                 float ground = palette != null && palette.art != null ? palette.art.tileTop : 0;
                 ArtVisual.Create(data.visualPrefab,obj.transform,obj.transform.position+Vector3.up*(ground-.45f));
+                if (ArtSteps.On(1) && Application.isPlaying && palette != null && palette.art != null && palette.art.enemyGround != null)
+                {
+                    // v16.2 footprints: per-enemy blob + reporter to the single scene emitter (PF_VFX_EnemyGroundSystem, cap 64)
+                    var g = ArtVisual.Create(palette.art.enemyGround, obj.transform, obj.transform.position);
+                    var fx = g.GetComponent<StoneSignal.VFX.EnemyGroundFx>() ?? g.GetComponentInChildren<StoneSignal.VFX.EnemyGroundFx>();
+                    if (fx != null) { fx.groundY = ground - .45f; fx.SetFlying(data.flying); }
+                }
             } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(from), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
             if (enemy == null) enemy = obj.AddComponent<Enemy>();
             enemy.Initialize(this, grid, data, palette, hpScale, speedScale, from);
+            { var gfx = obj.GetComponentInChildren<StoneSignal.VFX.EnemyGroundFx>(); if (gfx != null) gfx.SetFlying(data.flying); } // pooled reuse keeps the flag right
+            if (!splitting && Application.isPlaying)
+            {
+                if (ArtSteps.On(3)) StoneSignal.VFX.SpawnRipple.Play(grid.TryPortalPoint(from, out var rp) ? rp : grid.ToWorld(from));
+                if (ArtSteps.On(2) && PortalAt != null) { var portal = PortalAt(from); if (portal != null) { var held = enemy; held.HeldBySpawn = true; portal.PlaySpawn(obj.transform, .6f, () => { if (held != null) held.HeldBySpawn = false; }); } }
+            }
             progress.Remove(enemy); // pooled reuse: never inherit the previous life's best distance (false ENEMY STUCK)
             active.Add(enemy); Spawned?.Invoke(enemy);
             return enemy;
@@ -60,11 +76,13 @@ namespace StoneSignal
             if(reason==EnemyResolution.Killed && enemy.Data.splitChild!=null && enemy.Data.splitCount>0) {
                 // Reserve child count before parent resolution can complete a wave.
                 ChildrenAdded?.Invoke(enemy.Data.splitCount);
+                splitting = true;
                 for(int i=0;i<enemy.Data.splitCount;i++) {
                     var child=Spawn(enemy.Data.splitChild,enemy.HPScale,enemy.SpeedScale,0);
                     child.ResumeFrom(enemy.transform.position,enemy.NavigationAnchor);
                     child.transform.localScale *= enemy.Data.splitChildScale;
                 }
+                splitting = false;
             }
             Resolved?.Invoke(enemy, reason);
         }

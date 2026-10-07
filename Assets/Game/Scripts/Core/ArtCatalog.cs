@@ -60,6 +60,12 @@ namespace StoneSignal
         public Texture2D runeAtlas;              // RuneInlay.Atlas (T_RuneGlyphAtlas)
         public GameObject towerBuffIcons;        // PF_UI_TowerBuffIcons
         public GameObject resonanceAura;         // PF_UI_ResonanceAura
+        public GameObject enemyGround;           // PF_VFX_EnemyGround (per enemy: blob shadow + footprint reporter)
+        public GameObject spawnPortalFx;         // PF_VFX_SpawnPortal (v16.2, PlaySpawn / SetActive)
+        [Tooltip("Trial toggle (user request): show the portal runestones. Off = their renderers are disabled at runtime; art prefab untouched.")]
+        public bool portalShowRunestones = false;
+        public Mesh coreEnclosureIntact, coreEnclosureCracked, coreEnclosureBroken; // SM_Core_Enclosure_* (CoreDamageFx)
+        public Material coreEnclosureMaterial;
         public GameObject enemyGroundSystem;     // PF_VFX_EnemyGroundSystem (one per scene)
         public GameObject rewardFlyGold;         // PF_VFX_RewardFly_Gold
         public Sprite UiSprite(string spriteName) { if (uiSprites != null) foreach (var s in uiSprites) if (s != null && s.name == spriteName) return s; return null; }

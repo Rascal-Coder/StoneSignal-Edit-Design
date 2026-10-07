@@ -30,6 +30,10 @@ namespace StoneSignal
         [Header("Level dressing (visual only)")]
         [Tooltip("Art-authored environment prefab (water, shore islands, trees) placed at the board centre. Assigned by the wiring tool when PF_Env_LevelDressing_16x12 exists; empty = cliff + bridges only.")]
         public GameObject levelDressing;
+        [Tooltip("Distance (cells) from an entry cell centre, outward, to the centre of its shore island (level_layout.json: 5.1).")]
+        public float entryIslandDistance = 5.1f;
+        [Tooltip("Island top surface height relative to the board walk plane.")]
+        public float entryIslandHeight = 0f;
         [Tooltip("Dressing pivot relative to the board centre / ground plane (demo tile top 0.80 -> game 0.25 = -0.55).")]
         public Vector3 levelDressingOffset = new Vector3(0, -.55f, 0);
         [Tooltip("The dressing ships its own board cliff, so the ArtCatalog cliff is skipped.")]

@@ -190,6 +190,14 @@ namespace StoneSignal.EditorTools
             // v15: runes / tower buff icons / resonance aura / global enemy ground system / kill gold fly
             art.runeAtlas = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Game/Art/Stylized/Runes/T_RuneGlyphAtlas.png");
             art.towerBuffIcons = Opt("PF_UI_TowerBuffIcons"); art.resonanceAura = Opt("PF_UI_ResonanceAura");
+            art.enemyGround = Opt("PF_VFX_EnemyGround"); art.spawnPortalFx = Opt("PF_VFX_SpawnPortal");
+            {
+                Mesh M(string n) => AssetDatabase.LoadAllAssetsAtPath("Assets/Game/Art/Stylized/Environment/Core/" + n + ".fbx").OfType<Mesh>().FirstOrDefault();
+                art.coreEnclosureIntact = M("SM_Core_Enclosure_Intact"); art.coreEnclosureCracked = M("SM_Core_Enclosure_Cracked"); art.coreEnclosureBroken = M("SM_Core_Enclosure_Broken");
+                art.coreEnclosureMaterial = AssetDatabase.LoadAllAssetsAtPath("Assets/Game/Art/Stylized/Environment/Core/SM_Core_Enclosure_Intact.fbx").OfType<Material>().FirstOrDefault();
+                var fbx = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Art/Stylized/Environment/Core/SM_Core_Enclosure_Intact.fbx");
+                if (fbx != null) { var mr = fbx.GetComponentInChildren<MeshRenderer>(); if (mr != null && mr.sharedMaterial != null) art.coreEnclosureMaterial = mr.sharedMaterial; }
+            }
             art.enemyGroundSystem = Opt("PF_VFX_EnemyGroundSystem"); art.rewardFlyGold = Opt("PF_VFX_RewardFly_Gold");
             foreach (var pf in new[] { art.slotHighlight, art.block, art.tile, art.tilePath, art.pathFlowSegment }.Concat(art.tileVariants ?? new GameObject[0]))
                 if (pf != null) foreach (var r in pf.GetComponentsInChildren<Renderer>(true)) foreach (var m in r.sharedMaterials)

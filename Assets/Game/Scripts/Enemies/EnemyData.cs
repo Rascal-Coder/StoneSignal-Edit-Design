@@ -14,6 +14,7 @@ namespace StoneSignal
         [Min(1)] public int damageToBase = 2;
         public bool fast;
         public EnemyKind kind;
+        [Tooltip("Flyers: EnemyGroundFx.SetFlying(true) -> blob shadow only, no footprints")] public bool flying;
         public EnemyData splitChild;
         [Min(0)] public int splitCount;
         [Header("Presentation (visual only)")]

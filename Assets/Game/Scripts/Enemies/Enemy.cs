@@ -58,22 +58,23 @@ namespace StoneSignal
 
         public void Initialize(EnemyManager manager, GridManager map, EnemyData data, VisualPalette palette, float hpScale, float speedScale, Vector2Int? from = null)
         {
-            LastAttacker = null; hasEnd = false; extWrites = 0;
+            LastAttacker = null; hasEnd = false; extWrites = 0; heldBySpawn = false; barFade = -1; flyChecked = false; fly = null; spawnFrame = Time.frameCount;
             owner = manager; grid = map; Data = data; HPScale=hpScale; SpeedScale=speedScale;
             HP = maxHP = data.hp * hpScale; speed = data.moveSpeed * speedScale; Alive = true;
             Vector2Int start = from ?? grid.spawn;
             transform.position = World(start);
+            if (owner != null && !owner.IsSplitting && Application.isPlaying) { if (grid.TryPortalPoint(start, out var pp)) transform.position = new Vector3(pp.x, transform.position.y + (pp.y - grid.ToWorld(start).y), pp.z); }
             Damaged = null; slowMultiplier = 1; slowRemaining = 0; flashUntil = 0; LastHitCrit = false;
             if (hpBar == null)
             {
                 bodies = GetComponentsInChildren<Renderer>();
                 tint = new MaterialPropertyBlock();
-                var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * .75f, new Vector3(.65f,.055f,.08f), palette.invalid);
+                var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * BarHeight(), new Vector3(.65f,.055f,.08f), palette.invalid);
                 healthFill = PrimitiveVisual.Create("HP", PrimitiveType.Cube, back.transform, back.transform.position + Vector3.up * .005f, new Vector3(.65f,.055f,.08f), palette.valid).transform;
-                hpBar = back.transform;
+                hpBar = back.transform; barScale = hpBar.localScale;
                 foreach (var r in back.GetComponentsInChildren<Renderer>()) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; }
             }
-            else { hpBar.gameObject.SetActive(true); hpBar.position = transform.position + Vector3.up * .75f; } // pooled reuse
+            else { hpBar.gameObject.SetActive(true); hpBar.localScale = barScale; hpBar.position = transform.position + Vector3.up * BarHeight(); } // pooled reuse
             SetFill(1); // pooled reuse resets to full
             path = owner.Paths.FindPath(start, grid.goal); node = 0;
             FaceNextNode();
@@ -97,7 +98,7 @@ namespace StoneSignal
         }
         public void ResumeFrom(Vector3 position,Vector2Int anchor) {
             transform.position=position; hasEnd=false; path=owner.Paths.FindPath(anchor,grid.goal); node=0;
-            if(hpBar!=null) hpBar.position=position+Vector3.up*.75f;
+            if(hpBar!=null) hpBar.position=position+Vector3.up*BarHeight();
             FaceNextNode(); // split children face their own route from the spawn point
         }
         // Models are authored facing +Z with identity root rotation: no per-model yaw offsets anywhere.
@@ -115,6 +116,39 @@ namespace StoneSignal
             slowMultiplier=Mathf.Min(slowMultiplier,1-Mathf.Clamp01(fraction)); slowRemaining=Mathf.Max(slowRemaining,duration);
         }
         private Transform hpBar;
+        // v17 flyers: the model is lifted by FlyingMotion (added by EnemyGroundFx.SetFlying after Initialize), so the bar rides above it.
+        private StoneSignal.VFX.FlyingMotion fly; private bool flyChecked; private float flyTop;
+        private float BarHeight()
+        {
+            if (!flyChecked && Application.isPlaying && Time.frameCount > spawnFrame)
+            {
+                fly = GetComponentInChildren<StoneSignal.VFX.FlyingMotion>(true); flyChecked = true; flyTop = 0;
+                if (fly != null) foreach (var r in ModelRenderers(fly.transform)) flyTop = Mathf.Max(flyTop, MeshTop(r) - fly.transform.position.y); // model top above the lifted pivot
+            }
+            if (fly == null || !fly.isActiveAndEnabled) return .75f;
+            return Mathf.Max(.75f + fly.CurrentHeight, fly.transform.position.y - transform.position.y + flyTop + .15f);
+        }
+        // The creature model only: skinned meshes if any (blob shadows / fx quads are MeshRenderers).
+        public static List<Renderer> ModelRenderers(Transform root)
+        {
+            var all = new List<Renderer>(); var sk = new List<Renderer>();
+            foreach (var r in root.GetComponentsInChildren<Renderer>())
+            {
+                if (!r.enabled || r.name.StartsWith("Blob") || r.name.StartsWith("HP")) continue;
+                if (r is SkinnedMeshRenderer) sk.Add(r); else if (r is MeshRenderer && !r.name.StartsWith("HP")) all.Add(r);
+            }
+            return sk.Count > 0 ? sk : all;
+        }
+        // World top of a renderer's mesh. SkinnedMeshRenderer.bounds is a loose animation box (measured 2.7 m tall on the Skimmer), so use the rest mesh.
+        public static float MeshTop(Renderer r)
+        {
+            Mesh m = r is SkinnedMeshRenderer sk ? sk.sharedMesh : (r.TryGetComponent<MeshFilter>(out var mf) ? mf.sharedMesh : null);
+            if (m == null) return r.bounds.max.y;
+            var b = m.bounds; float top = float.MinValue;
+            for (int i = 0; i < 8; i++) top = Mathf.Max(top, r.transform.TransformPoint(new Vector3((i & 1) == 0 ? b.min.x : b.max.x, (i & 2) == 0 ? b.min.y : b.max.y, (i & 4) == 0 ? b.min.z : b.max.z)).y);
+            return top;
+        }
+        private int spawnFrame;
         private Vector3 World(Vector2Int cell) => grid.ToWorld(cell) + Vector3.up * .45f;
         public bool Repath()
         {
@@ -131,8 +165,30 @@ namespace StoneSignal
             bool moving = Alive && owner != null && owner.CanMove();
             if (animator != null) animator.speed = moving ? 1 : 0;
             if (Feedback != null && Alive && Data != null) Feedback.SetMoveSpeed(speed * owner.SpeedMultiplier() * slowMultiplier / Mathf.Max(.01f, Data.moveSpeed));
-            if (moving) Advance(Time.deltaTime);
+            if (moving && !HeldBySpawn) Advance(Time.deltaTime); // spawn portal rise: hold until onDone
+            if (barFade >= 0 && hpBar != null)
+            {
+                barFade += Time.unscaledDeltaTime; float k = Mathf.Clamp01(barFade / BarFadeTime); k = 1 - (1 - k) * (1 - k); // ease-out
+                hpBar.localScale = barScale * k; if (barFade >= BarFadeTime) { hpBar.localScale = barScale; barFade = -1; }
+            }
         }
+        /// Spawn portal rise: no movement until the portal's onDone. The HP bar is hidden while held and eases in over
+        /// barFadeTime once released (art-approved v17.1). The bar cubes use shared opaque palette materials, so the "fade"
+        /// is a scale-in (no per-enemy material / no transparent pass / no extra draw calls).
+        public bool HeldBySpawn
+        {
+            get => heldBySpawn;
+            set
+            {
+                if (heldBySpawn == value) return; heldBySpawn = value;
+                if (hpBar == null || !Application.isPlaying) return;
+                if (value) { hpBar.gameObject.SetActive(false); barFade = -1; }
+                else if (Alive) { hpBar.gameObject.SetActive(true); barFade = 0; hpBar.localScale = Vector3.zero; hpBar.position = transform.position + Vector3.up * BarHeight(); FaceBar(); }
+            }
+        }
+        private bool heldBySpawn; private float barFade = -1; private Vector3 barScale = new Vector3(.65f, .055f, .08f);
+        public const float BarFadeTime = .2f;
+        public bool HpBarVisible => hpBar != null && hpBar.gameObject.activeInHierarchy && hpBar.localScale.x > .001f;
         public void Advance(float deltaTime)
         {
             if (!Alive || path == null || path.Count == 0) return;
@@ -154,7 +210,7 @@ namespace StoneSignal
             // Yaw-only, smooth turn toward the travel direction (EnemyData.turnSpeed deg/s); no snapping at corners.
             if(heading.sqrMagnitude>.00001f)
                 transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(heading),Data.turnSpeed*deltaTime);
-            if (hpBar != null) { hpBar.position = transform.position + Vector3.up * .75f; FaceBar(); }
+            if (hpBar != null) { hpBar.position = transform.position + Vector3.up * BarHeight(); FaceBar(); }
             lastStep = speed * owner.SpeedMultiplier() * slowMultiplier * deltaTime; lastEnd = transform.position; hasEnd = true;
             if (node >= path.Count) Resolve(EnemyResolution.Escaped);
         }
@@ -223,6 +279,7 @@ namespace StoneSignal
         }
         private void LateUpdate()
         {
+            if (fly != null && hpBar != null && Alive) hpBar.position = transform.position + Vector3.up * BarHeight(); // follow the flyer bob
             // Stylized enemies flash through EnemyHitFeedback; writing a property block here would erase it.
             if (bodies == null || Feedback != null) return;
             bool flash=Time.time<flashUntil;

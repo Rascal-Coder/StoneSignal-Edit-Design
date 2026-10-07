@@ -16,6 +16,7 @@ namespace StoneSignal
         public TowerManager Towers { get; private set; }
         public WaveManager Waves { get; private set; }
         public RewardManager Rewards { get; private set; }
+        public GridView MapView { get; private set; }
         public RunEconomy Economy { get; private set; }
         public RunModifiers Modifiers { get; private set; }
         public RuneConfig Runes { get; private set; }
@@ -64,7 +65,7 @@ namespace StoneSignal
             if (config.layout != null) grid.layout = config.layout;
             grid.Initialize();
             Paths = Service<PathfindingManager>("A star paths"); Paths.Initialize(grid);
-            Service<GridView>("Map visuals").Initialize(grid,Paths,config.palette);
+            var mapView = Service<GridView>("Map visuals"); mapView.Initialize(grid,Paths,config.palette); MapView = mapView;
             Validator = Service<PlacementValidator>("Placement validation"); Validator.Initialize(grid,Paths);
             Enemies = Service<EnemyManager>("Enemy registry"); Enemies.Initialize(grid,Paths,config.palette,() => Game.State == GameState.Combat);
             Validator.ValidateActors = Enemies.ValidatePlacement;
@@ -76,6 +77,11 @@ namespace StoneSignal
             Towers = Service<TowerManager>("Tower placement");
             Towers.Initialize(grid,Validator,Enemies,config.palette,Modifiers,config.towers,Blocks,() => Game.State == GameState.Build,() => Game.State == GameState.Combat,Economy.Spend,() => Economy.Gold);
             Towers.RuneRulesConfig = Runes;
+            // v16.2: spawn portals (rise before walking, active only in combat) + core enclosure damage states
+            Enemies.PortalAt = MapView.PortalAt;
+            Game.StateChanged += st => MapView.SetPortalsActive(st == GameState.Combat);
+            Economy.Changed += () => { if (MapView.CoreFx != null) MapView.CoreFx.SetHealth01(Economy.MaxHP > 0 ? Economy.HP / (float)Economy.MaxHP : 1); };
+            Enemies.Resolved += (e, r) => { if (r == EnemyResolution.Escaped && MapView.CoreFx != null) MapView.CoreFx.PlayHit(); };
             { var pic = Service<PlacementInputController>("Placement input"); pic.Initialize(Towers, Blocks, grid, config.palette != null ? config.palette.art : null); }
             var spawner = Service<EnemySpawner>("Enemy spawner"); spawner.Initialize(Enemies);
             Waves = Service<WaveManager>("Waves"); Waves.Initialize(Game,config,Enemies,spawner,Modifiers);
