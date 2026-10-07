@@ -19,7 +19,7 @@ namespace StoneSignal
                 if (!grid.CanPlace(cell)) return "Cell occupied / protected";
                 if (!simulation.Add(cell)) return "Duplicate block cell";
             }
-            if (paths.FindPath(grid.spawn, grid.goal, simulation).Count == 0) return "Blocked: the core needs an open route";
+            if (!paths.AllSpawnsReachCore(simulation)) return "Blocked: the core needs an open route";
             return ValidateActors?.Invoke(simulation);
         }
         public string ValidateTower(Vector2Int cell)

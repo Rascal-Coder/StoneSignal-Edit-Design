@@ -17,7 +17,7 @@ MonoBehaviour:
   tileSpawn: {fileID: 8879056266098044780, guid: 48d491a3533b37e4ea4415686a351a7c, type: 3}
   tileGoal: {fileID: 8879056266098044780, guid: 48d491a3533b37e4ea4415686a351a7c, type: 3}
   block: {fileID: 4775566562741414565, guid: 05fd1ab73023def46b8a023ee164d8df, type: 3}
-  spawnPortal: {fileID: 4194413955246952831, guid: 0e71c96e634e1a34aaad343a706b2ed6, type: 3}
+  spawnPortal: {fileID: 0}
   signalCore: {fileID: 5435697756241155518, guid: f9b33f524cc9e05419513022edaa5f67, type: 3}
   towerBase: {fileID: 1547034742133161897, guid: 63ca9fef6ccd6e24cbef236949a22932, type: 3}
   towerBodyA: {fileID: 3651849596417564392, guid: 15c8aaa5d8efdd24cbb9db7cbaea2a68, type: 3}
@@ -34,6 +34,12 @@ MonoBehaviour:
   detailDirt: {fileID: 5046714115729109645, guid: c867780bebd5a1e489806e6de5e62028, type: 3}
   atlas: {fileID: 2100000, guid: a2bf304f4332eb64e8df2694f9b0ec37, type: 2}
   backdrop: {fileID: 2100000, guid: d45a2c1e443d96f4db865de735f3f6fa, type: 2}
+  boardCliff: {fileID: 2571206500013787580, guid: 91161e3e9f81a964a93892a1f91fa8cb, type: 3}
+  boardCliffSize: {x: 16, y: 12}
+  boardCliffOffsetY: -0.55
+  entryBridge: {fileID: 1232416522293476760, guid: b396d9254e58c8e43a029d1d54a82e79, type: 3}
+  entryBridgePlanks: 4
+  entryBridgeOffsetY: -0.55
   coreHitVfx: {fileID: 6531622362749199158, guid: ddaceebcf3fae584f84a089110410510, type: 3}
   tileTop: 0.25
   blockTop: 0.6

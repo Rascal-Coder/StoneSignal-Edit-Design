@@ -19,7 +19,7 @@ namespace StoneSignal
             foreach (EnemyGroup group in wave.groups)
                 for (int i = 0; i < group.count; i++)
                 {
-                    enemies.Spawn(group.enemy,wave.hpScale * extraScale,wave.speedScale);
+                    enemies.Spawn(group.enemy,wave.hpScale * extraScale,wave.speedScale,group.spawnIndex);
                     yield return delay;
                 }
             routine = null; completed();

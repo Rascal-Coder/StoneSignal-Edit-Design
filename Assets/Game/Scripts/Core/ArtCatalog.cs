@@ -27,6 +27,16 @@ namespace StoneSignal
         [Header("Scene")]
         public Material atlas;
         public Material backdrop;
+        [Header("Board dressing (visual only)")]
+        [Tooltip("Cliff/island mesh placed under the board, scaled from its native footprint to the grid.")]
+        public GameObject boardCliff;
+        public Vector2 boardCliffSize = new Vector2(16, 12);
+        [Tooltip("Cliff pivot height relative to the grid plane (tile pivots rest on the cliff top).")]
+        public float boardCliffOffsetY = -.55f;
+        [Tooltip("Plank placed outward from each edge spawn.")]
+        public GameObject entryBridge;
+        [Min(0)] public int entryBridgePlanks = 4;
+        public float entryBridgeOffsetY = -.55f;
         [Header("Combat VFX")]
         [Tooltip("Played where an enemy reaches the core.")]
         public GameObject coreHitVfx;

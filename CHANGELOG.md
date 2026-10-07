@@ -143,3 +143,17 @@ Validation：Tuanjie 2022.3.62t16 batchmode 编译通过；`StylizedGameplayWiri
 - Turrets: no gold slot plates; plinths are stone with metal trim.
 - Docs/ArtDirection.md: value hierarchy and palette retune (darker low-contrast ground, mid walls, desaturated foliage).
 
+
+## 2026-10-07 — 美术 v6 适配：塔骨架瞄准 + 中央 2×2 核心 + 多入口
+
+Changed:
+
+- 塔瞄准按 v6 层级 `Rig > *_Base / *_Head(yaw) > [*_Barrel(pitch)] > *_Muzzle(+Z)`：Head 偏航使 Muzzle 水平朝向对准目标（Tesla 线圈也会转），直射 Barrel 俯仰（±30°/次，仅 Cannon，未接入），抛射 Barrel 保持 28° 作者角；炮口特效、弹体、Tesla 电弧均从 Muzzle 位置/朝向发出。运行时不再读取渲染包围盒（删除 Tower 中 MortarBarrelTip 副本；编辑器 `StylizedVFXBuilder.MortarBarrelTip` 优先用 Muzzle）。
+- 设计变更：Ember 核心（PF_Prop_Core）位于棋盘中央，占 2×2；敌人从多个边缘入口进入。新增 `BoardLayoutData`（`ScriptableObjects/Board/StylizedBoard.asset`，由 `GameConfig.layout` 引用）：16×12，入口 (15,3)/(0,8)/(7,0)（对应 level_layout.json 的 Blender W/E/N 栈桥），核心 (7,5) 起 2×2。
+- `GridManager` 支持多 Spawn 与多格 Goal（`Spawns`/`CoreCells`，`spawn`/`goal` 保留为第一个以兼容）；A* 以任一核心格为终点；放置校验要求**每个入口**都能到达核心，堵死任一入口即拒绝。`PathfindingManager.CurrentPaths` 每入口一条，GridView 绘制全部路线与土路。
+- 波次：`EnemyGroup.spawnIndex`（-1 = 轮流各入口，现有三波均为 -1）；Splitter 子怪从母体位置续行，不占轮转。
+- 棋盘装饰：`ArtCatalog.boardCliff` = PF_Env_Board_Cliff_16x12，按网格缩放置于棋盘中心下方 0.55；每个边缘入口外放 4 块 PF_Env_Bridge_Plank；有悬崖时不再生成 Kenney 外圈装饰；`spawnPortal` 置空。
+- Game.unity（由接线工具写入）：Grid 改 16×12、位置 (-8,0,-6)（中心仍在原点），正交尺寸 9.2→6.4（`GameCamOrthoV7`，见 Docs/ArtDirection.md）。
+- `ThirdPartyArtIntegration.Checks` 的 "Block and landmarks assigned" 改为接受 entryBridge 代替 spawnPortal（多入口用栈桥标记）。
+- 地块 ±0.03 m 起伏仅为视觉；玩法高度固定 ground 0.25 / wall 0.6，运行时无任何逻辑读取网格包围盒。
+- Smoke test 改为与布局无关（每入口有路、不能封死核心、自动找合法绕路与塔位）。

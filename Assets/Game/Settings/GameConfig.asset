@@ -46,3 +46,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7c9c7497f0ed4c5f92093575d2e78c96, type: 2}
   - {fileID: 11400000, guid: e2dea71c5afb47e286d0839ebf85dbf7, type: 2}
   palette: {fileID: 11400000, guid: eacb0adbad95395468bf7c70d857b223, type: 2}
+  layout: {fileID: 11400000, guid: e0f7b7112c01b304eaa56dffd744ff17, type: 2}

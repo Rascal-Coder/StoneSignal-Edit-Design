@@ -63,37 +63,43 @@ namespace StoneSignal
         {
             yield return null; yield return null;
             if(session.config.palette.art!=null) {
-                Require(session.config.palette.art.block!=null && session.config.palette.art.spawnPortal!=null,"Art catalog environment assigned");
+                Require(session.config.palette.art.block!=null && session.config.palette.art.signalCore!=null,"Art catalog environment assigned");
                 Require(session.config.palette.art.tile!=null && session.config.palette.art.tilePath!=null && session.config.palette.art.tileGoal!=null,"Board tile, road and goal assigned");
                 foreach(var tower in session.config.towers) Require(tower.visualPrefab!=null && tower.icon!=null,"Tower model and icon "+tower.displayName);
-                Require(session.GetComponentsInChildren<BoardEnvironment>().Length==1,"Board decoration initialized");
+                Require(session.config.palette.art.boardCliff!=null || session.GetComponentsInChildren<BoardEnvironment>().Length==1,"Board island / decoration initialized");
             }
-            Require(session.Paths.CurrentPath.Count==16 && session.Game.State==GameState.Build,"Initial scene, route and Build state");
+            var grid=session.grid;
+            Require(session.Paths.CurrentPaths.Count==grid.Spawns.Count && session.Paths.CurrentPaths.TrueForAll(p=>p.Count>1) && session.Game.State==GameState.Build,"Initial scene, a route from every spawn and Build state");
             session.Blocks.Refill(5);
             for(int i=0;i<5;i++) if(session.Blocks.Hand.Cards[i].displayName=="L") session.Blocks.SelectCard(i);
             Require(session.config.waves[0].Total==5 && session.config.waves[1].Total==8 && session.config.waves[2].Total==12,"Configured 5 / 8 / 12 initial enemies");
             Require(session.config.towers.Length==4 && session.config.rewards.Length==13,"Four towers and thirteen reward assets");
-            var barrier=new List<Vector2Int>();
-            for(int y=0;y<10;y++) if(y<4 || y>6) barrier.Add(new Vector2Int(8,y));
-            session.grid.Commit(barrier,CellState.Blocked);
-            var testVisuals=new GameObject("Validation test wall");
-            foreach(var cell in barrier) PrimitiveVisual.Create("Test wall",PrimitiveType.Cube,testVisuals.transform,session.grid.ToWorld(cell)+Vector3.up*.3f,new Vector3(.9f,.6f,.9f),session.config.palette.wall);
-            session.Blocks.Preview(new Vector2Int(8,4));
-            Require(!session.Blocks.PreviewValid && !session.Blocks.CommitPlacement(new Vector2Int(8,4)),"L cannot seal the last three-cell passage");
-            Require(session.grid.Get(new Vector2Int(8,4))==CellState.Empty && session.Blocks.Remaining==5,"Failed placement is side-effect free");
-            yield return Capture("01-rejected-route");
-            Destroy(testVisuals); session.grid.Initialize(); session.Paths.Recalculate();
-            session.Blocks.Preview(new Vector2Int(15,9));
+            // Sealing the core: every empty ring cell around the core at once must be rejected.
+            var ring=new List<Vector2Int>();
+            foreach(var c in grid.CoreCells) foreach(var d in new[]{Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right})
+                if(grid.CanPlace(c+d) && !ring.Contains(c+d)) ring.Add(c+d);
+            Require(ring.Count>0 && session.Validator.ValidatePlacement(ring)!=null,"Players cannot seal the core");
+            Require(grid.CoreCells.Count==(session.config.layout!=null ? session.config.layout.coreSize.x*session.config.layout.coreSize.y : 1),"Core footprint matches layout");
+            session.Blocks.Preview(new Vector2Int(grid.width-1,grid.height-1));
             Require(!session.Blocks.PreviewValid,"Out-of-bounds ghost invalid");
-            session.Blocks.Rotate(); session.Blocks.Preview(new Vector2Int(6,3));
-            Require(session.Blocks.PreviewValid,"Rotated L ghost valid");
-            session.Blocks.Rotate(); session.Blocks.Rotate(); session.Blocks.Rotate();
-            Require(session.Blocks.CommitPlacement(new Vector2Int(6,3)) && session.Paths.CurrentPath.Count>16,"Legal L placement creates detour");
-            Require(session.Towers.TryBuild(new Vector2Int(3,3),0),"Arrow beacon built");
-            Require(session.Towers.TryBuild(new Vector2Int(9,3),1),"Rapid beacon built");
+            yield return Capture("01-board");
+            int routeBefore=TotalRoute();
+            bool detour=false;
+            for(int r=0;r<4 && !detour;r++)
+            {
+                for(int x=0;x<grid.width && !detour;x++) for(int y=0;y<grid.height && !detour;y++)
+                {
+                    var anchor=new Vector2Int(x,y); var cells=session.Blocks.CellsAt(anchor);
+                    if(session.Blocks.ValidatePlacement(anchor)!=null || !cells.Exists(OnAnyRoute)) continue;
+                    detour=session.Blocks.CommitPlacement(anchor);
+                }
+                if(!detour) session.Blocks.Rotate();
+            }
+            Require(detour && TotalRoute()>routeBefore && session.Paths.AllSpawnsReachCore(),"Legal L placement creates a detour and keeps every spawn connected");
+            Require(TryTower(0,false),"Needle built");
+            Require(TryTower(1,false),"Pulse built");
             Require(session.Economy.Gold==80,"Tower costs deducted exactly once");
-            Require(!session.Towers.TryBuild(session.grid.spawn,0) && session.Economy.Gold==80,"Protected tower placement does not spend gold");
-            session.Blocks.Preview(new Vector2Int(1,7));
+            Require(!session.Towers.TryBuild(grid.spawn,0) && !session.Towers.TryBuild(grid.goal,0) && session.Economy.Gold==80,"Protected tower placement does not spend gold");
             yield return Capture("02-build");
             int[] spawnCounts=new int[3], childCounts=new int[3]; int killed=0;
             session.Enemies.ChildrenAdded+=n=>{if(session.Waves.WaveIndex<3) childCounts[session.Waves.WaveIndex]+=n;};
@@ -103,11 +109,11 @@ namespace StoneSignal
             {
                 if(wave==1)
                 {
-                    Require(session.Economy.Gold>=100 && session.Towers.TryBuild(new Vector2Int(9,5),2),"Cannon built with earned gold");
+                    Require(session.Economy.Gold>=100 && TryTower(2,false),"Seismic built with earned gold");
                     session.Towers.Select(-1);
                 }
                 if(wave==2) {
-                    Require(session.Towers.TryBuild(new Vector2Int(5,5),3),"Chill beacon built for third wave");
+                    Require(TryTower(3,false),"Chill beacon built for third wave");
                     session.Towers.Select(3); yield return Capture("05-chill-selection"); session.Towers.Select(-1);
                 }
                 int goldBefore=session.Economy.Gold;
@@ -119,10 +125,10 @@ namespace StoneSignal
                     Require(animator!=null && animator.runtimeAnimatorController!=null && animator.runtimeAnimatorController.animationClips.Length>=2,"Enemy prefab carries locomotion and death animation");
                     Require(session.Validator.ValidatePlacement(new[] { live.NavigationAnchor })!=null,"Live movement edge protected");
                     bool placed=false;
-                    for(int x=8;x<13 && !placed;x++) for(int y=0;y<7 && !placed;y++)
+                    for(int x=0;x<grid.width && !placed;x++) for(int y=0;y<grid.height && !placed;y++)
                     {
                         var anchor=new Vector2Int(x,y); var cells=session.Blocks.CellsAt(anchor);
-                        if(session.Blocks.ValidatePlacement(anchor)!=null || !cells.Exists(p=>session.Paths.CurrentPath.Contains(p))) continue;
+                        if(session.Blocks.ValidatePlacement(anchor)!=null || !cells.Exists(OnAnyRoute)) continue;
                         placed=session.Blocks.CommitPlacement(anchor);
                     }
                     Require(placed && live.transform.position==before,"Live wall placement repaths without teleport");
@@ -148,9 +154,24 @@ namespace StoneSignal
             EnemyData leak=session.config.waves[0].groups[0].enemy;
             for(int i=0;i<(hp+leak.damageToBase-1)/leak.damageToBase;i++) session.Enemies.Spawn(leak).Advance(100);
             Require(session.Game.State==GameState.GameOver && session.Economy.HP==0,"Base exhaustion reaches GameOver");
-            Require(!session.Waves.StartWave() && !session.Blocks.CommitPlacement(new Vector2Int(1,8)),"GameOver blocks gameplay actions");
+            Require(!session.Waves.StartWave() && !session.Blocks.CommitPlacement(new Vector2Int(1,1)),"GameOver blocks gameplay actions");
             yield return Capture("06-game-over");
             Finish();
+        }
+        private int TotalRoute() { int n=0; foreach(var p in session.Paths.CurrentPaths) n+=p.Count; return n; }
+        private bool OnAnyRoute(Vector2Int cell) => session.Paths.CurrentPaths.Exists(p=>p.Contains(cell));
+        // Towers go near a route (within range) on a cell that keeps every spawn connected.
+        private bool TryTower(int index,bool onRoute)
+        {
+            var grid=session.grid; var core=grid.CoreCenter; Vector2Int best=new Vector2Int(-1,-1); float bestScore=float.MaxValue;
+            for(int x=0;x<grid.width;x++) for(int y=0;y<grid.height;y++)
+            {
+                var c=new Vector2Int(x,y);
+                if(!grid.CanPlace(c) || OnAnyRoute(c)!=onRoute || session.Validator.ValidateTower(c)!=null) continue;
+                float score=(grid.ToWorld(c)-core).sqrMagnitude;
+                if(score<bestScore && score>1.5f) { bestScore=score; best=c; }
+            }
+            return best.x>=0 && session.Towers.TryBuild(best,index);
         }
         private void Finish()
         {

@@ -14,5 +14,7 @@ namespace StoneSignal
         public WaveData[] waves;
         public RewardData[] rewards;
         public VisualPalette palette;
+        [Tooltip("Board size, spawn points and core footprint for the game scene (null = legacy grid fields).")]
+        public BoardLayoutData layout;
     }
 }

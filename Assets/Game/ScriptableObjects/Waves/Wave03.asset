@@ -15,12 +15,16 @@ MonoBehaviour:
   groups:
   - enemy: {fileID: 11400000, guid: e8760c04fd898384797175217a32b339, type: 2}
     count: 6
+    spawnIndex: -1
   - enemy: {fileID: 11400000, guid: a770321d8aa43a14d84b0459c12d606d, type: 2}
     count: 2
+    spawnIndex: -1
   - enemy: {fileID: 11400000, guid: 95453d1060ed4cb68574b44305dacfe5, type: 2}
     count: 2
+    spawnIndex: -1
   - enemy: {fileID: 11400000, guid: 55d5cd7edd854f1a82d9f9af7f36333d, type: 2}
     count: 2
+    spawnIndex: -1
   spawnInterval: 0.7
   hpScale: 1
   speedScale: 1

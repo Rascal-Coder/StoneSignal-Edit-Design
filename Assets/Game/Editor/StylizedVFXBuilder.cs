@@ -352,9 +352,11 @@ public static class StylizedVFXBuilder
         if (ps) ps.Simulate(t, true, true); else foreach (Transform ch in go.transform) { var cp = ch.GetComponent<ParticleSystem>(); if (cp) cp.Simulate(t, true, true); }
         return go;
     }
-    /// Mortar barrel tip: top of the head renderers' bounds, aimed along the barrel (steep 60 deg lob toward target).
+    /// Mortar barrel tip: the *_Muzzle transform when present; otherwise top of head bounds aimed at a 60 deg lob.
     public static (Vector3 pos, Quaternion rot) MortarBarrelTip(Transform head, Vector3 dir)
     {
+        // v6 hierarchy: use the authored *_Muzzle (+Z = fire direction, follows the 28 deg barrel). Bounds fallback for older prefabs.
+        var mz = head.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.EndsWith("_Muzzle")); if (mz) return (mz.position, mz.rotation);
         var rs = head.GetComponentsInChildren<Renderer>(); if (rs.Length == 0) return (head.position + Vector3.up, Quaternion.LookRotation(Vector3.up));
         var b = rs.Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
         var aim = (dir * Mathf.Cos(60 * Mathf.Deg2Rad) + Vector3.up * Mathf.Sin(60 * Mathf.Deg2Rad)).normalized;

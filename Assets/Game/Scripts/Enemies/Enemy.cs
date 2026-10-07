@@ -43,18 +43,19 @@ namespace StoneSignal
         public bool LastHitCrit { get; private set; }
         public EnemyHitFeedback Feedback { get; private set; }
 
-        public void Initialize(EnemyManager manager, GridManager map, EnemyData data, VisualPalette palette, float hpScale, float speedScale)
+        public void Initialize(EnemyManager manager, GridManager map, EnemyData data, VisualPalette palette, float hpScale, float speedScale, Vector2Int? from = null)
         {
             owner = manager; grid = map; Data = data; HPScale=hpScale; SpeedScale=speedScale;
             HP = maxHP = data.hp * hpScale; speed = data.moveSpeed * speedScale; Alive = true;
-            transform.position = World(grid.spawn);
+            Vector2Int start = from ?? grid.spawn;
+            transform.position = World(start);
             bodies = GetComponentsInChildren<Renderer>();
             tint = new MaterialPropertyBlock();
             var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * .75f, new Vector3(.65f,.055f,.08f), palette.invalid);
             healthFill = PrimitiveVisual.Create("HP", PrimitiveType.Cube, back.transform, back.transform.position + Vector3.up * .005f, new Vector3(.65f,.055f,.08f), palette.valid).transform;
             healthFill.localScale = Vector3.one;
             hpBar = back.transform;
-            path = owner.Paths.FindPath(grid.spawn, grid.goal); node = 0;
+            path = owner.Paths.FindPath(start, grid.goal); node = 0;
             BindAnimator();
         }
         private void BindAnimator()

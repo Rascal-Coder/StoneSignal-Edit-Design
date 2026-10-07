@@ -28,6 +28,7 @@ namespace StoneSignal
             Application.targetFrameRate = 60;
             Modifiers = new RunModifiers();
             Game = Service<GameManager>("Game state");
+            if (config.layout != null) grid.layout = config.layout;
             grid.Initialize();
             Paths = Service<PathfindingManager>("A star paths"); Paths.Initialize(grid);
             Service<GridView>("Map visuals").Initialize(grid,Paths,config.palette);

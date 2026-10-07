@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 330129753}
   m_Layer: 0
   m_HasEditorInfo: 1
-  m_Name: Grid 16 x 10
+  m_Name: Grid 16 x 12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -155,8 +155,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   width: 16
-  height: 10
+  height: 12
   cellSize: 1
+  layout: {fileID: 11400000, guid: e0f7b7112c01b304eaa56dffd744ff17, type: 2}
   spawn: {x: 0, y: 4}
   goal: {x: 15, y: 4}
 --- !u!4 &330129754
@@ -168,7 +169,7 @@ Transform:
   m_GameObject: {fileID: 330129752}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8, y: 0, z: -5}
+  m_LocalPosition: {x: -8, y: 0, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -423,7 +424,7 @@ Camera:
   far clip plane: 80
   field of view: 60
   orthographic: 1
-  orthographic size: 9.2
+  orthographic size: 6.4
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2

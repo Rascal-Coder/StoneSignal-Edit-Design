@@ -7,7 +7,9 @@ namespace StoneSignal
     {
         private GridManager grid;
         private PathfindingManager pathfinding;
-        private LineRenderer route;
+        private readonly List<LineRenderer> routes = new List<LineRenderer>();
+        private Material routeMaterial;
+        private float routeWidth;
         private Mesh directionMesh;
         private ArtCatalog art;
         private Transform groundRoot;
@@ -24,43 +26,48 @@ namespace StoneSignal
                 for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
                 {
                     var p = new Vector2Int(x, y);
-                    if (p == grid.spawn) SetGround(p, art.tileSpawn);
-                    else if (p == grid.goal) SetGround(p, art.tileGoal);
+                    var state = grid.Get(p);
+                    if (state == CellState.Spawn) SetGround(p, art.tileSpawn);
+                    else if (state == CellState.Goal) SetGround(p, art.tileGoal);
                     else SetGround(p, art.tile);
                 }
-                ArtVisual.Create(art.spawnPortal, transform, grid.ToWorld(grid.spawn));
-                ArtVisual.Create(art.signalCore, transform, grid.ToWorld(grid.goal));
-                var environment = new GameObject("Board decoration");
-                environment.transform.SetParent(transform);
-                environment.AddComponent<BoardEnvironment>().Initialize(grid, art);
+                foreach (var s in grid.Spawns) ArtVisual.Create(art.spawnPortal, transform, grid.ToWorld(s));
+                ArtVisual.Create(art.signalCore, transform, grid.CoreCenter);
+                if (art.boardCliff != null) BuildIsland();
+                else
+                {
+                    var environment = new GameObject("Board decoration");
+                    environment.transform.SetParent(transform);
+                    environment.AddComponent<BoardEnvironment>().Initialize(grid, art);
+                }
             }
             else
             {
                 for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
                 {
                     var p = new Vector2Int(x, y);
-                    Material mat = p == grid.spawn ? palette.spawn : p == grid.goal ? palette.goal : ((x + y) % 2 == 0 ? palette.tileA : palette.tileB);
+                    var state = grid.Get(p);
+                    Material mat = state == CellState.Spawn ? palette.spawn : state == CellState.Goal ? palette.goal : ((x + y) % 2 == 0 ? palette.tileA : palette.tileB);
                     PrimitiveVisual.Create("Tile " + x + "," + y, PrimitiveType.Cube, transform, grid.ToWorld(p) - Vector3.up * .13f, new Vector3(.95f, .2f, .95f) * grid.cellSize, mat);
                 }
-                PrimitiveVisual.Create("Signal core", PrimitiveType.Cylinder, transform, grid.ToWorld(grid.goal) + Vector3.up * .45f, new Vector3(.62f, .45f, .62f), palette.goal);
-                PrimitiveVisual.Create("Spawn gate", PrimitiveType.Cylinder, transform, grid.ToWorld(grid.spawn) + Vector3.up * .35f, new Vector3(.7f, .35f, .7f), palette.spawn);
+                PrimitiveVisual.Create("Signal core", PrimitiveType.Cylinder, transform, grid.CoreCenter + Vector3.up * .45f, new Vector3(.62f, .45f, .62f), palette.goal);
+                foreach (var s in grid.Spawns) PrimitiveVisual.Create("Spawn gate", PrimitiveType.Cylinder, transform, grid.ToWorld(s) + Vector3.up * .35f, new Vector3(.7f, .35f, .7f), palette.spawn);
             }
-            foreach (var endpoint in new[] { grid.spawn, grid.goal })
+            var labels = new List<(string, Vector3)>();
+            foreach (var s in grid.Spawns) labels.Add(("SPAWN", grid.ToWorld(s)));
+            labels.Add(("CORE", grid.CoreCenter));
+            foreach (var (name, at) in labels)
             {
-                var label = new GameObject(endpoint == grid.spawn ? "SPAWN" : "CORE");
+                var label = new GameObject(name);
                 label.transform.SetParent(transform);
-                label.transform.position = grid.ToWorld(endpoint) + Vector3.up * 1.65f;
+                label.transform.position = at + Vector3.up * 1.65f;
                 label.transform.rotation = Quaternion.Euler(48, 34, 0);
                 var text = label.AddComponent<TextMesh>();
                 text.text = label.name; text.fontSize = 36; text.characterSize = .055f;
                 text.anchor = TextAnchor.MiddleCenter;
                 text.color = art != null ? new Color(.13f, .2f, .12f) : new Color(1, .94f, .77f);
             }
-            route = new GameObject("Current route").AddComponent<LineRenderer>();
-            route.transform.SetParent(transform);
-            route.sharedMaterial = palette.path;
-            route.startWidth = route.endWidth = art != null ? .07f : .11f;
-            route.numCapVertices = 3;
+            routeMaterial = palette.path; routeWidth = art != null ? .07f : .11f;
             var directions = new GameObject("Route direction chevrons", typeof(MeshFilter), typeof(MeshRenderer));
             directions.transform.SetParent(transform, false);
             directionMesh = new Mesh { name = "Current route arrows" };
@@ -79,11 +86,13 @@ namespace StoneSignal
         private void RefreshRoad()
         {
             var wanted = new HashSet<Vector2Int>();
-            foreach (Vector2Int cell in pathfinding.CurrentPath)
-            {
-                if (cell == grid.spawn || cell == grid.goal) continue;
-                if (grid.InBounds(cell)) wanted.Add(cell);
-            }
+            foreach (var path in pathfinding.CurrentPaths)
+                foreach (Vector2Int cell in path)
+                {
+                    var state = grid.Get(cell);
+                    if (state == CellState.Spawn || state == CellState.Goal) continue;
+                    if (grid.InBounds(cell)) wanted.Add(cell);
+                }
             var stale = new List<Vector2Int>();
             foreach (Vector2Int cell in roaded) if (!wanted.Contains(cell)) stale.Add(cell);
             foreach (Vector2Int cell in stale) { roaded.Remove(cell); SetGround(cell, art.tile); }
@@ -97,13 +106,27 @@ namespace StoneSignal
         }
         private void DrawPath()
         {
-            route.positionCount = pathfinding.CurrentPath.Count;
-            for (int i = 0; i < pathfinding.CurrentPath.Count; i++) route.SetPosition(i, grid.ToWorld(pathfinding.CurrentPath[i]) + Vector3.up * (art != null ? art.tileTop + .02f : .03f));
-            var vertices = new List<Vector3>(); var triangles = new List<int>();
-            float lift = art != null ? .25f : .05f;
-            for (int i = 0; i < pathfinding.CurrentPath.Count - 1; i += 2)
+            var paths = pathfinding.CurrentPaths;
+            while (routes.Count < paths.Count)
             {
-                Vector3 a = grid.ToWorld(pathfinding.CurrentPath[i]), b = grid.ToWorld(pathfinding.CurrentPath[i + 1]);
+                var line = new GameObject("Current route " + routes.Count).AddComponent<LineRenderer>();
+                line.transform.SetParent(transform);
+                line.sharedMaterial = routeMaterial; line.startWidth = line.endWidth = routeWidth; line.numCapVertices = 3;
+                routes.Add(line);
+            }
+            float height = art != null ? art.tileTop + .02f : .03f;
+            for (int r = 0; r < routes.Count; r++)
+            {
+                var path = r < paths.Count ? paths[r] : null;
+                routes[r].positionCount = path != null ? path.Count : 0;
+                if (path != null) for (int i = 0; i < path.Count; i++) routes[r].SetPosition(i, grid.ToWorld(path[i]) + Vector3.up * height);
+            }
+            var vertices = new List<Vector3>(); var triangles = new List<int>();
+            float lift = art != null ? art.tileTop + .05f : .05f;
+            foreach (var path in paths)
+            for (int i = 0; i < path.Count - 1; i += 2)
+            {
+                Vector3 a = grid.ToWorld(path[i]), b = grid.ToWorld(path[i + 1]);
                 Vector3 forward = (b - a).normalized, side = Vector3.Cross(Vector3.up, forward);
                 Vector3 center = Vector3.Lerp(a, b, .55f) + Vector3.up * lift;
                 int index = vertices.Count;
@@ -113,6 +136,27 @@ namespace StoneSignal
                 triangles.Add(index); triangles.Add(index + 2); triangles.Add(index + 1);
             }
             directionMesh.Clear(); directionMesh.SetVertices(vertices); directionMesh.SetTriangles(triangles, 0); directionMesh.RecalculateNormals();
+        }
+        // Stylized board: cliff island under the grid plus plank bridges leading out of each edge spawn.
+        private void BuildIsland()
+        {
+            var cliff = ArtVisual.Create(art.boardCliff, transform, grid.BoardCenter + Vector3.up * art.boardCliffOffsetY);
+            var native = art.boardCliffSize;
+            if (native.x > 0 && native.y > 0)
+                cliff.transform.localScale = new Vector3(grid.width * grid.cellSize / native.x, 1, grid.height * grid.cellSize / native.y);
+            if (art.entryBridge == null) return;
+            foreach (var s in grid.Spawns)
+            {
+                Vector2Int n = grid.EdgeNormal(s);
+                if (n == Vector2Int.zero) continue;
+                var outward = new Vector3(n.x, 0, n.y);
+                float yaw = Quaternion.LookRotation(outward).eulerAngles.y + 90; // plank long axis matches level_layout.json
+                for (int k = 0; k < art.entryBridgePlanks; k++)
+                {
+                    var plank = ArtVisual.Create(art.entryBridge, transform, grid.ToWorld(s) + outward * (.68f + .82f * k) * grid.cellSize + Vector3.up * art.entryBridgeOffsetY);
+                    plank.transform.rotation = Quaternion.Euler(0, yaw, 0);
+                }
+            }
         }
         private void OnDestroy()
         {

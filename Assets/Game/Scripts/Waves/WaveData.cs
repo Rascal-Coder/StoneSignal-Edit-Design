@@ -7,6 +7,8 @@ namespace StoneSignal
     {
         public EnemyData enemy;
         [Min(1)] public int count = 5;
+        [Tooltip("Index into the board's spawn points; -1 rotates through all entries.")]
+        public int spawnIndex = -1;
     }
     [CreateAssetMenu(menuName = "StoneSignal/Wave")]
     public sealed class WaveData : ScriptableObject

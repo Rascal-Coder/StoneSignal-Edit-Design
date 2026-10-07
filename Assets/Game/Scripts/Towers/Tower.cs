@@ -11,7 +11,7 @@ namespace StoneSignal
         private RunModifiers modifiers;
         private Func<bool> canAttack;
         private Transform projectileRoot;
-        private Transform visual, head;
+        private Transform visual, head, barrel, muzzle;
         private float cooldown, visualElevation;
         private Vector3 aimDirection = Vector3.forward;
         public TowerData Data { get; private set; }
@@ -27,7 +27,9 @@ namespace StoneSignal
             visualElevation=elevation;
             if(data.visualPrefab!=null) {
                 visual=ArtVisual.Create(data.visualPrefab,transform,transform.position+Vector3.up*elevation).transform;
-                head=FindHead(visual,data.headName);
+                head=FindPart(visual,data.headName,"_Head");
+                barrel=FindPart(head!=null?head:visual,null,"_Barrel");
+                muzzle=FindPart(head!=null?head:visual,null,"_Muzzle");
                 return;
             }
             Material mat = data.kind == TowerKind.Arrow ? colors.arrow : data.kind == TowerKind.Rapid ? colors.rapid : data.kind == TowerKind.Chill ? colors.path : colors.cannon;
@@ -36,14 +38,36 @@ namespace StoneSignal
             visual = head;
             PrimitiveVisual.Create("Barrel", PrimitiveType.Cube, head, head.position + Vector3.forward * .3f, new Vector3(.13f,.13f,.6f), mat);
         }
-        // Stylized tower prefabs expose their rotatable turret as a child named "*_Head" (Tesla has none).
-        private static Transform FindHead(Transform root, string explicitName)
+        // Stylized tower hierarchy: Rig > *_Base (static) / *_Head (yaw) > [*_Barrel (pitch)] > *_Muzzle (+Z = fire direction).
+        private static Transform FindPart(Transform root, string explicitName, string suffix)
         {
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
             {
-                if (!string.IsNullOrEmpty(explicitName) ? t.name == explicitName : t.name.EndsWith("_Head")) return t;
+                if (!string.IsNullOrEmpty(explicitName) ? t.name == explicitName : t.name.EndsWith(suffix)) return t;
             }
             return null;
+        }
+        private void Aim(Enemy target)
+        {
+            Vector3 dir = target.transform.position - transform.position; dir.y = 0;
+            if (dir.sqrMagnitude < .001f) return;
+            aimDirection = dir.normalized;
+            if (head == null) return;
+            // Yaw the head so the muzzle's horizontal heading meets the target (muzzle may point straight up, e.g. Tesla).
+            Vector3 facing = muzzle != null ? muzzle.forward : head.forward; facing.y = 0;
+            if (facing.sqrMagnitude < .01f) { facing = head.forward; facing.y = 0; }
+            if (facing.sqrMagnitude < .01f) { facing = head.right; facing.y = 0; }
+            if (facing.sqrMagnitude > .0001f)
+                head.rotation = Quaternion.AngleAxis(Vector3.SignedAngle(facing, aimDirection, Vector3.up), Vector3.up) * head.rotation;
+            // Direct-fire barrels pitch toward the target; lobbed barrels keep their authored elevation.
+            if (barrel != null && muzzle != null && !Data.lobbedShot)
+            {
+                Vector3 axis = barrel.right;
+                Vector3 want = Vector3.ProjectOnPlane(target.transform.position - muzzle.position, axis);
+                Vector3 have = Vector3.ProjectOnPlane(muzzle.forward, axis);
+                if (want.sqrMagnitude > .0001f && have.sqrMagnitude > .0001f)
+                    barrel.rotation = Quaternion.AngleAxis(Mathf.Clamp(Vector3.SignedAngle(have, want, axis), -30, 30), axis) * barrel.rotation;
+            }
         }
         private void Update()
         {
@@ -52,25 +76,16 @@ namespace StoneSignal
             if (cooldown > 0) return;
             Enemy target = enemies.ClosestToGoal(transform.position + Vector3.up * .45f, Range);
             if (target == null) { cooldown = .1f; return; }
-            Vector3 aim = target.transform.position - transform.position; aim.y = 0;
-            if (aim.sqrMagnitude > .001f) { aimDirection = aim.normalized; if (head != null) head.rotation = Quaternion.LookRotation(aimDirection); }
+            Aim(target);
             Fire(target);
             cooldown = 1 / AttackRate;
         }
         private (Vector3 pos, Quaternion rot) Muzzle()
         {
+            if (muzzle != null) return (muzzle.position, muzzle.rotation);
             Vector3 basePos = transform.position + Vector3.up * visualElevation;
-            if (Data.lobbedShot && head != null) return MortarBarrelTip(head, aimDirection);
             Vector3 pos = basePos + Vector3.up * Data.muzzleHeight + aimDirection * Data.muzzleForward;
             return (pos, Quaternion.LookRotation(aimDirection));
-        }
-        // Runtime copy of StylizedVFXBuilder.MortarBarrelTip (editor-only): top of head bounds, aimed up along a 60 degree lob.
-        public static (Vector3 pos, Quaternion rot) MortarBarrelTip(Transform head, Vector3 dir)
-        {
-            var rs = head.GetComponentsInChildren<Renderer>(); if (rs.Length == 0) return (head.position + Vector3.up, Quaternion.LookRotation(Vector3.up));
-            Bounds b = rs[0].bounds; for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
-            var aim = (dir * Mathf.Cos(60 * Mathf.Deg2Rad) + Vector3.up * Mathf.Sin(60 * Mathf.Deg2Rad)).normalized;
-            return (new Vector3(b.center.x, b.max.y, b.center.z) + dir * b.extents.x * .35f, Quaternion.LookRotation(aim));
         }
         public Projectile Fire(Enemy target)
         {

@@ -17,22 +17,26 @@ namespace StoneSignal
         public event Action<Enemy> Spawned;
         public event Action<int> ChildrenAdded;
         public Func<float> SpeedMultiplier = () => 1;
+        private int nextSpawn;
         public void Initialize(GridManager map, PathfindingManager paths, VisualPalette colors, Func<bool> allowed)
         {
             grid = map; Paths = paths; palette = colors; CanMove = allowed;
             Paths.PathChanged += RepathAll;
         }
-        public Enemy Spawn(EnemyData data, float hpScale = 1, float speedScale = 1)
+        // spawnIndex < 0 rotates through the board's spawn points; otherwise picks that entry (wrapped).
+        public Enemy Spawn(EnemyData data, float hpScale = 1, float speedScale = 1, int spawnIndex = -1)
         {
+            var entries = grid.Spawns;
+            Vector2Int from = entries.Count == 0 ? grid.spawn : entries[(spawnIndex >= 0 ? spawnIndex : nextSpawn++) % entries.Count];
             GameObject obj;
             if(data.visualPrefab!=null) {
-                obj=new GameObject(data.displayName);obj.transform.SetParent(transform);obj.transform.position=grid.ToWorld(grid.spawn);
+                obj=new GameObject(data.displayName);obj.transform.SetParent(transform);obj.transform.position=grid.ToWorld(from);
                 // Logical enemy height is +0.45 over the grid plane; the visual stands on the ground tile top.
                 float ground = palette != null && palette.art != null ? palette.art.tileTop : 0;
                 ArtVisual.Create(data.visualPrefab,obj.transform,obj.transform.position+Vector3.up*(ground-.45f));
-            } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(grid.spawn), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
+            } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(from), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
             Enemy enemy = obj.AddComponent<Enemy>();
-            enemy.Initialize(this, grid, data, palette, hpScale, speedScale);
+            enemy.Initialize(this, grid, data, palette, hpScale, speedScale, from);
             active.Add(enemy); Spawned?.Invoke(enemy);
             return enemy;
         }
@@ -43,7 +47,7 @@ namespace StoneSignal
                 // Reserve child count before parent resolution can complete a wave.
                 ChildrenAdded?.Invoke(enemy.Data.splitCount);
                 for(int i=0;i<enemy.Data.splitCount;i++) {
-                    var child=Spawn(enemy.Data.splitChild,enemy.HPScale,enemy.SpeedScale);
+                    var child=Spawn(enemy.Data.splitChild,enemy.HPScale,enemy.SpeedScale,0);
                     child.ResumeFrom(enemy.transform.position,enemy.NavigationAnchor);
                     child.transform.localScale *= enemy.Data.splitChildScale;
                 }
