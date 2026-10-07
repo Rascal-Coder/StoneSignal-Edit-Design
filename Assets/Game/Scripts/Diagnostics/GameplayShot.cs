@@ -35,6 +35,7 @@ namespace StoneSignal
         {
             yield return new WaitForSecondsRealtime(1f);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudshots") >= 0) { yield return HudShots(); Debug.Log("HUD SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots3") >= 0) { yield return CnShots3(); Debug.Log("CN SHOTS3 DONE " + path); Application.Quit(0); yield break; }
             var grid = s.grid; s.Economy.AddGold(900);
@@ -344,6 +345,69 @@ namespace StoneSignal
             yield return Shot("reward");
             File.WriteAllText(Path.Combine(dir, "hud_" + res + ".txt"), sb.ToString());
             HudScaler.SimulatedSafeArea = null;
+        }
+        // v17.6 -toastshots [-touch]: art toast (ui9_toast + warn/info icon + ToastFx) WARNING and INFO in the hold phase, timing samples,
+        // toast rules, sprite/atlas page check, draw calls with / without the toast; then a pick-one-of-three with ExtraDraw + NextDraw.
+        IEnumerator ToastShots()
+        {
+            var ui = FindObjectOfType<GameUI>(); string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height;
+            var sb = new System.Text.StringBuilder("toast shots v17.6 " + res + " aspect " + ((float)Screen.width / Mathf.Max(1, Screen.height)).ToString("F3") + " touch=" + PointerInput.TouchMode + "\n" + CnAtlas());
+            IEnumerator Wait(float sec) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < sec) yield return null; }
+            IEnumerator Shot(string name) { yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, name + "_" + res + ".png")); }
+            string Dc() => "drawCalls=" + draws.LastValue + " batches=" + batches.LastValue + " setPass=" + setPass.LastValue;
+            if (s.Game.State == GameState.Build) s.Draw();
+            yield return Wait(1f);
+            var fx = ui != null ? ui.NoticeFx : null; var rt = ui != null ? ui.NoticeRect : null;
+            if (fx == null || rt == null) { sb.Append("NO ToastFx on the notice pill (ToastStyle.Apply not wired)\n"); File.WriteAllText(Path.Combine(dir, "toast_" + res + ".txt"), sb.ToString()); yield break; }
+            var img = rt.GetComponent<UnityEngine.UI.Image>(); Transform ic = rt.Find("Icon"); var icon = ic != null ? ic.GetComponent<UnityEngine.UI.Image>() : null;
+            sb.Append("ToastFx popIn " + fx.popIn.ToString("F2") + " hold " + fx.hold.ToString("F2") + " fadeOut " + fx.fadeOut.ToString("F2") + " -> total " + fx.TotalSeconds.ToString("F2") + " s\n");
+            yield return Clean(); for (int f = 0; f < 8; f++) yield return null; string dcNo = Dc();
+            foreach (var kind in new[] { ("warn", "Cell occupied / protected"), ("info", "Tower ready") })
+            {
+                ui.DebugNotice(kind.Item2); float t0 = Time.unscaledTime; var samples = new System.Text.StringBuilder();
+                float[] at = { 0f, .06f, .12f, .18f, .5f, 1.25f, 1.35f, 1.45f, 1.52f }; int k = 0;
+                while (k < at.Length && Time.unscaledTime - t0 < 2f)
+                {
+                    yield return null; float e = Time.unscaledTime - t0;
+                    if (e >= at[k]) { var cg = rt.GetComponent<CanvasGroup>(); samples.Append(" " + e.ToString("F2") + "s:" + (rt.gameObject.activeInHierarchy ? "a" + (cg ? cg.alpha : 1f).ToString("F2") + "/s" + rt.localScale.x.ToString("F2") : "hidden")); k++; }
+                    if (k == 4) // hold phase (0.5 s): sprite / icon / DC / capture
+                    {
+                        sb.Append(kind.Item1 + " '" + ui.NoticeShown + "' kind=" + fx.Kind + " pill sprite=" + (img && img.sprite ? img.sprite.name + " tex=" + img.sprite.texture.name + " border=" + img.sprite.border + " type=" + img.type : "NONE") +
+                                  " icon=" + (icon && icon.enabled && icon.sprite ? icon.sprite.name + " tex=" + icon.sprite.texture.name : "none") + " rect=" + rt.rect.size + " | " + ui.NoticeDebug + "\n");
+                        yield return Clean(); for (int f = 0; f < 3; f++) yield return null;
+                        sb.Append("  DC with toast (clean frame) " + Dc() + " | without toast " + dcNo + "\n");
+                        yield return Shot("toast_" + kind.Item1);
+                    }
+                }
+                sb.Append("  timing samples (alpha/scale):" + samples + "\n");
+                yield return Wait(1.2f);
+            }
+            {   // rules with the art toast: 1.5 s total, same text within 1 s ignored (no pop restart), one at a time (new text replaces + pops)
+                const string A = "Cell occupied / protected", B = "No tower selected";
+                ui.DebugNotice(A); float t0 = Time.unscaledTime; yield return null; string s0 = ui.NoticeShown;
+                while (Time.unscaledTime - t0 < .5f) yield return null; ui.DebugNotice(A); yield return null; float el = fx.Elapsed;
+                while (Time.unscaledTime - t0 < 1.4f) yield return null; string s14 = ui.NoticeShown;
+                while (Time.unscaledTime - t0 < 1.6f) yield return null; string s16 = ui.NoticeShown;
+                ui.DebugNotice(A); yield return null; string sAgain = ui.NoticeShown;
+                while (Time.unscaledTime - t0 < 2.0f) yield return null; ui.DebugNotice(B); yield return null; string sB = ui.NoticeShown; float elB = fx.Elapsed;
+                bool ok = s0 == "这里不能放" && el > .4f && s14 == "这里不能放" && s16 == "" && sAgain == "这里不能放" && sB == "先选一座塔" && elB < .1f;
+                sb.Append("toast rules: shown '" + s0 + "'; same text re-sent at 0.5 s -> ToastFx elapsed " + el.ToString("F2") + " s (not restarted); 1.4 s '" + s14 + "'; 1.6 s '" + s16 + "' (1.5 s, not extended); again -> '" + sAgain + "'; new text -> '" + sB + "' elapsed " + elB.ToString("F2") + " (replaces, pops) PASS=" + ok + "\n");
+                yield return Wait(1.7f);
+            }
+            // atlas: same page for the toast parts and the rest of the HUD
+            var names = new[] { "ui9_toast", "ui_icon_warn", "ui_icon_info", "ui_reward_extra_draw", "ui_reward_next_draw", "ui9_panel_navy", "ui9_pill_gold", "ui_draw_pile" };
+            var pages = new HashSet<string>();
+            foreach (var n in names) { var sp = ui.DebugSprite(n); sb.Append("  sprite " + n + " -> " + (sp ? sp.texture.name + " packed=" + sp.packed : "MISSING") + "\n"); if (sp) pages.Add(sp.texture.name); }
+            sb.Append("HUD atlas textures used by these sprites: " + pages.Count + " [" + string.Join(", ", pages) + "]\n");
+            // reward pick-one-of-three with ExtraDraw (精良) + NextDraw (符文保底) + AddBlock
+            var C = StoneSignal.UI.RewardRarity.Common; var R = StoneSignal.UI.RewardRarity.Rare;
+            if (ui.DebugShowRewardPick(new[] { R, C, C }, new[] { RewardEffect.ExtraDraw, RewardEffect.NextDraw, RewardEffect.AddBlock }))
+            {
+                yield return Wait(1.2f); yield return Clean(); for (int f = 0; f < 6; f++) yield return null;
+                sb.Append("reward pick (ExtraDraw / NextDraw / AddBlock): " + Dc() + "\n" + TextAudit("reward cards v17.6"));
+                yield return Shot("reward_extradraw_nextdraw");
+            }
+            File.WriteAllText(Path.Combine(dir, "toast_" + res + ".txt"), sb.ToString());
         }
         IEnumerator RewardShots()
         {

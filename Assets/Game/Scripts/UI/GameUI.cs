@@ -35,11 +35,12 @@ namespace StoneSignal
         private float noticeUntil; private string notice; private bool handDirty = true; private RectTransform noticePill;
         // notice toast (玩法策划 v18): 1.5 s, one at a time (a new text replaces the old one), the same text is not re-shown within 1 s of
         // its last show; re-placed per notice in the free top slot farthest from the core and the path arrows (routes change with walls).
-        private const float NoticeSeconds = 1.5f, NoticeRepeatGap = 1f, NoticeClearance = 48f;
+        private const float NoticeSeconds = 1.5f, NoticeRepeatGap = 1f, NoticeClearance = 48f; // v17.6: ToastFx pop 0.18 + hold 1.12 + fade 0.2 = the planner's 1.5 s total
+        private StoneSignal.UI.ToastFx noticeFx;
         private float noticeShownAt = -10f; private bool noticeDirty; private string noticeInfo = "";
         // slot: anchor (0 = top-centre, 1 = top-right, 2 = top-left), x, y from the top edge (reference px, inside the safe area)
         private static readonly Vector3[] NoticeSlots = { new Vector3(0, 0, 132), new Vector3(0, 0, 212), new Vector3(1, -24, 132), new Vector3(2, 24, 216) };
-        public string NoticeDebug => noticeInfo; public RectTransform NoticeRect => noticePill;
+        public StoneSignal.UI.ToastFx NoticeFx => noticeFx; public string NoticeDebug => noticeInfo; public RectTransform NoticeRect => noticePill;
         public string NoticeShown => noticePill != null && noticePill.gameObject.activeSelf && hint != null ? hint.text : "";
         // drag hand fade (玩法策划 v18): CanvasGroup alpha per hand card (no extra draw calls), 1 -> .35 over .15 s while the drag finger or
         // the ghost is over the hand; the dragged card stays opaque; restores on leaving / release.
@@ -111,6 +112,8 @@ namespace StoneSignal
             // navy pill bottom-centre above the hand row, shown 2.4 s per notice, never takes input
             noticePill = Panel(root, "Notice", "ui9_panel_navy", Navy); BC(noticePill, 0, 524, 560, 68);
             hint = Txt(noticePill, "", 32, Ink); Full(hint.rectTransform); hint.rectTransform.offsetMin = new Vector2(16, 4); hint.rectTransform.offsetMax = new Vector2(-16, -4); UseCn(hint);
+            noticeFx = StoneSignal.UI.ToastStyle.Apply(noticePill, hint, S);   // v17.6 toast (art): ui9_toast, 78 px rect, warn/info icon slot, 30 px text, ToastFx
+            if (noticeFx != null) { noticeFx.hold = Mathf.Max(0f, NoticeSeconds - noticeFx.popIn - noticeFx.fadeOut); } // keep the accepted 1.5 s total (art default 1.58 s)
             noticePill.gameObject.SetActive(false);
             battle = Btn(root, Loc.Battle, 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave(), CnFont); BR((RectTransform)battle.transform, -24, 24, 256, 104);
             battle.name = "BATTLE"; if (drawPile.statusLabel != null) UseCn(drawPile.statusLabel); { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableWordWrapping = false; bl.overflowMode = TextOverflowModes.Overflow; bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
@@ -276,6 +279,7 @@ namespace StoneSignal
             var text = Loc.Notice(message); if (string.IsNullOrEmpty(text)) return; float now = Time.unscaledTime;
             if (text == notice && now - noticeShownAt < NoticeRepeatGap) return; // same text within 1 s of its last show: not re-shown
             notice = text; noticeShownAt = now; noticeUntil = now + NoticeSeconds; noticeDirty = true;   // replaces any toast on screen
+            noticeFx?.Restart();   // v17.6: pop-in restarts for every shown toast (the ignored repeat above does not restart it)
         }
         /// Diagnostics: route a raw notice through the toast rules (same path as BlockPlacementManager / TowerManager notices).
         public void DebugNotice(string message) => ShowNotice(message);
@@ -348,7 +352,7 @@ namespace StoneSignal
             if (hint != null)
             {
                 bool on = Time.unscaledTime < noticeUntil && !string.IsNullOrEmpty(notice) && (session.Game.State == GameState.Build || session.Game.State == GameState.Combat);
-                if (on && (hint.text != notice || noticeDirty)) { hint.text = notice; noticePill.sizeDelta = new Vector2(Mathf.Clamp(hint.GetPreferredValues(notice).x + 72, 240, 900), noticePill.sizeDelta.y); PlaceNotice(); noticeDirty = false; } // pill hugs the text
+                if (on && (hint.text != notice || noticeDirty)) { hint.text = notice; noticePill.sizeDelta = new Vector2(Mathf.Clamp(hint.GetPreferredValues(notice).x + StoneSignal.UI.ToastStyle.ExtraWidth(true), StoneSignal.UI.ToastStyle.MinWidth, StoneSignal.UI.ToastStyle.MaxWidth), noticePill.sizeDelta.y); PlaceNotice(); noticeDirty = false; } // pill hugs the text
                 else if (!on) hint.text = DefaultHint;
                 if (noticePill != null && noticePill.gameObject.activeSelf != on) noticePill.gameObject.SetActive(on);
             }
@@ -541,6 +545,7 @@ namespace StoneSignal
             var t = Txt(r, label, size, Ink); if (font != null) t.font = font; /* before the outline creates a material instance */ Full(t.rectTransform); t.rectTransform.offsetMin = new Vector2(0, 6); t.outlineWidth = .18f; t.outlineColor = Navy; return b;
         }
         private Sprite S(string name) => art != null ? art.UiSprite(name) : null;
+        public Sprite DebugSprite(string name) => S(name);   // diagnostics (atlas page check)
         private RectTransform Panel(Transform parent, string name, string sprite, Color fallback)
         {
             var sp = sprite != null ? S(sprite) : null;
