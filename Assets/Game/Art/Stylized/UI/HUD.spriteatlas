@@ -55,9 +55,12 @@ SpriteAtlas:
     - 7ba2b1f3b905c3443b987cd229305159: 21300000
     - cad86d243917421a8180a0e7e024e125: 21300000
     - bd069e5419c90594584734176ab1b3ac: 21300000
+    - 3a94bb9476fed754f9641012f68e64e7: 21300000
     - 28d46bb4880ea57418d834d7df8127c0: 21300000
+    - dac95fe4c264e4641bd3b9cfea3005a4: 21300000
     - c35b848550eb4951b96fd66cffa83e63: 21300000
     - d699a52671cf47dd8ce471c9ba96d6a0: 21300000
+    - 69af6d3600cf5834e9131d06c034bf21: 21300000
     - 8a384f76a4df4edc806ab4e297ce839b: 21300000
     - f99299179b704f5ba0c4abd68d701630: 21300000
     - 60920737988409f45970f14a5a3576a5: 21300000
@@ -68,6 +71,7 @@ SpriteAtlas:
     - 0c7169095b1a484090456863aaa419a5: 21300000
     - adb9c33921db484dbf106761e6ca93ba: 21300000
     - 87ce1db980b74701876196646b01232a: 21300000
+    - 8ba7fac92089b58469fc593f92fd70fc: 21300000
     - 7f28be0a63904b09b85464b14424ccda: 21300000
     - bf73ddfa0e81498ea3c16b028be5738b: 21300000
     - 5bd6d55b52db4ce29442f9c4233071d0: 21300000
@@ -104,9 +108,12 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7ba2b1f3b905c3443b987cd229305159, type: 3}
   - {fileID: 21300000, guid: cad86d243917421a8180a0e7e024e125, type: 3}
   - {fileID: 21300000, guid: bd069e5419c90594584734176ab1b3ac, type: 3}
+  - {fileID: 21300000, guid: 3a94bb9476fed754f9641012f68e64e7, type: 3}
   - {fileID: 21300000, guid: 28d46bb4880ea57418d834d7df8127c0, type: 3}
+  - {fileID: 21300000, guid: dac95fe4c264e4641bd3b9cfea3005a4, type: 3}
   - {fileID: 21300000, guid: c35b848550eb4951b96fd66cffa83e63, type: 3}
   - {fileID: 21300000, guid: d699a52671cf47dd8ce471c9ba96d6a0, type: 3}
+  - {fileID: 21300000, guid: 69af6d3600cf5834e9131d06c034bf21, type: 3}
   - {fileID: 21300000, guid: 8a384f76a4df4edc806ab4e297ce839b, type: 3}
   - {fileID: 21300000, guid: f99299179b704f5ba0c4abd68d701630, type: 3}
   - {fileID: 21300000, guid: 60920737988409f45970f14a5a3576a5, type: 3}
@@ -117,6 +124,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 0c7169095b1a484090456863aaa419a5, type: 3}
   - {fileID: 21300000, guid: adb9c33921db484dbf106761e6ca93ba, type: 3}
   - {fileID: 21300000, guid: 87ce1db980b74701876196646b01232a, type: 3}
+  - {fileID: 21300000, guid: 8ba7fac92089b58469fc593f92fd70fc, type: 3}
   - {fileID: 21300000, guid: 7f28be0a63904b09b85464b14424ccda, type: 3}
   - {fileID: 21300000, guid: bf73ddfa0e81498ea3c16b028be5738b, type: 3}
   - {fileID: 21300000, guid: 5bd6d55b52db4ce29442f9c4233071d0, type: 3}
@@ -152,9 +160,12 @@ SpriteAtlas:
   - ui_icon_tower_Seismic
   - ui_icon_block_L
   - ui_badge_size_1x2
+  - ui_draw_pile_layer
   - ui_card_blueprint
+  - ui_draw_bubble_tail
   - ui_badge_size_blank
   - ui_rune_socket_glow
+  - ui9_draw_bubble
   - ui_icon_block_S
   - ui_card_blueprint_stack
   - ui_icon_tower_Needle
@@ -165,6 +176,7 @@ SpriteAtlas:
   - ui_icon_block_I
   - ui_icon_block_O
   - ui9_badge_count
+  - ui_icon_free
   - ui_rune_bounty
   - ui_badge_video_ad
   - ui_icon_block_Z

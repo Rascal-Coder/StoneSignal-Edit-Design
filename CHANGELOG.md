@@ -230,3 +230,10 @@ Changed:
 - Runes: 6 icons, glyph atlas, RuneInlay (shader MPB), TowerBuffIcons, PF_UI_ResonanceAura; block stack / draw / reward sprites; HUD atlas includes UI folder.
 - Top-right islet moved to the right edge; one far edge tree removed.
 
+
+
+## Stylized art v16 DRAW pile (2026-10-07)
+- Rule: 2 draws/wave (1st FREE, 2nd rewarded video placeholder), no gold draws; hand persists, max 7.
+- Sprites (original ember/rune look, no price on card): ui_draw_pile (top card back, navy + gold inlay + ember-rune emblem, 168x216 fixed), ui_draw_pile_layer (plain back for stack layers), ui9_draw_bubble (ivory status pill 176x72, 9-slice L30 B28 R30 T28), ui_draw_bubble_tail (26x15 notch), ui_icon_free (ember star 56). Reuses ui_badge_video_ad. ui9_draw_price_tag no longer used.
+- DrawPileUI (StoneSignal.VFX): SetState(Free|Ad|Used|Full), SetStackCount(3-5), PlayDrawPulse(), SetHandCount(n,7); pill bobs +-4px/1.6s.
+- Spec Docs/draw_pile_v16_spec.md + mockup Docs/draw_pile_v16.png; StylizedFxV14.BuildAtlas pins v16 borders.

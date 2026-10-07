@@ -177,6 +177,8 @@ public static class StylizedFxV14
         {
             var tp = AssetDatabase.GUIDToAssetPath(guid); var ti = (TextureImporter)AssetImporter.GetAtPath(tp);
             var border = ti.spriteBorder;   // keep borders from our .meta
+            var nm = System.IO.Path.GetFileNameWithoutExtension(tp);   // v16 draw pile: pin borders (no hand-written metas)
+            if (nm == "ui9_draw_bubble") border = new Vector4(30, 28, 30, 28); else if (nm.StartsWith("ui_draw_") || nm == "ui_icon_free") border = Vector4.zero;
             ti.textureType = TextureImporterType.Sprite; ti.spriteImportMode = SpriteImportMode.Single; ti.mipmapEnabled = false; ti.alphaIsTransparency = true;
             ti.spriteBorder = border; ti.spritePixelsPerUnit = 100; ti.npotScale = TextureImporterNPOTScale.None; ti.wrapMode = TextureWrapMode.Clamp;
             ti.SaveAndReimport();   // rewrites minimal hand-written metas into full Tuanjie metas
