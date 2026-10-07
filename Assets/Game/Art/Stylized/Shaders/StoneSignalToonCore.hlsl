@@ -6,6 +6,7 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
 TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+TEXTURE2D(_RuneAtlas); SAMPLER(sampler_RuneAtlas);
 TEXTURE2D(_RampTex); SAMPLER(sampler_RampTex);
 
 CBUFFER_START(UnityPerMaterial)
@@ -16,6 +17,8 @@ CBUFFER_START(UnityPerMaterial)
     half _Dissolve, _DissolveEdge, _Wobble, _WobbleFreq, _BaseAO, _BaseAOHeight, _Mottle;
     half4 _DissolveColor;
     float _OutlineWidthPx, _OutlineZOffset;
+    half4 _HiColor; half _HiAmount;
+    half4 _RuneColor; half _RuneIdx;   // v15 rune inlay: glyph index into 4x2 _RuneAtlas (-1 = none), set per wall renderer via MPB (RuneInlay)   // v15 placement wall highlight (set per renderer via MPB by WallHighlight)
 CBUFFER_END
 float _OutlineGlobalScale; // optional global from camera script; 0/unset -> 1
 
@@ -49,6 +52,7 @@ float3 SS_Deform(float3 p)
     float a = sin(t * 0.5) * 0.35 * _Wobble; float ca = cos(a), sa = sin(a);
     p.xz = float2(p.x * ca - p.z * sa, p.x * sa + p.z * ca);
     p.y += (sin(t * 2) * 0.5 + 0.5) * 0.08 * _Wobble;
+    p.y += 0.02 * _HiAmount;   // highlight lift
     return p;
 }
 float3 SS_World(float4 posOS, half4 c) { return TransformObjectToWorld(SS_Deform(posOS.xyz)) + SS_Wind(0, c); }
@@ -116,6 +120,19 @@ half4 ToonFrag(Varyings i) : SV_Target
     half3 c = diffuse + ambient + rim + _EmissionColor.rgb;
     c *= 1 + (SS_Noise(i.positionWS * 2.3) * 0.7 + SS_Noise(i.positionWS * 7.1) * 0.3 - 0.5) * _Mottle; // weathered mottling
     c *= lerp(1 - _BaseAO, 1, saturate(i.positionOS.y / max(_BaseAOHeight, 1e-3))); // contact AO at object base
+    if (_RuneIdx > -0.5)   // rune glyph on the block top (object-space xz -> 4x2 atlas cell), emissive + slow breathe
+    {
+        float2 uv = saturate(i.positionOS.xz / 0.84 + 0.5); uv.y = 1 - uv.y;
+        float id = floor(_RuneIdx + 0.5); float2 cell = float2(fmod(id, 4), 1 - floor(id / 4));
+        half g = SAMPLE_TEXTURE2D(_RuneAtlas, sampler_RuneAtlas, (uv + cell) * float2(0.25, 0.5)).a * saturate(N.y * 2 - 1);
+        c = lerp(c, _RuneColor.rgb * 0.55, g * 0.6) + _RuneColor.rgb * g * (0.9 + 0.25 * sin(_Time.y * 2.0));
+    }
+    if (_HiAmount > 0.001)   // rim glow on block top edges + faint fill, pulsing
+    {
+        float2 q = abs(i.positionOS.xz); float e = smoothstep(0.34, 0.46, max(q.x, q.y)) * saturate(N.y * 2 - 0.6);
+        half pulse = 0.75 + 0.25 * sin(_Time.y * 6.0);
+        c += _HiColor.rgb * _HiAmount * (e * 1.8 + 0.15) * pulse;
+    }
     c = lerp(c, _FlashColor.rgb, _HitFlash);
     c = lerp(c, _DissolveColor.rgb, edge);
     c = MixFog(c, i.fog);

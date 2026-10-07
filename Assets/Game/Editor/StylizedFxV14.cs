@@ -45,26 +45,55 @@ public static class StylizedFxV14
     public static void BuildAll()
     {
         if (!AssetDatabase.IsValidFolder(Gen.TrimEnd('/'))) AssetDatabase.CreateFolder(StylizedArtIntegration.ArtDir.TrimEnd('/'), "Generated");
-        BuildCoinDrop(); BuildEnemyGround(); BuildAtlas(); AssetDatabase.SaveAssets();
+        BuildCoinDrop(); BuildEnemyGround(); BuildAtlas(); BuildRunes(); AssetDatabase.SaveAssets();
         Previews();
     }
 
+    static Material IconMat(string name, Texture2D tex)
+    {
+        string p = MatDir + name + ".mat"; var sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        var m = AssetDatabase.LoadAssetAtPath<Material>(p); if (!m) { m = new Material(sh); AssetDatabase.CreateAsset(m, p); }
+        m.shader = sh; m.SetTexture("_BaseMap", tex); m.SetColor("_BaseColor", Color.white);
+        m.SetFloat("_Surface", 1); m.SetFloat("_Blend", 0); m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha); m.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha); m.SetFloat("_ZWrite", 0);
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT"); m.renderQueue = 3050; m.enableInstancing = true; EditorUtility.SetDirty(m); return m;
+    }
     static void BuildCoinDrop()
     {
-        var root = new GameObject("PF_VFX_CoinDrop"); var fx = root.AddComponent<CoinDropFx>();
-        var coins = EmitPS(root.transform, "Coins", M("M_FX_Alpha_Coin", false, 6), 10, .34f, Color.white, 48);
-        var r = coins.GetComponent<ParticleSystemRenderer>(); r.sortingFudge = -10;
-        var tr = coins.trails; tr.enabled = true; tr.mode = ParticleSystemTrailMode.PerParticle; tr.lifetime = .18f; tr.minVertexDistance = .08f;
-        tr.widthOverTrail = new PSS.MinMaxCurve(1, AnimationCurve.Linear(0, .6f, 1, 0)); tr.dieWithParticles = true; tr.inheritParticleColor = false;
-        var tg = new Gradient(); tg.SetKeys(new[] { new GradientColorKey(H("FFE27A"), 0), new GradientColorKey(H("FFB020"), 1) }, new[] { new GradientAlphaKey(.9f, 0), new GradientAlphaKey(0, 1) });
-        tr.colorOverTrail = tg; r.trailMaterial = M("M_FX_Add_Trail", true, 7);
-        var sp = EmitPS(root.transform, "Sparkle", M("M_FX_Add_Dot", true, 0, .7f), .45f, .12f, H("FFE07A"), 40);
-        var spm = sp.main; spm.startSpeed = new PSS.MinMaxCurve(.8f, 2.2f); spm.startSize = new PSS.MinMaxCurve(.06f, .14f); spm.gravityModifier = .3f;
-        var sh = sp.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = .15f; FadeOut(sp);
-        var fl = EmitPS(root.transform, "PickupFlash", M("M_FX_Add_Flash", true, 4), .25f, .9f, H("FFF2B0"), 8);
-        var so = fl.sizeOverLifetime; so.enabled = true; so.size = new PSS.MinMaxCurve(1, AnimationCurve.Linear(0, .5f, 1, 1.6f)); FadeOut(fl);
-        fx.coins = coins; fx.sparkle = sp; fx.flash = fl;
-        PrefabUtility.SaveAsPrefabAsset(root, Pf + "PF_VFX_CoinDrop.prefab"); Object.DestroyImmediate(root);
+        const string rd = StylizedArtIntegration.ArtDir + "Rewards";
+        if (!AssetDatabase.IsValidFolder(rd)) AssetDatabase.CreateFolder(StylizedArtIntegration.ArtDir.TrimEnd('/'), "Rewards");
+        var defs = new[] {
+            ("gold",  "ui_coin_gold",    "FFE07A", "FFE27A", "FFB020", .46f, "PF_VFX_RewardFly_Gold"),
+            ("shard", "ui_reward_shard", "E0B0FF", "E6C0FF", "9A50FF", .44f, "PF_VFX_RewardFly_Shard"),
+            ("gem",   "ui_reward_gem",   "A0F0FF", "C8F6FF", "40A8FF", .44f, "PF_VFX_RewardFly_Gem") };
+        foreach (var (id, icon, spk, th, tt, size, pf) in defs)
+        {
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(StylizedArtIntegration.ArtDir + "UI/" + icon + ".png");
+            string rp = rd + "/RT_" + char.ToUpper(id[0]) + id.Substring(1) + ".asset";
+            var rt = AssetDatabase.LoadAssetAtPath<RewardType>(rp); if (!rt) { rt = ScriptableObject.CreateInstance<RewardType>(); AssetDatabase.CreateAsset(rt, rp); }
+            rt.id = id; rt.icon = tex; rt.material = IconMat("M_FX_RewardIcon_" + id, tex); rt.size = size; rt.sparkle = H(spk); rt.trailHead = H(th); var tc = H(tt); tc.a = 0; rt.trailTail = tc;
+            EditorUtility.SetDirty(rt);
+            for (int v = 0; v < (id == "gold" ? 2 : 1); v++)
+            {
+                string name = v == 1 ? "PF_VFX_CoinDrop" : pf;
+                var root = new GameObject(name);
+                RewardFlyFx fx = id == "gold" && v == 1 ? root.AddComponent<CoinDropFx>() : root.AddComponent<RewardFlyFx>();
+                fx.type = rt;
+                var icons = EmitPS(root.transform, "Icons", rt.material, 10, size, Color.white, 48);
+                var im = icons.main; im.startSize3D = true;
+                var r = icons.GetComponent<ParticleSystemRenderer>(); r.sortingFudge = -20;
+                var tr = icons.trails; tr.enabled = true; tr.mode = ParticleSystemTrailMode.PerParticle; tr.lifetime = .2f; tr.minVertexDistance = .06f;
+                tr.widthOverTrail = new PSS.MinMaxCurve(.7f, AnimationCurve.Linear(0, 1, 1, 0)); tr.dieWithParticles = true; tr.inheritParticleColor = false; tr.sizeAffectsWidth = true;
+                var tg = new Gradient(); tg.SetKeys(new[] { new GradientColorKey(rt.trailHead, 0), new GradientColorKey((Color)rt.trailTail, 1) }, new[] { new GradientAlphaKey(.9f, 0), new GradientAlphaKey(0, 1) });
+                tr.colorOverTrail = tg; r.trailMaterial = M("M_FX_Add_Trail", true, 7);
+                var sp = EmitPS(root.transform, "Sparkle", M("M_FX_Add_Dot", true, 0, .7f), .45f, .14f, rt.sparkle, 24);
+                var spm = sp.main; spm.startSpeed = new PSS.MinMaxCurve(1f, 2.4f); spm.startSize = new PSS.MinMaxCurve(.1f, .18f); spm.gravityModifier = .35f;
+                var sh = sp.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = .15f; FadeOut(sp);
+                var fl = EmitPS(root.transform, "AbsorbFlash", M("M_FX_Add_Ring", true, 1), .28f, .9f, rt.sparkle, 6);
+                var so = fl.sizeOverLifetime; so.enabled = true; so.size = new PSS.MinMaxCurve(1, AnimationCurve.EaseInOut(0, .3f, 1, 1.8f)); FadeOut(fl);
+                fx.icons = icons; fx.sparkle = sp; fx.flash = fl;
+                PrefabUtility.SaveAsPrefabAsset(root, Pf + name + ".prefab"); Object.DestroyImmediate(root);
+            }
+        }
     }
 
     static Mesh BlobMesh()
@@ -108,6 +137,38 @@ public static class StylizedFxV14
         }
     }
 
+    const string RuneAtlasPath = StylizedArtIntegration.ArtDir + "Runes/T_RuneGlyphAtlas.png";
+    static void BuildRunes()
+    {
+        var ti = (TextureImporter)AssetImporter.GetAtPath(RuneAtlasPath);
+        if (ti) { ti.textureType = TextureImporterType.Default; ti.alphaSource = TextureImporterAlphaSource.FromInput; ti.mipmapEnabled = true; ti.wrapMode = TextureWrapMode.Clamp; ti.sRGBTexture = false; ti.SaveAndReimport(); }
+        var atlasTex = AssetDatabase.LoadAssetAtPath<Texture2D>(RuneAtlasPath);
+        // default rune atlas on the shared wall/block materials (MPB sets index/colour only)
+        foreach (var mp in Directory.GetFiles(MatDir, "*.mat")) { var m = AssetDatabase.LoadAssetAtPath<Material>(mp); if (m && m.HasProperty("_RuneAtlas")) { m.SetTexture("_RuneAtlas", atlasTex); m.SetFloat("_RuneIdx", -1); EditorUtility.SetDirty(m); } }
+        // PF_UI_TowerBuffIcons: 4 billboard sprites (HUD atlas) + 4 link lines
+        var root = new GameObject("PF_UI_TowerBuffIcons"); var tb = root.AddComponent<TowerBuffIcons>();
+        string[] names = { "blade", "swift", "sight", "frost", "bounty", "resonance" };
+        for (int i = 0; i < 6; i++) tb.runeIcons[i] = AssetDatabase.LoadAssetAtPath<Sprite>(StylizedArtIntegration.ArtDir + "UI/ui_rune_" + names[i] + ".png");
+        var linkMat = M("M_FX_Add_Trail", true, 7);
+        for (int i = 0; i < 4; i++)
+        {
+            var g = new GameObject("Buff" + i); g.transform.SetParent(root.transform, false); var sr = g.AddComponent<SpriteRenderer>(); sr.sprite = tb.runeIcons[i]; sr.sortingOrder = 50; tb.slots[i] = sr; g.SetActive(false);
+            var l = new GameObject("Link" + i); l.transform.SetParent(root.transform, false); var lr = l.AddComponent<LineRenderer>(); lr.sharedMaterial = linkMat; lr.positionCount = 2; lr.widthMultiplier = .08f; lr.useWorldSpace = true;
+            lr.shadowCastingMode = ShadowCastingMode.Off; lr.receiveShadows = false; tb.links[i] = lr; l.SetActive(false);
+        }
+        PrefabUtility.SaveAsPrefabAsset(root, Pf + "PF_UI_TowerBuffIcons.prefab"); Object.DestroyImmediate(root);
+        // PF_UI_ResonanceAura: subtle dashed ring, radius 8 cells (quad 17 m incl. cell centre)
+        var ringMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/UI/M_UI_RangeRing.mat");
+        var rm = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/UI/M_UI_ResonanceRing.mat");
+        if (!rm) { rm = new Material(ringMat); AssetDatabase.CreateAsset(rm, "Assets/Game/Materials/Stylized/UI/M_UI_ResonanceRing.mat"); }
+        rm.CopyPropertiesFromMaterial(ringMat); rm.SetColor("_Color", new Color(.95f, .93f, .9f, .35f)); rm.SetFloat("_Speed", .05f); rm.SetFloat("_Dashes", 96); rm.SetFloat("_Width", .015f); EditorUtility.SetDirty(rm);
+        var au = GameObject.CreatePrimitive(PrimitiveType.Quad); au.name = "PF_UI_ResonanceAura"; Object.DestroyImmediate(au.GetComponent<Collider>());
+        au.transform.rotation = Quaternion.Euler(90, 0, 0); au.transform.localScale = Vector3.one * (2 * RuneArt.ResonanceRadiusCells + 1);
+        var ar = au.GetComponent<Renderer>(); ar.sharedMaterial = rm; ar.shadowCastingMode = ShadowCastingMode.Off; ar.receiveShadows = false;
+        var auRoot = new GameObject("PF_UI_ResonanceAura"); au.name = "Ring"; au.transform.SetParent(auRoot.transform, false); au.transform.localPosition = Vector3.up * .06f;
+        PrefabUtility.SaveAsPrefabAsset(auRoot, Pf + "PF_UI_ResonanceAura.prefab"); Object.DestroyImmediate(auRoot);
+    }
+
     // ---------------- HUD sprite atlas
     static void BuildAtlas()
     {
@@ -115,13 +176,18 @@ public static class StylizedFxV14
         foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { ui }))
         {
             var tp = AssetDatabase.GUIDToAssetPath(guid); var ti = (TextureImporter)AssetImporter.GetAtPath(tp);
-            if (ti.textureType != TextureImporterType.Sprite || ti.mipmapEnabled) { ti.textureType = TextureImporterType.Sprite; ti.spriteImportMode = SpriteImportMode.Single; ti.mipmapEnabled = false; ti.alphaIsTransparency = true; ti.SaveAndReimport(); }
+            var border = ti.spriteBorder;   // keep borders from our .meta
+            ti.textureType = TextureImporterType.Sprite; ti.spriteImportMode = SpriteImportMode.Single; ti.mipmapEnabled = false; ti.alphaIsTransparency = true;
+            ti.spriteBorder = border; ti.spritePixelsPerUnit = 100; ti.npotScale = TextureImporterNPOTScale.None; ti.wrapMode = TextureWrapMode.Clamp;
+            ti.SaveAndReimport();   // rewrites minimal hand-written metas into full Tuanjie metas
         }
+        var frame = (TextureImporter)AssetImporter.GetAtPath(ui + "/ui_card_tower_frame.png");
+        Debug.Log($"HUD FRAME CHECK: ui_card_tower_frame type={frame.textureType} mode={frame.spriteImportMode} border={frame.spriteBorder}");
         string ap = ui + "/HUD.spriteatlas";
         var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(ap);
         if (!atlas) { atlas = new UnityEngine.U2D.SpriteAtlas(); AssetDatabase.CreateAsset(atlas, ap); }
-        UnityEditor.U2D.SpriteAtlasExtensions.Remove(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPackables(atlas));
-        UnityEditor.U2D.SpriteAtlasExtensions.Add(atlas, new Object[] { AssetDatabase.LoadAssetAtPath<DefaultAsset>(ui) });
+        var folder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(ui);
+        if (!UnityEditor.U2D.SpriteAtlasExtensions.GetPackables(atlas).Contains(folder)) UnityEditor.U2D.SpriteAtlasExtensions.Add(atlas, new Object[] { folder });
         UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, new UnityEditor.U2D.SpriteAtlasPackingSettings { enableRotation = false, enableTightPacking = false, padding = 4 });
         UnityEditor.U2D.SpriteAtlasExtensions.SetTextureSettings(atlas, new UnityEditor.U2D.SpriteAtlasTextureSettings { generateMipMaps = false, filterMode = FilterMode.Bilinear, sRGB = true });
         EditorUtility.SetDirty(atlas); AssetDatabase.SaveAssets();
@@ -155,7 +221,7 @@ public static class StylizedFxV14
             for (int a = 0; a < w; a++) for (int b = 0; b < d; b++) { var blk = Put("PF_Env_Rock_1x1", pos[i] + new Vector3(a - (w - 1) * .5f, 0, b - (d - 1) * .5f)); top = Top(blk); }
             Put(towers[i], pos[i] + Vector3.up * top, 180);
         }
-        StylizedArtIntegration.Capture(cam, PreviewDir + "towers_nobase_v15.png");
+        StylizedArtIntegration.Capture(cam, PreviewDir + "towers_base_v15.png");
 
         // coin drop: real simulation stepped at 30 fps, particles baked to meshes per frame (pop / hold / fly+trail / pickup flash)
         float[] ts = { .15f, .4f, .75f, .98f, 1.12f, 1.26f };
@@ -169,7 +235,7 @@ public static class StylizedFxV14
             var pill = GameObject.CreatePrimitive(PrimitiveType.Cube); Object.DestroyImmediate(pill.GetComponent<Collider>()); pill.transform.position = target + new Vector3(.45f, .1f, 0);
             pill.transform.localScale = new Vector3(1.1f, .4f, .1f) * (k == 5 ? 1.18f : 1); pill.transform.rotation = cam.transform.rotation;
             var pm = new Material(Shader.Find("Universal Render Pipeline/Unlit")); pm.color = H("FFD678"); pill.GetComponent<Renderer>().sharedMaterial = pm;
-            var fxGo = Put("PF_VFX_CoinDrop", Vector3.zero); var fx = fxGo.GetComponent<CoinDropFx>(); fx.cam = null;
+            var fxGo = Put("PF_VFX_CoinDrop", Vector3.zero); var fx = fxGo.GetComponent<CoinDropFx>(); fx.cam = null; fx.target = null;
             foreach (var ps in fxGo.GetComponentsInChildren<ParticleSystem>()) { ps.useAutoRandomSeed = false; ps.randomSeed = 3; }
             UnityEngine.Random.InitState(5);
             fx.Play(c0, 20, target, null, false);
@@ -209,6 +275,49 @@ public static class StylizedFxV14
         }
         Bake(sysGo, cam);
         StylizedArtIntegration.Capture(cam, PreviewDir + "enemy_trail_v15.png");
+
+        // placement: ghost tower + footprint frame (per-cell valid/invalid, rotated) + real wall blocks highlighted (MPB) + rune glyph + buff icons + resonance aura
+        cam = Scene(new Vector3(-9, 12, -9), new Vector3(0, .8f, 0), 4.2f);
+        RuneInlay.Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(RuneAtlasPath);
+        var walls = new System.Collections.Generic.Dictionary<Vector2Int, Renderer>(); float wtop = 0;
+        for (int x = -4; x <= 4; x++) for (int z = -3; z <= 3; z++)
+        {
+            var t = Put("PF_Env_Rock_1x1", new Vector3(x, 0, z)); float h = Top(t); t.transform.position = new Vector3(x, .8f + .45f - h, z); wtop = .8f + .45f;
+            walls[new Vector2Int(x, z)] = t.GetComponentInChildren<Renderer>();
+        }
+        var ghostPf = "PF_UI_PlaceGhost_Tower";
+        (string tower, Vector3 at, Vector2Int size, int rot, bool[] ok)[] cases = {
+            ("PF_Tower_Gatling_1x1", new Vector3(-3, 0, 1), new Vector2Int(1, 1), 0, new[] { true }),
+            ("PF_Tower_Flamer_1x2",  new Vector3(-.5f, 0, 1), new Vector2Int(1, 2), 1, new[] { true, false }),
+            ("PF_Tower_Mortar_2x2",  new Vector3(2.5f, 0, .5f), new Vector2Int(2, 2), 0, new[] { true, true, true, false }) };
+        foreach (var cs in cases)
+        {
+            var gpos = cs.at + Vector3.up * (wtop + .0f);
+            var gg = Put(ghostPf, gpos, cs.rot * 90); var pg = gg.GetComponent<PlacementGhost>();
+            gg.transform.rotation = Quaternion.identity; pg.SetFootprint(cs.size, cs.rot);
+            for (int k = 0; k < cs.ok.Length; k++) pg.SetCellValid(k, cs.ok[k]);
+            var tw = Put(cs.tower, gpos, cs.rot * 90); bool allOk = cs.ok.All(o => o);
+            var gmat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/UI/" + (allOk ? "M_UI_Ghost_Valid.mat" : "M_UI_Ghost_Invalid.mat"));
+            foreach (var r in tw.GetComponentsInChildren<Renderer>()) { var arr = r.sharedMaterials; for (int i = 0; i < arr.Length; i++) arr[i] = gmat; r.sharedMaterials = arr; }
+            // wall highlight under footprint (per cell colour)
+            var rotq = Quaternion.Euler(0, cs.rot * 90, 0); var cells = new System.Collections.Generic.List<Vector2Int>();
+            for (int y = 0; y < cs.size.y; y++) for (int x = 0; x < cs.size.x; x++)
+            {
+                var lp = rotq * new Vector3(x - (cs.size.x - 1) * .5f, 0, y - (cs.size.y - 1) * .5f); var c = new Vector2Int(Mathf.RoundToInt(cs.at.x + lp.x), Mathf.RoundToInt(cs.at.z + lp.z));
+                cells.Add(c); if (walls.TryGetValue(c, out var wr)) WallHighlight.Register(c, wr);
+            }
+            WallHighlight.SetCells(cells.ToArray(), cs.ok, true);
+        }
+        // runes on wall tops + a placed tower with buff icons and resonance aura
+        RuneInlay.Set(walls[new Vector2Int(-3, -2)], RuneId.Blade); RuneInlay.Set(walls[new Vector2Int(-2, -2)], RuneId.Swift); RuneInlay.Set(walls[new Vector2Int(-1, -2)], RuneId.Sight);
+        RuneInlay.Set(walls[new Vector2Int(0, -2)], RuneId.Frost); RuneInlay.Set(walls[new Vector2Int(1, -2)], RuneId.Bounty); RuneInlay.Set(walls[new Vector2Int(3, -2)], RuneId.Resonance);
+        var placed = Put("PF_Tower_Tesla_1x1", new Vector3(-2, wtop, -2), 180);
+        var bi = Put("PF_UI_TowerBuffIcons", placed.transform.position).GetComponent<TowerBuffIcons>();
+        bi.Set(new[] { RuneId.Swift }, new[] { new Vector3(-2, wtop, -2) });
+        foreach (var s0 in bi.slots) if (s0 && s0.gameObject.activeSelf) s0.transform.rotation = cam.transform.rotation;
+        Put("PF_UI_ResonanceAura", new Vector3(3, wtop, -2));
+        StylizedArtIntegration.Capture(cam, PreviewDir + "ghost_footprint_v15.png");
+        WallHighlight.ClearRegistry();
     }
 
     /// Batch captures don't draw edit-mode particle systems reliably: bake each PS (+trails) into a static mesh with the same material.

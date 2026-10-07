@@ -45,8 +45,8 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    totalVerticesCount: 549
-    totalTrianglesCount: 430
+    totalVerticesCount: 885
+    totalTrianglesCount: 594
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
@@ -152,19 +152,27 @@ ModelImporter:
       reserveDetailLevel: 0
     selectedVGMeshes:
     - index: 0
-      meshName: SM_Tower_Mortar_2x2_01_Barrel
+      meshName: SM_Tower_Mortar_2x2_01_Base
       lodLevel: 0
       meshGeometryBuffer: 0
     - index: 1
+      meshName: SM_Tower_Mortar_2x2_01_Barrel
+      lodLevel: 0
+      meshGeometryBuffer: 0
+    - index: 2
       meshName: SM_Tower_Mortar_2x2_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0
     supportVGMeshes:
     - index: 0
-      meshName: SM_Tower_Mortar_2x2_01_Barrel
+      meshName: SM_Tower_Mortar_2x2_01_Base
       lodLevel: 0
       meshGeometryBuffer: 0
     - index: 1
+      meshName: SM_Tower_Mortar_2x2_01_Barrel
+      lodLevel: 0
+      meshGeometryBuffer: 0
+    - index: 2
       meshName: SM_Tower_Mortar_2x2_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0

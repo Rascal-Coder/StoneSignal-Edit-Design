@@ -352,13 +352,19 @@ def plinth(fx, fy, h=.16):
     return [box((fx * .9, fy * .9, h), (0, 0, h / 2), "StoneSide", bevel=.03),
             box((fx * .9 + .02, fy * .9 + .02, .04), (0, 0, h - .02), "Metal", bevel=.01)]
 
+PLATE_H = .10   # collar plate top (m)
+
 def turret(name, base, head, pivot, barrel=None, bpivot=None, muzzle=None):
     """Hierarchy (Unity): <SM>_Base (static) and <SM>_Head (yaw pivot, centred) > <SM>_Barrel (pitch pivot) > <SM>_Muzzle (empty).
     Blender keeps Head parented to Base for export convenience; StylizedArtIntegration re-parents Base/Head as siblings."""
     # v14: no visible base mesh - towers sit directly on the wall-block top. _Base stays as an empty pivot (API),
     # head/barrel/muzzle are lowered so the lowest head vertex rests on z=0 (wall top).
-    b = bpy.data.objects.new(name + "_Base", None); b.empty_display_size = .2
-    bpy.context.scene.collection.objects.link(b)
+    # v15: low collar plate sized to the footprint (1x1 / 1x2 / 2x2), flush on wall top, wall palette slightly darker. Long axis = Y (1x2).
+    fw, fd = (2, 2) if "2x2" in name else (1, 2) if "1x2" in name else (1, 1)
+    plate = [box((fw * .9, fd * .9, .07), (0, 0, .035), "WallSideDark", bevel=.025, seg=2),
+             box((fw * .9 - .1, fd * .9 - .1, .035), (0, 0, .085), "WallSide", bevel=.015, seg=1),
+             box((fw * .9 + .02, fd * .9 + .02, .012), (0, 0, .006), "StoneDark")]          # contact AO lip
+    b = to_object(name + "_Base", plate)
     objs = [b]; last = b
     if head:
         h = to_object(name + "_Head", head, origin=tuple(pivot)); h.parent = b; objs.append(h); last = h
@@ -369,12 +375,12 @@ def turret(name, base, head, pivot, barrel=None, bpivot=None, muzzle=None):
         m = bpy.data.objects.new(name + "_Muzzle", None); m.empty_display_size = .1
         bpy.context.scene.collection.objects.link(m); m.location = muzzle
         m.parent = b; m.matrix_parent_inverse = b.matrix_world.inverted(); objs.append(m)
-    meshes = [o for o in objs if o.type == "MESH"]
+    meshes = [o for o in objs[1:] if o.type == "MESH"]
     if meshes:
         bpy.context.view_layer.update()
         zmin = min((o.matrix_world @ v.co).z for o in meshes for v in o.data.vertices)
         for o in objs[1:]:
-            if o.parent == b: o.location.z -= zmin
+            if o.parent == b: o.location.z -= zmin - PLATE_H
         print("VALIDATE-NB %s head lowered %.3f" % (name, zmin))
     return objs
 

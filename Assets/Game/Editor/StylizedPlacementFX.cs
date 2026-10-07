@@ -33,12 +33,12 @@ public static class StylizedPlacementFX
     {
         if (!AssetDatabase.IsValidFolder("Assets/Game/Materials/Stylized/UI")) AssetDatabase.CreateFolder("Assets/Game/Materials/Stylized", "UI");
         var gV = M("M_UI_Ghost_Valid", 0, new Color(.55f, 1f, .62f, .42f));
-        var gI = M("M_UI_Ghost_Invalid", 0, new Color(1f, .42f, .42f, .42f));
+        var gI = M("M_UI_Ghost_Invalid", 0, new Color(.898f, .282f, .302f, .5f));   // #E5484D
         var oV = M("M_UI_CellOutline_Valid", 2, new Color(.6f, 1f, .7f, .9f), width: .07f);
-        var oI = M("M_UI_CellOutline_Invalid", 2, new Color(1f, .45f, .45f, .9f), width: .07f);
+        var oI = M("M_UI_CellOutline_Invalid", 2, new Color(.898f, .282f, .302f, 1f), width: .07f);
         var ring = M("M_UI_RangeRing", 1, new Color(1f, .93f, .78f, .85f), .15f, 48, .05f);
-        var slot = M("M_UI_SlotHighlight", 2, new Color(1f, .78f, .42f, .7f), width: .1f);
-        var path = M("M_Path_Flow", 3, new Color(1f, .62f, .28f, .45f), .8f, 10);
+        var slot = M("M_UI_SlotHighlight", 2, new Color(1f, .82f, .45f, 1f), width: .12f); slot.renderQueue = 3110;
+        var path = M("M_Path_Flow", 3, new Color(1f, .8f, .4f, .9f), .8f, 10);
         var stone = AssetDatabase.LoadAllAssetsAtPath(StylizedArtIntegration.ArtDir + "Environment/SM_Env_Rock_1x1_01.fbx").OfType<Mesh>().FirstOrDefault();
 
         // dust puff (cheap: 14 particles, one burst)
@@ -74,13 +74,13 @@ public static class StylizedPlacementFX
         // PF_UI_PlaceGhost_Tower (+ range ring child)
         var tw = new GameObject("PF_UI_PlaceGhost_Tower"); var tg = tw.AddComponent<PlacementGhost>();
         tg.validMat = gV; tg.invalidMat = gI; tg.validOutline = oV; tg.invalidOutline = oI;
-        var foot = new GameObject("Cell"); foot.transform.SetParent(tw.transform, false); Quad("Outline", foot.transform, oV, 1f, .015f); tg.cellTemplate = foot;
+        var foot = new GameObject("Cell"); foot.transform.SetParent(tw.transform, false); Quad("Fill", foot.transform, gV, .94f, .012f); Quad("Outline", foot.transform, oV, 1f, .015f); foot.SetActive(false); tg.cellTemplate = foot;
         var ri = (GameObject)PrefabUtility.InstantiatePrefab(rrPf, tw.transform); ri.name = "RangeRing";
         tg.dust = Dust(tw.transform).GetComponent<ParticleSystem>();
         PrefabUtility.SaveAsPrefabAsset(tw, Pf + "PF_UI_PlaceGhost_Tower.prefab"); Object.DestroyImmediate(tw);
 
         // PF_UI_SlotHighlight (valid wall-top slot for a turret)
-        var sl = new GameObject("PF_UI_SlotHighlight"); Quad("Glow", sl.transform, slot, .92f, .01f);
+        var sl = new GameObject("PF_UI_SlotHighlight"); Quad("Glow", sl.transform, slot, .92f, .05f);   // v15: 5 cm above wall top (tile bumps hid it at 1 cm)
         PrefabUtility.SaveAsPrefabAsset(sl, Pf + "PF_UI_SlotHighlight.prefab"); Object.DestroyImmediate(sl);
 
         // PF_Path_FlowSegment: LineRenderer lying on the ground, uv.x along path (Tile mode -> chevrons keep constant size)

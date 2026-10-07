@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae4a39dc2bd90974dbe14c12906441e1, type: 3}
+  m_Name: RT_Gem
+  m_EditorClassIdentifier: 
+  id: gem
+  icon: {fileID: 2800000, guid: 6399ccc175744a0aafe54a14a11c02fe, type: 3}
+  material: {fileID: 2100000, guid: 87e9fc17c1b378d4997845469a0e30e9, type: 2}
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  sparkle: {r: 0.627451, g: 0.9411765, b: 1, a: 1}
+  trailHead: {r: 0.78431374, g: 0.9647059, b: 1, a: 1}
+  trailTail: {r: 0.2509804, g: 0.65882355, b: 1, a: 0}
+  size: 0.44
+  twoAt: 6
+  threeAt: 16
+  sfxPop: reward_pop
+  sfxArrive: reward_arrive

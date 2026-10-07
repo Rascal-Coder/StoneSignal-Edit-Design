@@ -30,6 +30,11 @@ Shader "StoneSignal/ToonLit"
         _DissolveEdge ("Dissolve Edge Width", Range(0.01,0.3)) = 0.08
         [HDR] _DissolveColor ("Dissolve Edge Color", Color) = (4,2.2,0.8,1)
         _Mottle ("World Mottle (weathering)", Range(0,1)) = 0
+        [HideInInspector] _RuneIdx ("Rune Index", Float) = -1
+        [HideInInspector] [HDR] _RuneColor ("Rune Color", Color) = (1,1,1,1)
+        [NoScaleOffset] _RuneAtlas ("Rune Glyph Atlas (4x2, alpha)", 2D) = "black" {}
+        [HideInInspector] _HiAmount ("Placement Highlight", Range(0,1)) = 0
+        [HideInInspector] [HDR] _HiColor ("Placement Highlight Color", Color) = (0.4,1.6,0.6,1)
         _BaseAO ("Base AO Strength", Range(0,1)) = 0
         _BaseAOHeight ("Base AO Height (m, object Y)", Float) = 0.3
         _Wobble ("Vertex Wobble (Shard)", Range(0,2)) = 0

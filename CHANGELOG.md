@@ -220,3 +220,13 @@ Changed:
 - New PF_VFX_EnemyGround + EnemyGroundFx (blob shadow + distance-emitted dust, 2 s fade), added as child GroundFx to all PF_Enemy_*.
 - Editor: StylizedFxV14.cs (builder, previews, checks) called from BatchImport.
 
+
+## Stylized art v15 (2026-10-07)
+- Fix: v13 UI .meta GUIDs were truncated (Tuanjie base64 GUIDs) -> assets ignored -> flat pink cards. Restored original GUIDs for ui_card_tower_frame, ui_card_blueprint, ui_badge_hotkey, ui_badge_size_1x2/2x2; batch now rewrites full importer settings.
+- Ghost invalid red #E5484D (SS_PlaceFX ghost ignores mesh vertex colours); path flow alpha .45->.9; slot highlight lifted to 5 cm, queue 3110.
+- Towers: low collar base plate per footprint (SM_Tower_X_Base mesh), heads re-seated. PlacementGhost.SetFootprint/SetCellValid; WallHighlight (shader _HiAmount/_HiColor MPB).
+- EnemyGroundFx: blob only (winding fix, lift .07); global EnemyGroundFxSystem dust (cap 64).
+- RewardFlyFx/RewardType/CoinDropFx (pooled, <=8 particles, Reset), RewardCounterUI; PF_VFX_RewardFly_Gold/Shard/Gem.
+- Runes: 6 icons, glyph atlas, RuneInlay (shader MPB), TowerBuffIcons, PF_UI_ResonanceAura; block stack / draw / reward sprites; HUD atlas includes UI folder.
+- Top-right islet moved to the right edge; one far edge tree removed.
+

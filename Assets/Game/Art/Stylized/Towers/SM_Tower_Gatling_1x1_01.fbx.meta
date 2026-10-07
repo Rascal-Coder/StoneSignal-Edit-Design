@@ -45,8 +45,8 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    totalVerticesCount: 648
-    totalTrianglesCount: 344
+    totalVerticesCount: 984
+    totalTrianglesCount: 508
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
@@ -152,11 +152,19 @@ ModelImporter:
       reserveDetailLevel: 0
     selectedVGMeshes:
     - index: 0
+      meshName: SM_Tower_Gatling_1x1_01_Base
+      lodLevel: 0
+      meshGeometryBuffer: 0
+    - index: 1
       meshName: SM_Tower_Gatling_1x1_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0
     supportVGMeshes:
     - index: 0
+      meshName: SM_Tower_Gatling_1x1_01_Base
+      lodLevel: 0
+      meshGeometryBuffer: 0
+    - index: 1
       meshName: SM_Tower_Gatling_1x1_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0

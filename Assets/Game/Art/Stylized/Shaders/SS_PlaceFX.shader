@@ -37,7 +37,8 @@ Shader "StoneSignal/PlaceFX"
             half4 frag(V i) : SV_Target
             {
                 float t = _Time.y * _Speed;
-                half4 c = _Color * i.col;
+                // v15: ghost mode ignores mesh vertex colours (tower meshes carry AO/mask colours like (0,1,1) -> red turned cyan)
+                half4 c = _Mode < 0.5 ? half4(_Color.rgb, _Color.a * i.col.a) : _Color * i.col;
                 if (_Mode < 0.5)        // ghost
                 {
                     float rim = pow(1 - saturate(abs(dot(normalize(i.n), normalize(i.vd)))), 2);
