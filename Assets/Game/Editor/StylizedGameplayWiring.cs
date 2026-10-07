@@ -147,6 +147,7 @@ namespace StoneSignal.EditorTools
         [MenuItem("StoneSignal/Stylized art/Wire gameplay (towers, enemies, core, VFX)")]
         public static void Wire()
         {
+            BuildUiAtlas(); // sprite reimports first, so no loaded asset reference goes stale below
             Tower("Needle", "PF_Tower_Gatling_1x1", DamageKind.Physical, "FX_Muzzle_Gatling", "FX_Proj_Bullet", "FX_Hit_Kinetic", "FX_Explosion_Kinetic", t =>
             { t.explosionOnCrit = true; t.critChance = .1f; t.critMultiplier = 1.5f; t.impactHitStop = .03f; });
             Tower("Pulse", "PF_Tower_Tesla_1x1", DamageKind.Lightning, "FX_Muzzle_Tesla", "FX_Proj_Tesla_Arc", "FX_Hit_Lightning", "FX_Explosion_Lightning", t =>
@@ -185,12 +186,44 @@ namespace StoneSignal.EditorTools
             art.pathFlowSegment = Opt("PF_Path_FlowSegment"); art.pathFlowY = GroundTop + .09f; // above the +0.06 tile undulation (demo 0.82 would sit inside raised tiles)
             art.placeGhostBlock = Opt("PF_UI_PlaceGhost_Block"); art.placeGhostTower = Opt("PF_UI_PlaceGhost_Tower");
             art.slotHighlight = Opt("PF_UI_SlotHighlight");
+            // v11 HUD sprites (ui_mockup_v3)
+            art.uiOrbCore = UiSprite("ui_orb_core"); art.uiCardTower = UiSprite("ui_card_tower_frame"); art.uiCardBlueprint = UiSprite("ui_card_blueprint");
+            art.uiBadgeHotkey = UiSprite("ui_badge_hotkey"); art.uiBadgeSize2x2 = UiSprite("ui_badge_size_2x2"); art.uiBadgeSize1x2 = UiSprite("ui_badge_size_1x2");
             EditorUtility.SetDirty(art);
             WireLayout();
             AssetDatabase.SaveAssets();
             Debug.Log("STYLIZED WIRING: " + Check());
         }
 
+        const string UiDir = "Assets/Game/Art/Stylized/UI/";
+        // Imports a HUD png as an uncompressed-on-desktop / ASTC-on-mobile Sprite (once) and returns it.
+        static Sprite UiSprite(string name)
+        {
+            string path = UiDir + name + ".png";
+            var imp = AssetImporter.GetAtPath(path) as TextureImporter; if (imp == null) return null;
+            if (imp.textureType != TextureImporterType.Sprite || imp.mipmapEnabled)
+            {
+                imp.textureType = TextureImporterType.Sprite; imp.spriteImportMode = SpriteImportMode.Single; imp.mipmapEnabled = false;
+                imp.alphaIsTransparency = true; imp.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+        // One atlas for every HUD sprite => the hand/HUD batch into few draw calls.
+        static void BuildUiAtlas()
+        {
+            const string atlasPath = "Assets/Game/Art/Stylized/UI/HUD.spriteatlas";
+            var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlasPath);
+            if (atlas == null)
+            {
+                atlas = new UnityEngine.U2D.SpriteAtlas();
+                UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, new UnityEditor.U2D.SpriteAtlasPackingSettings { enableRotation = false, enableTightPacking = false, padding = 4 });
+                UnityEditor.U2D.SpriteAtlasExtensions.SetTextureSettings(atlas, new UnityEditor.U2D.SpriteAtlasTextureSettings { generateMipMaps = false, filterMode = FilterMode.Bilinear, sRGB = true });
+                AssetDatabase.CreateAsset(atlas, atlasPath);
+                UnityEditor.U2D.SpriteAtlasExtensions.Add(atlas, new UnityEngine.Object[] { AssetDatabase.LoadAssetAtPath<DefaultAsset>(UiDir.TrimEnd((char)47)) });
+            }
+            foreach (var png in System.IO.Directory.GetFiles(UiDir, "*.png")) UiSprite(System.IO.Path.GetFileNameWithoutExtension(png));
+            UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new[] { atlas }, EditorUserBuildSettings.activeBuildTarget);
+        }
         static void Tower(string asset, string prefab, DamageKind kind, string muzzle, string proj, string hit, string boom, Action<TowerData> extra)
         {
             var t = Load<TowerData>(D + "Towers/" + asset + ".asset");
@@ -200,6 +233,7 @@ namespace StoneSignal.EditorTools
             t.critChance = 0; t.critMultiplier = 1.5f; t.muzzleHeight = .65f; t.muzzleForward = .45f; t.lobHeight = 1.5f;
             t.impactShake = FeedbackShake.None; t.impactHitStop = 0;
             t.footprint = Vector2Int.one; t.footprintRotates = false; // Gatling/Tesla/Frost/Cannon 1x1, Flamer 1x2 (rotates), Mortar 2x2
+            t.icon = UiSprite("ui_icon_tower_" + asset) ?? t.icon;
             extra?.Invoke(t);
             EditorUtility.SetDirty(t);
         }

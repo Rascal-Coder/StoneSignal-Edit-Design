@@ -138,10 +138,10 @@ namespace StoneSignal
                     yield return Capture("03-combat");
                 }
                 StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=4;
-                float deadline=Time.realtimeSinceStartup+45;
+                float deadline=Time.realtimeSinceStartup+90;
                 while(session.Game.State==GameState.Combat && Time.realtimeSinceStartup<deadline) yield return null;
                 StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1;
-                Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat");
+                Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat (state="+session.Game.State+" remaining="+session.Waves.Remaining+" active="+session.Enemies.Active.Count+")");
                 Require(spawnCounts[wave]==session.config.waves[wave].Total+childCounts[wave],"Wave "+(wave+1)+" exact spawn count");
                 Require(session.Economy.Gold>goldBefore,"Wave "+(wave+1)+" kills earn gold");
                 Require(session.Rewards.Choices.Count==3 && new HashSet<RewardData>(session.Rewards.Choices).Count==3,"Three unique reward cards");

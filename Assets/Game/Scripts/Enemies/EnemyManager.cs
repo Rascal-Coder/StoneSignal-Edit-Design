@@ -5,8 +5,11 @@ using StoneSignal.VFX;
 
 namespace StoneSignal
 {
+    public enum TargetMode { First, Last, Strong, Close }
     public sealed class EnemyManager : MonoBehaviour
     {
+        // Strike target priority for every tower (HUD "TARGET" button).
+        public TargetMode Targeting = TargetMode.First;
         private GridManager grid;
         private VisualPalette palette;
         private readonly List<Enemy> active = new List<Enemy>();
@@ -89,10 +92,14 @@ namespace StoneSignal
         }
         public Enemy ClosestToGoal(Vector3 position, float range)
         {
-            Enemy best = null; float remaining = float.MaxValue;
+            Enemy best = null; float bestScore = float.MaxValue;
             foreach (Enemy enemy in active)
-                if (enemy.Alive && (enemy.transform.position - position).sqrMagnitude <= range * range && enemy.RemainingDistance < remaining)
-                { best = enemy; remaining = enemy.RemainingDistance; }
+            {
+                float d2 = (enemy.transform.position - position).sqrMagnitude;
+                if (!enemy.Alive || d2 > range * range) continue;
+                float score = Targeting == TargetMode.First ? enemy.RemainingDistance : Targeting == TargetMode.Last ? -enemy.RemainingDistance : Targeting == TargetMode.Strong ? -enemy.HP : d2;
+                if (score < bestScore) { best = enemy; bestScore = score; }
+            }
             return best;
         }
         public void DamageArea(Vector3 position, float radius, float damage) => DamageArea(position, radius, damage, DamageKind.Physical, false);

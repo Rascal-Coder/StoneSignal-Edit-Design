@@ -193,3 +193,9 @@ Changed:
 - Water shore glow narrowed: _DepthRange 0.28 -> 0.08 with tighter falloff. The line is about 0.08 m wide (was about 0.35 m); glow and pulse kept.
 - UI: Emberward-style crimson tower cards (white stroke, cost, hotkey badge, size tag for non-1x1). Sprites: ui_card_tower_frame, ui_badge_size_2x2, ui_badge_size_1x2, ui_badge_hotkey.
 
+
+## v10 UI (ui_mockup_v3)
+- TMP HUD rebuilt: core orb HP, gold pill, WAVE x/y banner, speed II/x1/x2/x3, TARGET cycle (EnemyManager.TargetMode), fanned tower cards with hotkey/size badges, blueprint block cards, stacked DRAW deck + BATTLE, hint pill.
+- HUD sprites imported as Sprites + HUD.spriteatlas; ArtCatalog ui* fields; TowerData.icon wired.
+- GameplayShot (-stonesignal-shot <png>): 1920x1080 in-game capture with real UI.
+

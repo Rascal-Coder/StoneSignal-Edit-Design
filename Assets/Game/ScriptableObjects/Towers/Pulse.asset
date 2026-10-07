@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Pulse
   m_EditorClassIdentifier: 
   visualPrefab: {fileID: 2019347110210421079, guid: 138f5d46567f07943aa47f48bc0607bc, type: 3}
-  icon: {fileID: 21300000, guid: 06dbd9e6606f41a439dbef94ccbb2277, type: 3}
+  icon: {fileID: 21300000, guid: efd24ce3ebfc5ea40a7fc98ee82bd1b0, type: 3}
   displayName: Pulse Beacon
   role: Rapid small-area shots clear Shards.
   slowFraction: 0

@@ -54,6 +54,8 @@ namespace StoneSignal
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-stonesignal-smoke") >= 0)
                 Service<PrototypeSmokeTest>("Automated play verification").Initialize(this);
+            { var a = System.Environment.GetCommandLineArgs(); int i = System.Array.IndexOf(a,"-stonesignal-shot");
+              if (i >= 0 && i + 1 < a.Length) Service<GameplayShot>("Gameplay screenshot").Initialize(this, a[i + 1]); }
 #endif
         }
     }

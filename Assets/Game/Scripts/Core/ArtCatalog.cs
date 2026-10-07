@@ -49,6 +49,9 @@ namespace StoneSignal
         public GameObject placeGhostBlock, placeGhostTower;
         [Tooltip("Marks wall-top cells that can take a tower while a tower is selected (pooled).")]
         public GameObject slotHighlight;
+        [Header("HUD sprites (Assets/Game/Art/Stylized/UI)")]
+        public Sprite uiOrbCore;
+        public Sprite uiCardTower, uiCardBlueprint, uiBadgeHotkey, uiBadgeSize2x2, uiBadgeSize1x2;
         [Header("Combat VFX")]
         [Tooltip("Played where an enemy reaches the core.")]
         public GameObject coreHitVfx;

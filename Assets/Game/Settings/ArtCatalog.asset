@@ -53,6 +53,12 @@ MonoBehaviour:
   placeGhostBlock: {fileID: 3235682694636928108, guid: 66f9747f005741a4d87393493963a003, type: 3}
   placeGhostTower: {fileID: 5797902941885729350, guid: 8d4d82d6d53b9514c8fb240b06c8cfc1, type: 3}
   slotHighlight: {fileID: 6079820617362110597, guid: 84dfc173270a585469a472398563ac7b, type: 3}
+  uiOrbCore: {fileID: 21300000, guid: 165d8e7001d95f341b70a897b4d52e81, type: 3}
+  uiCardTower: {fileID: 21300000, guid: a62262f79541da74fafb6174e2c96465, type: 3}
+  uiCardBlueprint: {fileID: 21300000, guid: 28d46bb4880ea57418d834d7df8127c0, type: 3}
+  uiBadgeHotkey: {fileID: 21300000, guid: f8bb91ab07dd5004ab6debe798935ec0, type: 3}
+  uiBadgeSize2x2: {fileID: 21300000, guid: 9fb15730a710fbc4491d7d5e3711d47e, type: 3}
+  uiBadgeSize1x2: {fileID: 21300000, guid: bd069e5419c90594584734176ab1b3ac, type: 3}
   coreHitVfx: {fileID: 6531622362749199158, guid: ddaceebcf3fae584f84a089110410510, type: 3}
   tileTop: 0.25
   blockTop: 0.6

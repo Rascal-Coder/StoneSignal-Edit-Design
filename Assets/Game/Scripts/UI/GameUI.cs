@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -6,188 +8,232 @@ using UnityEngine.SceneManagement;
 
 namespace StoneSignal
 {
+    // In-game HUD per Docs/ui_mockup_v3 (art v11). One overlay canvas for static HUD + one for the hand (dirty rebuilds only),
+    // TextMeshPro text, sprites from ArtCatalog (Assets/Game/Art/Stylized/UI, packed in one SpriteAtlas). No debug text.
     public sealed class GameUI : MonoBehaviour
     {
         private GameBootstrap session;
-        private Font font;
-        private Text hp, wave, remaining, gold, phase, block, status, selection, upgrades;
-        private Text[] towerLabels = new Text[4];
-        private Button[] towerButtons = new Button[4];
-        private Button start, rotate;
-        private RectTransform handRoot;
-        private readonly System.Collections.Generic.List<GameObject> handCards = new System.Collections.Generic.List<GameObject>();
+        private ArtCatalog art;
+        private TextMeshProUGUI hpNumber, hpSmall, gold, wave, hint, targetLabel, drawLeft, drawCost;
+        private Button battle;
+        private readonly Button[] speedButtons = new Button[4];
+        private RectTransform towerHand, blockHand;
+        private readonly List<GameObject> built = new List<GameObject>();
         private GameObject rewardPanel, overPanel;
-        private Text[] rewardNames = new Text[3], rewardDescriptions = new Text[3], rewardEffects = new Text[3];
-        private float noticeUntil, refreshAt;
-        private string notice;
-        private readonly Color ink = new Color(.86f,.94f,.94f);
-        private readonly Color muted = new Color(.48f,.65f,.69f);
-        private readonly Color accent = new Color(.39f,.91f,.79f);
+        private readonly TextMeshProUGUI[] rewardNames = new TextMeshProUGUI[3], rewardDescriptions = new TextMeshProUGUI[3], rewardEffects = new TextMeshProUGUI[3];
+        private float noticeUntil; private string notice; private bool handDirty = true;
+        private int speedIndex = 1; private bool paused;
+        private const string DefaultHint = "R rotate  ·  RMB cancel  ·  ghost shows valid / blocked";
+
+        static readonly Color Ink = Color.white, Navy = Hex("1E2A4A"), Slate = Hex("3B4566"), Blue = Hex("2F5FD0"),
+            Red = Hex("D9404A"), Gold = Hex("F7C948"), Orange = Hex("F59A3A"), Blueprint = Hex("2A5DB0"), Shadow = new Color(0, 0, 0, .35f);
 
         public void Initialize(GameBootstrap game)
         {
-            session = game; font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            session = game; art = game.config.palette != null ? game.config.palette.art : null;
             if (EventSystem.current == null) { var es = new GameObject("Event system"); es.transform.SetParent(transform); es.AddComponent<EventSystem>(); es.AddComponent<StandaloneInputModule>(); }
-            var canvasObject = new GameObject("HUD",typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));
-            canvasObject.transform.SetParent(transform);
-            var canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            var scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1600,900); scaler.matchWidthOrHeight = .5f;
-            RectTransform root = canvasObject.GetComponent<RectTransform>();
-            var header = Panel(root,"Header",new Color(.025f,.055f,.085f,.98f)); Stretch(header,0,1,1,1,new Vector2(0,96),new Vector2(0,0),new Vector2(.5f,1));
-            Label(header,"STONE  /  SIGNAL",26,accent,24,18,320,32);
-            Label(header,"RUINS OF THE LIVING SIGNAL",13,muted,24,54,330,24);
-            hp = Label(header,"",24,ink,460,20,210,32);
-            wave = Label(header,"",24,ink,720,20,210,32);
-            remaining = Label(header,"",24,ink,945,20,250,32);
-            gold = Label(header,"",26,new Color(1,.79f,.38f),1300,20,280,36);
-            Label(header,"CORE INTEGRITY",11,muted,460,56,210,20);
-            Label(header,"CURRENT WAVE",11,muted,720,56,210,20);
-            Label(header,"INCLUDING UNSPAWNED",11,muted,945,56,270,20);
-            phase = Label(root,"",16,accent,26,116,650,28);
-            var tools = Panel(root,"Tower tools",new Color(.035f,.075f,.11f,.97f)); TopRight(tools,-288,-116,270,640);
-            Label(tools,"DEFENSE BEACONS",16,accent,18,18,230,28);
-            Label(tools,"Select a tower, then click a cell.\nWalls can host a tower.",14,muted,18,54,232,52);
-            for (int i=0; i<session.config.towers.Length; i++)
+            var root = Canvas("HUD", 0);
+            // ---- top-left: core orb (HP number only) + small HP/Max below; gold pill
+            var orb = Img(root, "Core orb", art ? art.uiOrbCore : null, Hex("3A8FE0")); TL(orb, 24, 18, 160, 160);
+            hpNumber = Txt(orb, "", 64, Ink); Full(hpNumber.rectTransform); hpNumber.outlineWidth = .2f; hpNumber.outlineColor = Navy;
+            hpSmall = Txt(root, "", 22, Ink); TL(hpSmall.rectTransform, 24, 178, 160, 30); hpSmall.outlineWidth = .25f; hpSmall.outlineColor = Navy;
+            var pill = Img(root, "Gold", null, Gold); TL(pill, 210, 38, 215, 70); Outline(pill, Navy, 3);
+            var coin = Img(pill, "Coin", null, Hex("E3A21A")); TL(coin, 10, 10, 50, 50); Outline(coin, Navy, 2);
+            var dollar = Txt(coin, "$", 30, Navy); Full(dollar.rectTransform);
+            gold = Txt(pill, "", 40, Navy); TL(gold.rectTransform, 66, 4, 140, 62); gold.alignment = TextAlignmentOptions.Center;
+            // ---- top-centre wave banner
+            var banner = Img(root, "Wave banner", null, Red); TC(banner, 0, 24, 420, 80); Outline(banner, Navy, 4);
+            wave = Txt(banner, "", 44, Ink); Full(wave.rectTransform); wave.outlineWidth = .2f; wave.outlineColor = Navy;
+            // ---- top-right speed + strike target
+            string[] speeds = { "II", "x1", "x2", "x3" };
+            for (int i = 0; i < 4; i++)
             {
-                int captured = i; TowerData data = session.config.towers[i];
-                towerButtons[i] = MakeButton(tools,"",18,18,115+i*85,234,78,() => session.Towers.Select(captured));
-                towerLabels[i] = towerButtons[i].GetComponentInChildren<Text>();
-                towerLabels[i].fontSize=13;
-                if(data.icon!=null) {
-                    var icon=Panel(towerButtons[i].transform,"Model icon",Color.white);Position(icon,6,8,60,60);
-                    icon.GetComponent<Image>().sprite=data.icon;icon.GetComponent<Image>().preserveAspect=true;icon.GetComponent<Image>().raycastTarget=false;
-                    Position(towerLabels[i].rectTransform,72,6,150,66);
-                }
-                towerLabels[i].text = (i+1) + "  " + data.displayName + "\n" + data.cost + " gold  |  " + data.damage + " dmg  |  " + data.attacksPerSecond.ToString("0.0") + "/s";
+                int idx = i; var b = Btn(root, speeds[i], 34, Slate, () => SetSpeed(idx)); TR((RectTransform)b.transform, -(24 + (3 - i) * 96), 32, 84, 84); speedButtons[i] = b;
             }
-            selection = Label(tools,"",16,ink,18,464,234,62);
-            MakeButton(tools,"B  /  WALL BLOCK",15,18,536,234,30,() => session.Towers.Select(-1));
-            upgrades = Label(tools,"",13,muted,18,566,238,58);
-            var footer = Panel(root,"Footer",new Color(.025f,.055f,.085f,.98f)); Stretch(footer,0,0,1,0,new Vector2(0,112),Vector2.zero,new Vector2(.5f,0));
-            block = Label(footer,"",19,accent,24,15,380,30);
-            Label(footer,"LMB place  |  R / RMB rotate  |  1-4 tower  |  B wall",14,muted,24,54,575,32);
-            rotate = MakeButton(footer,"R  ROTATE",16,625,24,150,58,() => session.Blocks.Rotate());
-            start = MakeButton(footer,"SPACE  /  BATTLE",18,800,24,300,58,() => session.Waves.StartWave());
-            start.GetComponent<Image>().color=new Color(.025f,.30f,.38f);
-            status = Label(footer,"",14,ink,1130,20,445,72);
-            handRoot=Panel(root,"Block hand",new Color(.025f,.055f,.085f,.96f));
-            handRoot.anchorMin=handRoot.anchorMax=new Vector2(0,0); handRoot.pivot=Vector2.zero; handRoot.anchoredPosition=new Vector2(24,118); handRoot.sizeDelta=new Vector2(900,68);
-            BuildRewardPanel(root); BuildOverPanel(root);
-            session.Economy.Changed += Refresh;
-            session.Waves.Changed += Refresh;
-            session.Blocks.Changed += Refresh;
-            session.Towers.Changed += Refresh;
-            session.Game.StateChanged += OnState;
-            session.Rewards.Offered += ShowRewards;
+            var target = Btn(root, "", 28, Slate, CycleTarget); TR((RectTransform)target.transform, -24, 130, 372, 64);
+            targetLabel = target.GetComponentInChildren<TextMeshProUGUI>();
+            // ---- bottom: hint pill, battle, draw deck
+            var hintPill = Img(root, "Hint", null, new Color(.12f, .16f, .28f, .85f)); BC(hintPill, -100, 192, 670, 46);
+            hint = Txt(hintPill, DefaultHint, 21, Ink); Full(hint.rectTransform);
+            battle = Btn(root, "BATTLE  ►", 44, Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 186, 270, 90);
+            var deck = new GameObject("Draw deck", typeof(RectTransform)).GetComponent<RectTransform>(); deck.SetParent(root, false); BR(deck, -260, 24, 170, 180);
+            for (int i = 3; i >= 1; i--) { var layer = Img(deck, "Layer", null, Color.Lerp(Red, Navy, .45f)); Full(layer); layer.anchoredPosition = new Vector2(i * 4, -i * 5); Outline(layer, Navy, 2); }
+            var top = Img(deck, "Top", null, Red); Full(top); Outline(top, Navy, 3);
+            var drawTitle = Txt(top, "DRAW", 36, Ink); TL(drawTitle.rectTransform, 0, 16, 170, 44); drawTitle.outlineWidth = .2f; drawTitle.outlineColor = Navy;
+            drawLeft = Txt(top, "", 22, Ink); TL(drawLeft.rectTransform, 0, 58, 170, 30);
+            var costPill = Img(top, "Deck", null, Gold); TL(costPill, 35, 118, 100, 40); Outline(costPill, Navy, 2);
+            drawCost = Txt(costPill, "", 26, Navy); Full(drawCost.rectTransform);
+            var handCanvas = Canvas("Hand", 1);
+            towerHand = Group(handCanvas, "Tower hand"); BL(towerHand, 20, 20, 720, 210);
+            blockHand = Group(handCanvas, "Block hand"); BL(blockHand, 700, 22, 760, 140);
+            BuildRewardPanel(Canvas("Overlays", 2)); 
+            session.Economy.Changed += Refresh; session.Waves.Changed += Refresh;
+            session.Blocks.Changed += Dirty; session.Towers.Changed += Dirty;
+            session.Game.StateChanged += OnState; session.Rewards.Offered += ShowRewards;
             session.Blocks.Notice += ShowNotice; session.Towers.Notice += ShowNotice;
-            Refresh();
+            SetSpeed(1); Refresh();
         }
-        private void BuildRewardPanel(RectTransform root)
-        {
-            var panel = Panel(root,"Three reward choices",new Color(.018f,.035f,.06f,.96f)); Fill(panel); rewardPanel=panel.gameObject;
-            var title = Label(panel,"CHOOSE YOUR NEXT SIGNAL",32,accent,0,0,1050,50); Center(title.rectTransform,0,-245,1050,50); title.alignment=TextAnchor.MiddleCenter;
-            var subtitle = Label(panel,"One upgrade. A new route. The next wave awaits.",17,muted,0,0,1000,35); Center(subtitle.rectTransform,0,-192,1000,35); subtitle.alignment=TextAnchor.MiddleCenter;
-            for (int i=0; i<3; i++)
-            {
-                int captured=i;
-                var card=Panel(panel,"Reward " + i,new Color(.05f,.105f,.14f)); Center(card,(i-1)*336,12,308,320);
-                Label(card,"0"+(i+1)+"  /  RUN UPGRADE",13,accent,22,22,265,25);
-                rewardNames[i]=Label(card,"",25,ink,22,65,265,70);
-                rewardDescriptions[i]=Label(card,"",17,muted,22,140,265,65);
-                rewardEffects[i]=Label(card,"",20,accent,22,210,265,40);
-                MakeButton(card,"CHOOSE",17,22,264,264,38,() => session.Rewards.Choose(captured));
-            }
-            rewardPanel.SetActive(false);
-        }
-        private void BuildOverPanel(RectTransform root)
-        {
-            var panel=Panel(root,"Game over",new Color(.03f,.035f,.055f,.97f)); Fill(panel); overPanel=panel.gameObject;
-            var text=Label(panel,"THE CORE WENT DARK",38,ink,0,0,800,70); Center(text.rectTransform,0,-85,800,70); text.alignment=TextAnchor.MiddleCenter;
-            var tip=Label(panel,"Extend the route and spread your beacons along it.",19,muted,0,0,850,44); Center(tip.rectTransform,0,-10,850,44); tip.alignment=TextAnchor.MiddleCenter;
-            var restart=MakeButton(panel,"RESTART RUN",19,0,0,270,60,() => { StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }); Center((RectTransform)restart.transform,0,90,270,60);
-            overPanel.SetActive(false);
-        }
+
+        // ---------- state ----------
+        private void Dirty() { handDirty = true; Refresh(); }
         private void Refresh()
         {
-            hp.text=session.Economy.HP + " / " + session.Economy.MaxHP;
-            wave.text=(session.Waves.WaveIndex+1).ToString("00"); remaining.text=session.Waves.Remaining.ToString("00"); gold.text=session.Economy.Gold + "  GOLD";
-            phase.text=session.Game.State==GameState.Build ? "BUILD  /  Shape the route. Protect the core." : session.Game.State==GameState.Combat ? "COMBAT  /  Defend the core. Remaining includes queued enemies." : session.Game.State.ToString().ToUpper();
-            block.text="BLOCK  " + (session.Blocks.CurrentShape == null ? "EMPTY" : session.Blocks.CurrentShape.displayName) + "   /   " + session.Blocks.Remaining + " LEFT";
-            selection.text=session.Towers.SelectedIndex<0 ? "Selected: Wall block" : "Selected: " + session.config.towers[session.Towers.SelectedIndex].displayName;
-            foreach(var card in handCards) Destroy(card); handCards.Clear();
-            handRoot.sizeDelta=new Vector2(900,Mathf.Max(1,Mathf.CeilToInt(session.Blocks.Hand.Cards.Count/7f))*84);
-            for(int i=0;i<session.Blocks.Hand.Cards.Count;i++) {
-                int index=i; var shape=session.Blocks.Hand.Cards[i];
-                var card=MakeButton(handRoot,shape.displayName,16,(i%7)*126,8+(i/7)*84,118,70,()=>{session.Towers.Select(-1);session.Blocks.SelectCard(index);});
-                card.GetComponentInChildren<Text>().alignment=TextAnchor.MiddleLeft;
-                if(shape.icon!=null) {
-                    var icon=Panel(card.transform,"Block model",Color.white);Position(icon,24,2,88,66);
-                    icon.GetComponent<Image>().sprite=shape.icon;icon.GetComponent<Image>().preserveAspect=true;icon.GetComponent<Image>().raycastTarget=false;
-                } else foreach(var cell in shape.cells) { var tile=Panel(card.transform,"Shape cell",ink); Position(tile,48+cell.x*10,6+(3-cell.y)*10,8,8); tile.GetComponent<Image>().raycastTarget=false; }
-                card.GetComponent<Image>().color=i==session.Blocks.Hand.Selected && session.Towers.SelectedIndex<0 ? accent : new Color(.075f,.19f,.23f);
-                if(i==session.Blocks.Hand.Selected && session.Towers.SelectedIndex<0) card.GetComponentInChildren<Text>().color=new Color(.025f,.055f,.085f);
-                card.interactable=session.Game.State==GameState.Build || (session.config.allowCombatBlocks && session.Game.State==GameState.Combat);
-                handCards.Add(card.gameObject);
+            if (session == null) return;
+            hpNumber.text = session.Economy.HP.ToString();
+            hpSmall.text = session.Economy.HP + "/" + session.Economy.MaxHP;
+            gold.text = session.Economy.Gold.ToString();
+            wave.text = "WAVE " + Mathf.Min(session.Waves.WaveIndex + 1, Mathf.Max(1, session.config.waves.Length)) + " / " + session.config.waves.Length;
+            drawLeft.text = session.Blocks.Remaining + " left";
+            drawCost.text = session.Blocks.Deck != null ? session.Blocks.Deck.Cards.Count.ToString() : "-";
+            targetLabel.text = "TARGET: " + session.Enemies.Targeting.ToString().ToUpper() + "  ►";
+            battle.interactable = session.Game.State == GameState.Build;
+            if (handDirty) RebuildHands();
+            if (session.Game.State != GameState.Reward) rewardPanel.SetActive(false);
+            overPanel.SetActive(session.Game.State == GameState.GameOver);
+        }
+        private void RebuildHands()
+        {
+            handDirty = false;
+            foreach (var g in built) Destroy(g); built.Clear();
+            bool build = session.Game.State == GameState.Build;
+            var towers = session.config.towers;
+            for (int i = 0; i < towers.Length; i++)
+            {
+                int idx = i; var data = towers[i];
+                bool selected = session.Towers.SelectedIndex == i;
+                var card = new GameObject("Tower card " + data.displayName, typeof(RectTransform)).GetComponent<RectTransform>();
+                card.SetParent(towerHand, false); BL(card, i * 150, selected ? 30 : 0, 165, 178);
+                card.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(5, -5, towers.Length > 1 ? i / (float)(towers.Length - 1) : .5f)); // fanned +-5 deg
+                var shadow = Img(card, "Shadow", art ? art.uiCardTower : null, Shadow); Full(shadow); shadow.anchoredPosition = new Vector2(6, -8);
+                var face = Img(card, "Frame", art ? art.uiCardTower : null, art && art.uiCardTower ? Color.white : Red); Full(face);
+                var button = face.gameObject.AddComponent<Button>(); button.targetGraphic = face.GetComponent<Image>(); button.interactable = build;
+                button.onClick.AddListener(() => session.Towers.Select(session.Towers.SelectedIndex == idx ? -1 : idx));
+                if (data.icon != null) { var icon = Img(face, "Icon", data.icon, Color.white); Center(icon, 0, 14, 104, 104); icon.GetComponent<Image>().preserveAspect = true; }
+                var price = Txt(face, session.Towers.Cost(data).ToString(), 40, Ink); BCs(price.rectTransform, 0, 10, 120, 46); price.outlineWidth = .25f; price.outlineColor = Navy;
+                var hot = Img(face, "Hotkey", art ? art.uiBadgeHotkey : null, Navy); BRs(hot, -6, 8, 34, 34);
+                var num = Txt(hot, (i + 1).ToString(), 20, Ink); Full(num.rectTransform);
+                var size = TowerManager.SizeOf(data, 0);
+                if (size != Vector2Int.one)
+                {
+                    var badgeSprite = art == null ? null : size.x == 2 && size.y == 2 ? art.uiBadgeSize2x2 : art.uiBadgeSize1x2;
+                    var badge = Img(card, "Size", badgeSprite, Red); TL(badge, -4, -26, 74, 34);
+                    if (badgeSprite == null) { var t = Txt(badge, size.x + "X" + size.y, 20, Ink); Full(t.rectTransform); }
+                }
+                if (selected) Outline(face, Gold, 5);
+                built.Add(card.gameObject);
             }
-            bool build=session.Game.State==GameState.Build;
-            start.interactable=build; rotate.interactable=session.Blocks.Remaining>0 && (build || (session.config.allowCombatBlocks && session.Game.State==GameState.Combat));
-            for (int i=0;i<session.config.towers.Length;i++) {
-                var data=session.config.towers[i]; towerButtons[i].interactable=build;
-                towerButtons[i].GetComponent<Image>().color=session.Towers.SelectedIndex==i ? accent : new Color(.075f,.19f,.23f);
-                towerLabels[i].color=session.Towers.SelectedIndex==i ? new Color(.025f,.055f,.085f) : ink;
-                towerLabels[i].text=(i+1)+"  "+data.displayName+"\n"+session.Towers.Cost(data)+" gold | "+(data.damage*session.Modifiers.Damage).ToString("0.##")+" dmg | "+(data.attacksPerSecond*session.Modifiers.AttackSpeed).ToString("0.##")+"/s";
+            var hand = session.Blocks.Hand.Cards;
+            for (int i = 0; i < hand.Count; i++)
+            {
+                int idx = i; var shape = hand[i];
+                bool selected = session.Towers.SelectedIndex < 0 && i == session.Blocks.Hand.Selected;
+                var card = Img(blockHand, "Block card " + shape.displayName, art ? art.uiCardBlueprint : null, art && art.uiCardBlueprint ? Color.white : Blueprint);
+                BL(card, i * 150, selected ? 12 : 0, 131, 131);
+                var b = card.gameObject.AddComponent<Button>(); b.targetGraphic = card.GetComponent<Image>();
+                b.interactable = build || (session.config.allowCombatBlocks && session.Game.State == GameState.Combat);
+                b.onClick.AddListener(() => { session.Towers.Select(-1); session.Blocks.SelectCard(idx); });
+                // shape only: centred mini cells
+                var cells = shape.cells; if (cells == null || cells.Length == 0) continue;
+                int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+                foreach (var c in cells) { minX = Mathf.Min(minX, c.x); minY = Mathf.Min(minY, c.y); maxX = Mathf.Max(maxX, c.x); maxY = Mathf.Max(maxY, c.y); }
+                float s = Mathf.Min(80f / (maxX - minX + 1), 80f / (maxY - minY + 1), 26);
+                Vector2 off = new Vector2((maxX + minX) * .5f, (maxY + minY) * .5f);
+                foreach (var c in cells) { var cell = Img(card, "Cell", null, new Color(.86f, .93f, 1f)); Center(cell, (c.x - off.x) * s, -(c.y - off.y) * s, s - 3, s - 3); }
+                if (selected) Outline(card, Gold, 4);
+                built.Add(card.gameObject);
             }
-            if(session.Towers.SelectedIndex>=0) selection.text=session.config.towers[session.Towers.SelectedIndex].role;
-            upgrades.text="RUN: dmg x"+session.Modifiers.Damage.ToString("0.00")+"  |  rate x"+session.Modifiers.AttackSpeed.ToString("0.00")+"\nAll range x"+session.Modifiers.AllRange.ToString("0.00")+"  |  blast x"+session.Modifiers.CannonRadius.ToString("0.00");
-            if (session.Game.State!=GameState.Reward) rewardPanel.SetActive(false);
-            overPanel.SetActive(session.Game.State==GameState.GameOver);
+        }
+        private void SetSpeed(int index)
+        {
+            StoneSignal.VFX.HitStop.Cancel();
+            if (index == 0) paused = !paused; else { paused = false; speedIndex = index; }
+            Time.timeScale = paused ? 0 : speedIndex;
+            for (int i = 0; i < 4; i++) speedButtons[i].GetComponent<Image>().color = (i == 0 ? paused : !paused && i == speedIndex) ? Blue : Slate;
+        }
+        private void CycleTarget() { session.Enemies.Targeting = (TargetMode)(((int)session.Enemies.Targeting + 1) % Enum.GetValues(typeof(TargetMode)).Length); Refresh(); }
+        private void OnState(GameState state) { handDirty = true; Refresh(); }
+        private void ShowNotice(string message) { notice = message; noticeUntil = Time.unscaledTime + 2.4f; }
+        private void Update()
+        {
+            if (session == null) return;
+            hint.text = Time.unscaledTime < noticeUntil ? notice : DefaultHint;
+            if (Input.GetKeyDown(KeyCode.Space) && session.Game.State == GameState.Build) session.Waves.StartWave();
+        }
+
+        // ---------- reward / game over ----------
+        private void BuildRewardPanel(RectTransform root)
+        {
+            var panel = Img(root, "Rewards", null, new Color(.06f, .09f, .18f, .88f)); Full(panel); rewardPanel = panel.gameObject;
+            var title = Txt(panel, "CHOOSE AN UPGRADE", 52, Ink); Center(title.rectTransform, 0, -300, 1100, 70); title.outlineWidth = .2f; title.outlineColor = Navy;
+            for (int i = 0; i < 3; i++)
+            {
+                int idx = i; var card = Img(panel, "Reward " + i, null, Blueprint); Center(card, (i - 1) * 380, 20, 340, 400); Outline(card, Navy, 4);
+                rewardNames[i] = Txt(card, "", 32, Ink); TL(rewardNames[i].rectTransform, 20, 24, 300, 90);
+                rewardDescriptions[i] = Txt(card, "", 22, new Color(.86f, .93f, 1f)); TL(rewardDescriptions[i].rectTransform, 20, 120, 300, 130);
+                rewardEffects[i] = Txt(card, "", 26, Gold); TL(rewardEffects[i].rectTransform, 20, 250, 300, 50);
+                var choose = Btn(card, "CHOOSE", 30, Orange, () => session.Rewards.Choose(idx)); TL((RectTransform)choose.transform, 40, 316, 260, 64);
+            }
+            rewardPanel.SetActive(false);
+            var over = Img(root, "Game over", null, new Color(.05f, .06f, .12f, .92f)); Full(over); overPanel = over.gameObject;
+            var text = Txt(over, "THE CORE WENT DARK", 64, Ink); Center(text.rectTransform, 0, -90, 1200, 90);
+            var restart = Btn(over, "RESTART", 40, Orange, () => { StoneSignal.VFX.HitStop.Cancel(); Time.timeScale = 1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); });
+            Center((RectTransform)restart.transform, 0, 60, 300, 84);
+            overPanel.SetActive(false);
         }
         private void ShowRewards()
         {
-            for(int i=0;i<3;i++) { var reward=session.Rewards.Choices[i]; rewardNames[i].text=reward.displayName; rewardDescriptions[i].text=reward.description; rewardEffects[i].text=reward.effectText; }
+            for (int i = 0; i < 3; i++) { var r = session.Rewards.Choices[i]; rewardNames[i].text = r.displayName; rewardDescriptions[i].text = r.description; rewardEffects[i].text = r.effectText; }
             rewardPanel.SetActive(true); Refresh();
         }
-        private void OnState(GameState state) { Refresh(); }
-        private void ShowNotice(string message) { notice=message; noticeUntil=Time.unscaledTime+2.4f; }
-        private void Update()
+
+        // ---------- builders ----------
+        private RectTransform Canvas(string name, int order)
         {
-            if (session==null || Time.unscaledTime<refreshAt) return;
-            refreshAt=Time.unscaledTime+.1f;
-            status.text=Time.unscaledTime<noticeUntil ? notice : session.Towers.SelectedIndex<0 ? (session.Blocks.Remaining<=0 ? "No blocks left. Start the next wave." : session.Blocks.Status) : session.Towers.Status;
+            var go = new GameObject(name, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)); go.transform.SetParent(transform, false);
+            var c = go.GetComponent<Canvas>(); c.renderMode = RenderMode.ScreenSpaceOverlay; c.sortingOrder = order;
+            var s = go.GetComponent<CanvasScaler>(); s.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; s.referenceResolution = new Vector2(1920, 1080); s.matchWidthOrHeight = .5f;
+            return go.GetComponent<RectTransform>();
         }
-        private RectTransform Panel(Transform parent,string name,Color color)
+        private static RectTransform Group(Transform parent, string name) { var r = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>(); r.SetParent(parent, false); return r; }
+        private static RectTransform Img(Transform parent, string name, Sprite sprite, Color color)
         {
-            var obj=new GameObject(name,typeof(RectTransform),typeof(Image)); obj.transform.SetParent(parent,false); obj.GetComponent<Image>().color=color; return obj.GetComponent<RectTransform>();
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image)); go.transform.SetParent(parent, false);
+            var img = go.GetComponent<Image>(); img.sprite = sprite; img.color = color; img.raycastTarget = false; return go.GetComponent<RectTransform>();
         }
-        private Text Label(Transform parent,string value,int size,Color color,float x,float y,float width,float height=30)
+        private static TextMeshProUGUI Txt(Transform parent, string value, float size, Color color)
         {
-            var obj=new GameObject("Label",typeof(RectTransform),typeof(Text)); obj.transform.SetParent(parent,false);
-            var text=obj.GetComponent<Text>(); text.font=font; text.fontSize=size; text.color=color; text.text=value; text.raycastTarget=false; text.verticalOverflow=VerticalWrapMode.Overflow;
-            Position(text.rectTransform,x,y,width,height); return text;
+            var go = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI)); go.transform.SetParent(parent, false);
+            var t = go.GetComponent<TextMeshProUGUI>(); t.text = value; t.fontSize = size; t.color = color; t.fontStyle = FontStyles.Bold;
+            t.alignment = TextAlignmentOptions.Center; t.raycastTarget = false; t.enableWordWrapping = true; return t;
         }
-        private Button MakeButton(Transform parent,string label,int size,float x,float y,float width,float height,Action action)
+        private static Button Btn(Transform parent, string label, float size, Color color, Action action)
         {
-            var panel=Panel(parent,label,new Color(.075f,.19f,.23f)); Position(panel,x,y,width,height);
-            var outline=panel.gameObject.AddComponent<Outline>();outline.effectColor=new Color(.05f,.65f,.84f,.65f);outline.effectDistance=new Vector2(1.5f,-1.5f);
-            var button=panel.gameObject.AddComponent<Button>(); button.targetGraphic=panel.GetComponent<Image>();
-            var colors=button.colors; colors.highlightedColor=new Color(.5f,1,.84f); colors.pressedColor=new Color(.3f,.75f,.65f); colors.disabledColor=new Color(.4f,.4f,.4f,.6f); button.colors=colors;
-            var text=Label(panel,label,size,ink,8,4,width-16,height-8); text.alignment=TextAnchor.MiddleCenter;
-            button.onClick.AddListener(() => action()); return button;
+            var r = Img(parent, label, null, color); r.GetComponent<Image>().raycastTarget = true; Outline(r, Navy, 3);
+            var b = r.gameObject.AddComponent<Button>(); b.targetGraphic = r.GetComponent<Image>(); b.onClick.AddListener(() => action());
+            var t = Txt(r, label, size, Ink); Full(t.rectTransform); return b;
         }
-        private static void Position(RectTransform r,float x,float y,float width,float height) { r.anchorMin=r.anchorMax=new Vector2(0,1); r.pivot=new Vector2(0,1); r.anchoredPosition=new Vector2(x,-y); r.sizeDelta=new Vector2(width,height); }
-        private static void TopRight(RectTransform r,float x,float y,float width,float height) { r.anchorMin=r.anchorMax=new Vector2(1,1); r.pivot=new Vector2(0,1); r.anchoredPosition=new Vector2(x,y); r.sizeDelta=new Vector2(width,height); }
-        private static void Center(RectTransform r,float x,float y,float width,float height) { r.anchorMin=r.anchorMax=r.pivot=new Vector2(.5f,.5f); r.anchoredPosition=new Vector2(x,-y); r.sizeDelta=new Vector2(width,height); }
-        private static void Fill(RectTransform r) { r.anchorMin=Vector2.zero; r.anchorMax=Vector2.one; r.offsetMin=r.offsetMax=Vector2.zero; }
-        private static void Stretch(RectTransform r,float ax,float ay,float bx,float by,Vector2 size,Vector2 position,Vector2 pivot) { r.anchorMin=new Vector2(ax,ay); r.anchorMax=new Vector2(bx,by); r.pivot=pivot; r.anchoredPosition=position; r.sizeDelta=size; }
+        private static void Outline(RectTransform r, Color c, float w) { var o = r.gameObject.AddComponent<Outline>(); o.effectColor = c; o.effectDistance = new Vector2(w, -w); }
+        private static void Set(RectTransform r, Vector2 anchor, Vector2 pivot, float x, float y, float w, float h) { r.anchorMin = r.anchorMax = anchor; r.pivot = pivot; r.anchoredPosition = new Vector2(x, y); r.sizeDelta = new Vector2(w, h); }
+        private static void TL(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(0, 1), new Vector2(0, 1), x, -y, w, h);
+        private static void TR(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(1, 1), new Vector2(1, 1), x, -y, w, h);
+        private static void TC(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(.5f, 1), new Vector2(.5f, 1), x, -y, w, h);
+        private static void BL(RectTransform r, float x, float y, float w, float h) => Set(r, Vector2.zero, Vector2.zero, x, y, w, h);
+        private static void BR(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(1, 0), new Vector2(1, 0), x, y, w, h);
+        private static void BC(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(.5f, 0), new Vector2(.5f, 0), x, y, w, h);
+        private static void BCs(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(.5f, 0), new Vector2(.5f, 0), x, y, w, h);
+        private static void BRs(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(1, 0), new Vector2(1, 0), x, y, w, h);
+        private static void Center(RectTransform r, float x, float y, float w, float h) => Set(r, new Vector2(.5f, .5f), new Vector2(.5f, .5f), x, -y, w, h);
+        private static void Full(RectTransform r) { r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero; }
+        private static Color Hex(string h) { ColorUtility.TryParseHtmlString("#" + h, out var c); return c; }
         private void OnDestroy()
         {
-            if (session==null) return;
-            if(session.Economy!=null) session.Economy.Changed-=Refresh;
-            if(session.Waves!=null) session.Waves.Changed-=Refresh;
-            if(session.Blocks!=null) { session.Blocks.Changed-=Refresh; session.Blocks.Notice-=ShowNotice; }
-            if(session.Towers!=null) { session.Towers.Changed-=Refresh; session.Towers.Notice-=ShowNotice; }
-            if(session.Game!=null) session.Game.StateChanged-=OnState;
-            if(session.Rewards!=null) session.Rewards.Offered-=ShowRewards;
+            if (session == null) return;
+            if (session.Economy != null) session.Economy.Changed -= Refresh;
+            if (session.Waves != null) session.Waves.Changed -= Refresh;
+            if (session.Blocks != null) { session.Blocks.Changed -= Dirty; session.Blocks.Notice -= ShowNotice; }
+            if (session.Towers != null) { session.Towers.Changed -= Dirty; session.Towers.Notice -= ShowNotice; }
+            if (session.Game != null) session.Game.StateChanged -= OnState;
+            if (session.Rewards != null) session.Rewards.Offered -= ShowRewards;
         }
     }
 }
