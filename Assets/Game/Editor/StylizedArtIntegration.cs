@@ -139,7 +139,7 @@ public static class StylizedArtIntegration
         var water = AssetDatabase.LoadAssetAtPath<Material>(wp);
         if (water == null) { water = new Material(Shader.Find("Universal Render Pipeline/Unlit")); AssetDatabase.CreateAsset(water, wp); }
         water.shader = Shader.Find("StoneSignal/Water"); water.renderQueue = 2950;
-        water.SetColor("_ShallowColor", Hex("7FD3E0")); water.SetColor("_DeepColor", Hex("0A4C9E")); water.SetFloat("_DepthRange", .28f); water.SetColor("_GlowColor", new Color(.55f, 1.05f, 1.25f, 1)); water.SetColor("_BaseColor", Hex("0A4C9E")); StripUnused(water);
+        water.SetColor("_ShallowColor", Hex("7FD3E0")); water.SetColor("_DeepColor", Hex("0A4C9E")); water.SetFloat("_DepthRange", .08f); water.SetColor("_GlowColor", new Color(.55f, 1.05f, 1.25f, 1)); water.SetColor("_BaseColor", Hex("0A4C9E")); StripUnused(water);
         EditorUtility.SetDirty(water);
         block.SetFloat("_BaseAO", .5f); block.SetFloat("_BaseAOHeight", .45f); block.SetFloat("_Mottle", .35f);
         env.SetFloat("_Mottle", .18f);
@@ -324,7 +324,7 @@ public static class StylizedArtIntegration
         cam.fieldOfView = 32;
         cam.transform.position = new Vector3(9f, 21f, 25f); cam.transform.LookAt(new Vector3(0, .5f, .5f));
         EditorSceneManager.SaveScene(scene, ScenePath);
-        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v10.png"))) File.Delete(old);
+        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v11.png"))) File.Delete(old);
         Capture(cam, PreviewDir + "unity_demo.png");
         var ls = light.shadows; light.shadows = LightShadows.None;
         Capture(cam, PreviewDir + "unity_demo_noshadow.png");
@@ -335,11 +335,11 @@ public static class StylizedArtIntegration
         var wide = (cam.transform.position, cam.transform.rotation, cam.fieldOfView);
         cam.orthographic = true; cam.orthographicSize = GameCamOrthoV10; cam.transform.rotation = gRot; cam.transform.position = GameCamTargetV10 - fwd * 30f;  // v10 framing
         cam.farClipPlane = 200;
-        Capture(cam, PreviewDir + "level_gamecam_v10.png"); Capture(cam, PreviewDir + "level_compose_v10.png");
+        Capture(cam, PreviewDir + "level_gamecam_v11.png"); Capture(cam, PreviewDir + "level_compose_v11.png");
         cam.orthographic = false; cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
-        Capture(cam, PreviewDir + "level_wide_v10.png");
+        Capture(cam, PreviewDir + "level_wide_v11.png");
         cam.transform.position = new Vector3(3.2f, 3.4f, -5.2f); cam.transform.LookAt(new Vector3(-.3f, .2f, -8.6f)); cam.fieldOfView = 40;
-        Capture(cam, PreviewDir + "shore_closeup_v10.png");
+        Capture(cam, PreviewDir + "shore_closeup_v11.png");
         cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
         EditorSceneManager.SaveScene(scene, ScenePath);
     }

@@ -6,7 +6,7 @@ Shader "StoneSignal/Water"
     {
         _ShallowColor ("Shallow", Color) = (0.11, 0.62, 0.72, 1)
         _DeepColor ("Deep", Color) = (0.02, 0.2, 0.52, 1)
-        _DepthRange ("Shore Band Depth (m)", Float) = 0.28
+        _DepthRange ("Shore Band Depth (m)", Float) = 0.08
         [HDR] _GlowColor ("Shore Glow (HDR)", Color) = (0.55, 1.05, 1.25, 1)
         _BaseColor ("Base Color (fallback)", Color) = (0.03, 0.33, 0.63, 1)
     }
@@ -51,10 +51,10 @@ Shader "StoneSignal/Water"
                 float far = smoothstep(10, 30, length(i.ws.xz));
                 half3 col = lerp(_DeepColor.rgb, _DeepColor.rgb * 0.82, far);
                 // v10: narrow (~0.1 m) glowing shore line - HDR emissive, smooth falloff, slow subtle pulse (pure ALU, WebGL safe)
-                float band = 1 - smoothstep(_DepthRange * 0.7, _DepthRange, wd);
+                float band = 1 - smoothstep(_DepthRange * 0.35, _DepthRange, wd);   // v11: thin bright line, tight falloff
                 band *= band;                                                      // softer outer falloff
                 float pulse = 1 + 0.12 * sin(_Time.y * 1.3 + (i.ws.x + i.ws.z) * 0.15);
-                col = lerp(col, _ShallowColor.rgb, band * 0.45);
+                col = lerp(col, _ShallowColor.rgb, band * 0.6);
                 col += _GlowColor.rgb * band * pulse;                              // HDR > 1 -> picked up by existing bloom
                 col = MixFog(col, i.fog);
                 return half4(col, 1);

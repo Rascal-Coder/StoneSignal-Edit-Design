@@ -188,3 +188,8 @@ Changed:
 - Game camera proposal: pitch 40, yaw 10, ortho 6.6, look-at (0,0.8,-2.2) (StylizedArtIntegration.GameCam*V10).
 - UI sprites in Assets/Game/Art/Stylized/UI (orb, tower card frames, blueprint card, tower icons rendered from the models); ArtSource/Stylized/render_ui_icons.py.
 
+
+## Stylized art v11 (2026-10-07)
+- Water shore glow narrowed: _DepthRange 0.28 -> 0.08 with tighter falloff. The line is about 0.08 m wide (was about 0.35 m); glow and pulse kept.
+- UI: Emberward-style crimson tower cards (white stroke, cost, hotkey badge, size tag for non-1x1). Sprites: ui_card_tower_frame, ui_badge_size_2x2, ui_badge_size_1x2, ui_badge_hotkey.
+
