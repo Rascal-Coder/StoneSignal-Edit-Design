@@ -340,10 +340,11 @@ namespace StoneSignal
         private StoneSignal.UI.RewardOption RuneOption(int rune) =>
             new StoneSignal.UI.RewardOption { title = Loc.RuneTitle(rune), desc = Loc.RuneDesc(rune), icon = S(StoneSignal.VFX.RuneArt.Icon[Mathf.Clamp(rune, 0, 5)]) ?? S("ui_card_reward_rune") };
         private StoneSignal.UI.RewardOption RewardOption(RewardData r) => new StoneSignal.UI.RewardOption { title = Loc.RewardTitle(r), desc = Loc.RewardDesc(r), icon = RewardIcon(r) };
-        // Reward icons: no per-reward art yet -> closest existing HUD sprite (placeholder mapping, listed in the v18 report for art). Rune icons are
-        // reserved for rune options (a global damage reward must not look like the Blade rune).
+        // Reward icons: art v17.4 per-effect icons (StoneSignal.UI.RewardIconMap, packed in the HUD atlas by BatchWire); the old closest-sprite
+        // mapping below stays as the fallback when an icon is missing. Rune icons are reserved for rune options.
         private Sprite RewardIcon(RewardData r)
         {
+            var art17 = S(StoneSignal.UI.RewardIconMap.For(r.effect)); if (art17 != null) return art17;
             Sprite T(string kind) { foreach (var d in session.config.towers) if (d != null && d.icon != null && d.name.StartsWith(kind)) return d.icon; return null; }
             switch (r.effect)
             {

@@ -90,6 +90,8 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-stepshots") >= 0) yield return StepShots();
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-vfxcheck") >= 0) yield return VfxCheck(valid, fv);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-rewardshot") >= 0) yield return RewardShots();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-landprobe") >= 0) yield return LandProbe();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-corecheck") >= 0) yield return CoreCheck();
             Debug.Log("GAMEPLAY SHOT " + path + "\n" + stats);
             Application.Quit(0);
         }
@@ -184,20 +186,47 @@ namespace StoneSignal
             var ui = FindObjectOfType<GameUI>(); if (ui == null) yield break;
             string dir = Path.GetDirectoryName(path), info = "";
             var sets = new[] { new[] { StoneSignal.UI.RewardRarity.Common, StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic },
-                               new[] { StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic, StoneSignal.UI.RewardRarity.Legendary } };
+                               new[] { StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic, StoneSignal.UI.RewardRarity.Legendary },
+                               new[] { StoneSignal.UI.RewardRarity.Common, StoneSignal.UI.RewardRarity.Epic, StoneSignal.UI.RewardRarity.Legendary } }; // v17.4: 3 wave rewards, no rune card
+            string Tag(int k) => k == 0 ? "CRE" : k == 1 ? "REL" : "CEL";
             TimeController.SetSpeed(0);
             info += TextAudit("HUD");
+            // v17.4 reward icons: every RewardEffect -> RewardIconMap sprite resolved from ArtCatalog.uiSprites (BatchWire) and packed in the HUD atlas?
+            var cat = Resources.FindObjectsOfTypeAll<ArtCatalog>(); var ac = cat.Length > 0 ? cat[0] : null; int found = 0, total = 0;
+            foreach (RewardEffect e in System.Enum.GetValues(typeof(RewardEffect)))
+            {
+                var n = StoneSignal.UI.RewardIconMap.For(e); var sp = ac != null && n != null ? ac.UiSprite(n) : null; total++; if (sp) found++;
+                info += "  icon " + e + " -> " + (n ?? "null") + (sp ? " OK tex=" + sp.texture.name + " " + sp.texture.width + "x" + sp.texture.height + " packed=" + sp.packed : " MISSING (old fallback)") + "\n";
+            }
+            info += "reward icons resolved " + found + "/" + total + "\n";
+            if (ac != null && ac.uiSprites != null)
+            {
+                var pages = new Dictionary<Texture2D, int>(); int loose = 0, all = 0;
+                foreach (var u in ac.uiSprites) { if (u == null) continue; all++; if (u.packed) { pages.TryGetValue(u.texture, out var c); pages[u.texture] = c + 1; } else loose++; }
+                info += "HUD sprites: " + all + " in ArtCatalog.uiSprites, " + loose + " not packed, atlas pages=" + pages.Count + ":";
+                foreach (var kv in pages) info += " " + kv.Key.name + " " + kv.Key.width + "x" + kv.Key.height + " (" + kv.Value + " sprites)";
+                info += "\n";
+            }
             for (int k = 0; k < sets.Length; k++)
             {
                 if (!ui.DebugShowRewardPick(sets[k])) { info += "reward pick UI unavailable\n"; break; }
                 float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .8f) yield return null; // glow fade-in done
                 for (int f = 0; f < 4; f++) yield return null; long dOn = draws.LastValue, bOn = batches.LastValue;
-                info += TextAudit("reward cards " + (k == 0 ? "C,R,E" : "R,E,L"));
-                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_" + (k == 0 ? "CRE" : "REL") + ".png"));
+                info += TextAudit("reward cards " + Tag(k));
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_" + Tag(k) + ".png"));
                 ui.PickGlow.enabled = false; for (int f = 0; f < 6; f++) yield return null; long dOff = draws.LastValue, bOff = batches.LastValue;
-                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_noglow_" + (k == 0 ? "CRE" : "REL") + ".png"));
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_noglow_" + Tag(k) + ".png"));
                 ui.PickGlow.enabled = true; for (int f = 0; f < 4; f++) yield return null;
-                info += "set " + (k == 0 ? "Common,Rare,Epic" : "Rare,Epic,Legendary") + ": glow ON drawCalls=" + dOn + " batches=" + bOn + " | glow OFF drawCalls=" + dOff + " batches=" + bOff + " | delta DC=" + (dOn - dOff) + " batches=" + (bOn - bOff) + "\n";
+                info += "set " + string.Join(",", sets[k]) + ": glow ON drawCalls=" + dOn + " batches=" + bOn + " | glow OFF drawCalls=" + dOff + " batches=" + bOff + " | delta DC=" + (dOn - dOff) + " batches=" + (bOn - bOff) + "\n";
+            }
+            // v17.4: what the reward overlay and its icons cost (C,E,L = 3 wave-reward icons)
+            {
+                ui.DebugShowRewardPick(sets[2]); for (int f = 0; f < 8; f++) yield return null; yield return Clean(); long dAll = draws.LastValue, bAll = batches.LastValue;
+                var pcv = ui.PickUi.GetComponentInParent<Canvas>(); pcv.enabled = false; for (int f = 0; f < 4; f++) yield return null; long dScene = draws.LastValue, bScene = batches.LastValue; pcv.enabled = true;
+                var icons = new List<UnityEngine.UI.Image>(); foreach (var im in ui.PickUi.GetComponentsInChildren<UnityEngine.UI.Image>()) if (im.enabled && (im.name == "Icon" || im.name == "IconShadow")) { im.enabled = false; icons.Add(im); }
+                for (int f = 0; f < 4; f++) yield return null; long dNoIcon = draws.LastValue, bNoIcon = batches.LastValue; foreach (var im in icons) im.enabled = true;
+                info += "C,E,L overlay cost: with cards DC=" + dAll + " batches=" + bAll + " | reward canvas off DC=" + dScene + " batches=" + bScene + " -> overlay +" + (dAll - dScene) + " DC +" + (bAll - bScene) + " batches | icons (" + icons.Count + " Images) off DC=" + dNoIcon + " -> icons +" + (dAll - dNoIcon) + " DC\n";
+                ui.PickGlow.enabled = true; for (int f = 0; f < 4; f++) yield return null;
             }
             // Legendary +1 batch probe: batch / draw-call range over 2.5 s (two 1.2 s legendary pulses) per variant
             string probe = "legendary batch probe (min..max over 2.5 s, " + Screen.width + "x" + Screen.height + "):\n";
@@ -264,7 +293,7 @@ namespace StoneSignal
                     if (shotAt < 0 && !en.HeldBySpawn && along > -2.2f) shotAt = Time.realtimeSinceStartup; // v17.3: from the island end of the bridge onto the tiles
                     if (shotAt >= 0 && Time.realtimeSinceStartup - shotAt >= k * .7f)
                     {
-                        cam.transform.position = p - cam.transform.forward * 6f; yield return null; yield return new WaitForEndOfFrame();
+                        cam.transform.position = p - cam.transform.forward * 6f; yield return null; yield return Clean(); yield return new WaitForEndOfFrame();
                         long dc = draws.LastValue; Capture(Path.Combine(dir, run.Item1 + "_" + k + ".png"));
                         var cell = s.grid.ToCell(p); string where = s.grid.InBounds(cell) ? "tiles" : along > -.4f ? "bridge" : "island/bridge start";
                         info += run.Item1 + "_" + k + " [" + where + "]: " + Describe(en) + " | frame drawCalls=" + dc + "\n" + Prints(en) + "\n";
@@ -326,6 +355,84 @@ namespace StoneSignal
         static string RendererTops(Component en) { var sb = new System.Text.StringBuilder(); foreach (var r in en.GetComponentsInChildren<Renderer>()) sb.Append("\n    " + r.GetType().Name + " " + r.name + " enabled=" + r.enabled + " boundsTop=" + r.bounds.max.y.ToString("F2") + " meshTop=" + StoneSignal.Enemy.MeshTop(r).ToString("F2")); return sb.ToString(); }
         // -vfxcheck (v17.3 white squares): block landing dust (M_FX_Snow), enemy status FX (M_VFX_PortalEmber), and every particle
         // material in the scene: texture + surface. Close-ups with UI hidden.
+        // -landprobe (v18): per-frame draw calls around a block landing, no screenshots in the measured window (a Capture renders the
+        // camera twice inside the frame it runs in, so any DC sampled across a capture is inflated). Typical board (Build) and a
+        // late-wave-like board (Combat, many walls/towers/enemies). One run captures at +6 frames on purpose to show the capture artefact.
+        IEnumerator LandProbe()
+        {
+            string dir = Path.GetDirectoryName(path); var sb = new System.Text.StringBuilder();
+            captureNoUi = false; TimeController.ResetAll();
+            // camera: wherever the main shot left it (run -landprobe without the close-up steps = default gameplay view)
+            HashSet<Renderer> baseVis = null;
+            string Row(int f, float t)
+            {
+                int vis = 0, ps = 0, alive = 0, wallsOn = 0;
+                foreach (var r in FindObjectsOfType<Renderer>()) { if (!r.enabled || !r.isVisible) continue; vis++; if (r is ParticleSystemRenderer) { ps++; var p = r.GetComponent<ParticleSystem>(); if (p != null) alive += p.particleCount; } }
+                foreach (var b in InstancedBatch.All) if (b != null && b.name.Contains("lace")) foreach (var mr in b.GetComponentsInChildren<MeshRenderer>()) if (mr.enabled) wallsOn++;
+                return f + "\t" + t.ToString("F3") + "\t" + draws.LastValue + "\t" + batches.LastValue + "\t" + setPass.LastValue + "\t" + vis + "\t" + ps + "\t" + alive + "\t" + wallsOn;
+            }
+            HashSet<Renderer> Visible() { var h = new HashSet<Renderer>(); foreach (var r in FindObjectsOfType<Renderer>()) if (r.enabled && r.isVisible) h.Add(r); return h; }
+            string Path2(Transform t) { string n = t.name; for (var p = t.parent; p != null && n.Length < 120; p = p.parent) n = p.name + "/" + n; return n; }
+            BlockShapeData shape0 = s.Blocks.Hand.Cards.Count > 0 ? s.Blocks.Hand.Cards[0] : (s.Blocks.Deck.Cards.Count > 0 ? s.Blocks.Deck.Cards[0] : null);
+            void EnsureCard() { if (s.Blocks.Hand.Cards.Count == 0) s.Blocks.DrawCards(2); if (s.Blocks.Hand.Cards.Count == 0 && shape0 != null) s.Blocks.Hand.AddCard(shape0, RuneRules.NoRune); s.Blocks.SelectCard(0); }
+            bool FindCell(out Vector2Int cell)
+            {
+                cell = default;
+                for (int pass = 0; pass < 2; pass++)
+                    for (int y = 1; y < s.grid.height - 1; y++) for (int x = 1; x < s.grid.width - 1; x++) { var c = new Vector2Int(x, y); if (s.Blocks.CurrentShape != null && s.Blocks.ValidatePlacement(c) == null && (pass == 1 || !OnRoute(c))) { cell = c; return true; } }
+                return false;
+            }
+            IEnumerator KillAll(float timeout)
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (s.Enemies.Active.Count > 0 && Time.realtimeSinceStartup - t0 < timeout) { foreach (var e in new List<Enemy>(s.Enemies.Active)) if (e != null && e.Alive) e.TakeDamage(1e7f); yield return new WaitForSecondsRealtime(.25f); }
+            }
+            IEnumerator One(string label, int captureAt)
+            {
+                s.Blocks.enabled = true; s.Blocks.Pinned = false; EnsureCard();
+                bool have = FindCell(out var valid);
+                if (!have) { sb.Append(label + ": no valid placement\n"); yield break; }
+                for (int f = 0; f < 40; f++) yield return null;
+                sb.Append("== " + label + " (state " + s.Game.State + ", enemies " + s.Enemies.Active.Count + ", walls " + System.Linq.Enumerable.Count(s.Blocks.WallCells) + ", towers " + s.Towers.Towers.Count + ", cell " + valid + ")\n");
+                sb.Append("frame\tt\tdrawCalls\tbatches\tsetPass\tvisibleRenderers\tvisiblePS\tparticles\twallRenderersOn   (values = previous frame)\n");
+                for (int f = -10; f < 0; f++) { yield return null; sb.Append(Row(f, 0) + "\n"); }
+                baseVis = Visible(); long baseDc = draws.LastValue;
+                bool ok = s.Blocks.CommitPlacement(valid); float t0 = Time.realtimeSinceStartup; long peak = 0; int peakF = 0; string peakNew = "";
+                for (int f = 0; f < 75; f++)
+                {
+                    if (f == captureAt) { yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "land_capture_f" + f + ".png")); sb.Append("   <capture at frame " + f + ">\n"); }
+                    yield return null;
+                    sb.Append(Row(f, Time.realtimeSinceStartup - t0) + "\n");
+                    if (draws.LastValue > peak) { peak = draws.LastValue; peakF = f; var now = Visible(); now.ExceptWith(baseVis); var names = new List<string>(); foreach (var r in now) if (names.Count < 12) names.Add(r.GetType().Name + " " + Path2(r.transform)); peakNew = now.Count + " new visible renderers vs baseline: " + string.Join(" | ", names); }
+                }
+                sb.Append("committed=" + ok + " baseline DC=" + baseDc + " peak DC=" + peak + " at frame " + peakF + " (" + (peak - baseDc) + ")\n  " + peakNew + "\n\n");
+            }
+            // 1. typical board, Build
+            ToBuild(); yield return One("typical board, Build, no capture", -1);
+            yield return One("typical board, Build, no capture (2nd)", -1);
+            yield return One("typical board, Build, CAPTURE at frame 6 (old -vfxcheck method)", 6);
+            // 1b. typical board in a quiet Build phase (wave cleared, towers idle)
+            yield return KillAll(10f); float tw = Time.realtimeSinceStartup; while (s.Game.State == GameState.Combat && Time.realtimeSinceStartup - tw < 15f) { yield return KillAll(1f); yield return null; }
+            ToBuild(); yield return new WaitForSecondsRealtime(2.5f);
+            yield return One("typical board, quiet Build (wave " + s.Waves.WaveIndex + ")", -1);
+            yield return One("typical board, quiet Build (2nd)", -1);
+            // 2. late waves: clear 4 more waves, add walls, then a dense wave (+30 enemies) in Combat
+            for (int w = 0; w < 4; w++)
+            {
+                ToBuild(); if (!s.Waves.StartWave()) break; yield return new WaitForSecondsRealtime(1f);
+                tw = Time.realtimeSinceStartup; while (s.Game.State == GameState.Combat && Time.realtimeSinceStartup - tw < 30f) { yield return KillAll(1f); yield return null; }
+            }
+            ToBuild(); int placed = 0;
+            for (int k = 0; k < 10; k++) { EnsureCard(); if (FindCell(out var cc) && s.Blocks.CommitPlacement(cc)) placed++; }
+            s.Blocks.MergeWalls(); yield return new WaitForSecondsRealtime(1.2f);
+            s.Waves.StartWave(); EnemyData[] types = Resources.FindObjectsOfTypeAll<EnemyData>();
+            for (int k = 0; k < 30 && types.Length > 0; k++) { s.Enemies.Spawn(types[k % types.Length], 60, 1, k % Mathf.Max(1, s.grid.Spawns.Count)); if (k % 5 == 4) yield return new WaitForSecondsRealtime(.3f); }
+            yield return new WaitForSecondsRealtime(4f);
+            sb.Append("late-wave setup: wave index " + s.Waves.WaveIndex + ", +" + placed + " walls placed, " + s.Enemies.Active.Count + " live enemies, state " + s.Game.State + "\n");
+            yield return One("late-wave-like, Combat, no capture", -1);
+            yield return One("late-wave-like, Combat, no capture (2nd)", -1);
+            File.WriteAllText(Path.Combine(dir, "land_probe.txt"), sb.ToString()); Debug.Log("LAND PROBE\n" + sb);
+        }
         bool ToBuild() { if (s.Game.State == GameState.Reward && !s.Rewards.Choose(0)) s.Game.SetState(GameState.Build); return s.Game.State == GameState.Build; }
         IEnumerator VfxCheck(Vector2Int valid, bool haveValid)
         {
@@ -342,13 +449,34 @@ namespace StoneSignal
             if (haveValid)
             {
                 var at = s.grid.ToWorld(valid); cam.transform.position = at - cam.transform.forward * 6f; Zoom(.32f);
+                yield return Clean(); for (int f = 0; f < 4; f++) yield return null; long dPre = draws.LastValue;
                 s.Blocks.Pinned = false; bool ok = s.Blocks.CommitPlacement(valid); float t0 = Time.realtimeSinceStartup;
+                info += "landing dust: drawCalls before commit=" + dPre + " (clean frame)\n";
+                // v17.4 check: the dust ring must stay on the placed wall in world space. The ghost is moved 3 cells away right after the
+                // t=.06 sample (before the ~0.1 s dust emit) -> the particle centroid must stay at the wall, not follow the ghost.
+                var pg = s.Blocks.GetComponentInChildren<StoneSignal.VFX.PlacementGhost>(true); /* block ghost, not the tower ghost */ var parts = new ParticleSystem.Particle[64];
+                string DustInfo()
+                {
+                    if (pg == null || pg.dust == null) return " dust: no PlacementGhost.dust";
+                    var ps = pg.dust; int n = ps.GetParticles(parts); var cen = Vector3.zero; float rMax = 0;
+                    bool world = ps.main.simulationSpace == ParticleSystemSimulationSpace.World;
+                    for (int i = 0; i < n; i++) cen += world ? parts[i].position : ps.transform.TransformPoint(parts[i].position);
+                    if (n > 0) cen /= n;
+                    for (int i = 0; i < n; i++) rMax = Mathf.Max(rMax, Vector3.Distance(world ? parts[i].position : ps.transform.TransformPoint(parts[i].position), cen));
+                    var pr = ps.GetComponent<ParticleSystemRenderer>(); var c0 = n > 0 ? parts[0].GetCurrentColor(ps) : default;
+                    return " dust: particles=" + n + " simSpace=" + ps.main.simulationSpace + " material=" + (pr && pr.sharedMaterial ? pr.sharedMaterial.name : "NONE") +
+                           " centroid=" + cen.ToString("F2") + " spread=" + rMax.ToString("F2") + " colour0=#" + ColorUtility.ToHtmlStringRGBA(c0) + " | wall=" + at.ToString("F2") + " ghost=" + pg.transform.position.ToString("F2") +
+                           " centroid->wall=" + (n > 0 ? Vector2.Distance(new Vector2(cen.x, cen.z), new Vector2(at.x, at.z)).ToString("F2") : "-") + " centroid->ghost=" + (n > 0 ? Vector2.Distance(new Vector2(cen.x, cen.z), new Vector2(pg.transform.position.x, pg.transform.position.z)).ToString("F2") : "-");
+                }
                 foreach (var t in new[] { .06f, .16f, .32f })
                 {
                     while (Time.realtimeSinceStartup - t0 < t) yield return null;
-                    long d = draws.LastValue; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "vfx_landing_dust_t" + Mathf.RoundToInt(t * 100).ToString("00") + ".png"));
-                    info += "landing dust t=" + t + " committed=" + ok + " drawCalls=" + d + "\n";
+                    yield return Clean(); long d = draws.LastValue; string di = DustInfo(); yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "vfx_landing_dust_t" + Mathf.RoundToInt(t * 100).ToString("00") + ".png"));
+                    info += "landing dust t=" + t + " (actual " + (Time.realtimeSinceStartup - t0).ToString("F2") + ") committed=" + ok + " drawCalls=" + d + di + "\n";
+                    if (t < .1f && pg != null) { pg.transform.position += new Vector3(3f * s.grid.cellSize, 0, 0); info += "  (ghost moved 3 cells +x)\n"; }
                 }
+                float tw = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - tw < .8f) yield return null; yield return Clean();
+                info += "landing dust: drawCalls 1.1 s+ after commit (walls merged)=" + draws.LastValue + "\n";
             }
             else info += "landing dust: no valid block placement available\n";
             // 2. status FX on a live enemy (all five statuses)
@@ -365,7 +493,7 @@ namespace StoneSignal
                     var tp = target.transform.position; cam.transform.position = tp - cam.transform.forward * 6f; Zoom(.22f);
                     TimeController.ResetAll(); TimeController.SetSpeed(1);
                     float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .9f) { cam.transform.position = target.transform.position - cam.transform.forward * 6f; yield return null; }
-                    TimeController.SetPaused(true); yield return null; yield return null;
+                    TimeController.SetPaused(true); yield return null; yield return null; yield return Clean();
                     long d = draws.LastValue; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "vfx_status_all.png"));
                     info += "status fx: all 5 on " + target.name + " drawCalls=" + d + "\n"; TimeController.ResetAll(); sfx.ClearAll();
                 }
@@ -379,7 +507,7 @@ namespace StoneSignal
                     if (m == null || !seen.Add(m)) continue;
                     var tex = m.HasProperty("_BaseMap") ? m.GetTexture("_BaseMap") : m.mainTexture;
                     string surf = m.HasProperty("_Surface") ? (m.GetFloat("_Surface") > .5f ? "transparent" : "OPAQUE") : "queue " + m.renderQueue;
-                    bool bad = tex == null || surf == "OPAQUE";
+                    bool bad = (tex == null && !StoneSignal.VFX.VfxMaterialRules.IsProcedural(m)) || surf == "OPAQUE"; // v17.4: FXAdditive/FXAlpha are procedural (no texture by design)
                     info += (bad ? "  PARTICLE MATERIAL PROBLEM " : "  particle material ") + m.name + " shader=" + m.shader.name + " tex=" + (tex ? tex.name : "NONE") + " " + surf + " queue=" + m.renderQueue + " (e.g. " + r.name + ")\n";
                 }
             cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
@@ -402,7 +530,7 @@ namespace StoneSignal
             foreach (var at in new[] { .35f, .8f, 1.2f, 2.0f })
             {
                 while (Time.realtimeSinceStartup - t0 < at) yield return null;
-                long d = draws.LastValue, b = batches.LastValue; yield return new WaitForEndOfFrame();
+                yield return Clean(); long d = draws.LastValue, b = batches.LastValue; yield return new WaitForEndOfFrame();
                 Capture(Path.Combine(dir, "ripple_t" + Mathf.RoundToInt(at * 100).ToString("000") + ".png"));
                 info += "  t=" + at + (at < 1.6f ? " (ripple alive)" : " (ripple over)") + " drawCalls=" + d + " batches=" + b + "\n";
             }
@@ -431,6 +559,97 @@ namespace StoneSignal
             }
             cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
             File.WriteAllText(Path.Combine(dir, "step_shots.txt"), info); Debug.Log("STEP SHOTS\n" + info);
+        }
+        // -corecheck (art core questions, values only, nothing changed): (a) enclosure material + core renderer materials, Bloom actually
+        // active (volume + resolved stack) and camera HDR; (b) CoreDamageFx smoke/sparks state in Broken/Critical at NORMAL game speed;
+        // (c) Critical red flash: 3 captures across the flicker + per-renderer _HiAmount and whether its shader has _HiColor at all.
+        static string PathOf(Transform t) { string n = t.name; for (var p = t.parent; p != null && n.Length < 120; p = p.parent) n = p.name + "/" + n; return n; }
+        IEnumerator CoreCheck()
+        {
+            string dir = Path.GetDirectoryName(path); var sb = new System.Text.StringBuilder();
+            var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
+            void Zoom(float k) { if (cam.orthographic) cam.orthographicSize = ortho * k; else cam.fieldOfView = fov * k; }
+            var fx = s.MapView != null ? s.MapView.CoreFx : null;
+            if (fx == null) { File.WriteAllText(Path.Combine(dir, "core_check.txt"), "CoreDamageFx missing\n"); yield break; }
+            captureNoUi = true; TimeController.ResetAll(); TimeController.SetSpeed(1);
+            string Props(Material m)
+            {
+                if (m == null) return "NONE";
+                var o = m.name + " shader=" + m.shader.name + " queue=" + m.renderQueue + " keywords=[" + string.Join(",", m.shaderKeywords) + "]";
+                for (int i = 0; i < m.shader.GetPropertyCount(); i++)
+                {
+                    var n = m.shader.GetPropertyName(i); var t = m.shader.GetPropertyType(i);
+                    if (t == UnityEngine.Rendering.ShaderPropertyType.Color) { var c = m.GetColor(n); o += "\n      " + n + "=#" + ColorUtility.ToHtmlStringRGBA(c) + " (" + c.r.ToString("F3") + "," + c.g.ToString("F3") + "," + c.b.ToString("F3") + "," + c.a.ToString("F3") + ")"; }
+                    else if (t == UnityEngine.Rendering.ShaderPropertyType.Float || t == UnityEngine.Rendering.ShaderPropertyType.Range) o += "\n      " + n + "=" + m.GetFloat(n).ToString("0.###");
+                    else if (t == UnityEngine.Rendering.ShaderPropertyType.Vector) o += "\n      " + n + "=" + m.GetVector(n).ToString("F3");
+                    else if (t == UnityEngine.Rendering.ShaderPropertyType.Texture) { var tx = m.GetTexture(n); o += "\n      " + n + "=" + (tx ? tx.name : "none"); }
+                }
+                return o;
+            }
+            // (a)
+            var encR = fx.enclosure ? fx.enclosure.GetComponent<MeshRenderer>() : null;
+            sb.Append("(a) ENCLOSURE renderer=" + (encR ? PathOf(encR.transform) : "-") + " material=" + (encR ? Props(encR.sharedMaterial) : "-") + "\n");
+            foreach (var mm in new[] { fx.intactMesh, fx.crackedMesh, fx.brokenMesh })
+            {
+                if (mm == null) { sb.Append("    mesh: null\n"); continue; }
+                if (!mm.isReadable) { sb.Append("    mesh " + mm.name + ": not readable (vertex colours unknown)\n"); continue; }
+                var cols = mm.colors; int nv = cols.Length; float sr = 0, sg = 0, sbb = 0; int r50 = 0, r90 = 0;
+                foreach (var c in cols) { sr += c.r; sg += c.g; sbb += c.b; if (c.r > .5f) r50++; if (c.r > .9f) r90++; }
+                sb.Append("    mesh " + mm.name + ": verts=" + mm.vertexCount + " colours=" + nv + (nv > 0 ? " meanRGB=(" + (sr / nv).ToString("F2") + "," + (sg / nv).ToString("F2") + "," + (sbb / nv).ToString("F2") + ") R>0.5: " + (100f * r50 / nv).ToString("F0") + "% R>0.9: " + (100f * r90 / nv).ToString("F0") + "% -> emission = albedo x R x _VColorEmission" : " (no vertex colours -> shader default)") + "\n");
+            }
+            sb.Append("    core renderers (" + (fx.coreRenderers != null ? fx.coreRenderers.Length : 0) + "):\n");
+            if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) sb.Append("    - " + PathOf(r.transform) + " pos=" + r.transform.position.ToString("F2") + " bounds=" + r.bounds.size.ToString("F2") + " hasHiColor=" + (r.sharedMaterial && r.sharedMaterial.HasProperty("_HiColor")) + " hasHiAmount=" + (r.sharedMaterial && r.sharedMaterial.HasProperty("_HiAmount")) + " material=" + Props(r.sharedMaterial) + "\n");
+            sb.Append("    " + Bloom());
+            var cp = fx.transform.position; cam.transform.position = cp - cam.transform.forward * 6f; Zoom(.4f);
+            for (int f = 0; f < 3; f++) yield return null;
+            var stack = UnityEngine.Rendering.VolumeManager.instance.stack; var sbl = stack != null ? stack.GetComponent<UnityEngine.Rendering.Universal.Bloom>() : null;
+            sb.Append("    resolved volume stack (what the camera renders with): " + (sbl != null ? "bloom active=" + sbl.active + " IsActive=" + sbl.IsActive() + " threshold=" + sbl.threshold.value + " intensity=" + sbl.intensity.value + " scatter=" + sbl.scatter.value + " tint=#" + ColorUtility.ToHtmlStringRGB(sbl.tint.value) + " clamp=" + sbl.clamp.value + " highQualityFiltering=" + sbl.highQualityFiltering.value : "no Bloom in stack") + "\n");
+            var urpAsset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            var qrp = QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            sb.Append("    camera '" + cam.name + "' allowHDR=" + cam.allowHDR + " | pipeline asset=" + (urpAsset ? urpAsset.name + " supportsHDR=" + urpAsset.supportsHDR : "-") + " | quality '" + QualitySettings.names[QualitySettings.GetQualityLevel()] + "' asset=" + (qrp ? qrp.name + " supportsHDR=" + qrp.supportsHDR : "(uses default)") + " | Time.timeScale=" + Time.timeScale + "\n");
+            // (b)
+            string Ps(string label, ParticleSystem p)
+            {
+                if (!p) return "    " + label + ": NOT ASSIGNED\n";
+                var pr = p.GetComponent<ParticleSystemRenderer>(); var em = p.emission; var mn = p.main;
+                return "    " + label + " " + PathOf(p.transform) + ": activeInHierarchy=" + p.gameObject.activeInHierarchy + " isPlaying=" + p.isPlaying + " isEmitting=" + p.isEmitting + " particleCount=" + p.particleCount +
+                       " emission.enabled=" + em.enabled + " rate=" + em.rateOverTime.constant + "(mode " + em.rateOverTime.mode + ") bursts=" + em.burstCount +
+                       " maxParticles=" + mn.maxParticles + " looping=" + mn.loop + " playOnAwake=" + mn.playOnAwake + " unscaledTime=" + mn.useUnscaledTime + " simSpace=" + mn.simulationSpace + " scalingMode=" + mn.scalingMode +
+                       " startLifetime=" + mn.startLifetime.constant + " startSize=" + mn.startSize.constant + "/" + mn.startSize.constantMax + " startColor=#" + ColorUtility.ToHtmlStringRGBA(mn.startColor.color) +
+                       " | renderer enabled=" + (pr && pr.enabled) + " isVisible=" + (pr && pr.isVisible) + " mode=" + (pr ? pr.renderMode.ToString() : "-") + " bounds=" + (pr ? pr.bounds.center.ToString("F2") + " size " + pr.bounds.size.ToString("F2") : "-") +
+                       " material=" + (pr && pr.sharedMaterial ? pr.sharedMaterial.name + " shader=" + pr.sharedMaterial.shader.name : "NONE") +
+                       " | pos=" + p.transform.position.ToString("F2") + " localPos=" + p.transform.localPosition.ToString("F2") + " lossyScale=" + p.transform.lossyScale.ToString("F3") + " (core at " + cp.ToString("F2") + ")\n";
+            }
+            // forced stages get reset by GameBootstrap (Economy.Changed -> SetHealth01(real HP) on every kill/gold change), so re-assert each frame
+            int resets = 0; float hold = 1;
+            IEnumerator Hold(float seconds) { float h0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - h0 < seconds) { if (fx.Current == StoneSignal.VFX.CoreDamageFx.Stage.Intact && hold < .7f) resets++; fx.SetHealth01(hold); yield return null; } }
+            foreach (var st in new[] { (.3f, "broken"), (.1f, "critical") })
+            {
+                hold = st.Item1; fx.SetHealth01(st.Item1);
+                sb.Append("(b) " + st.Item2 + " h=" + st.Item1 + " stage=" + fx.Current + " fx.enabled=" + fx.enabled + "\n    right after SetHealth01:\n" + Ps("smoke", fx.smoke) + Ps("sparks", fx.sparks));
+                resets = 0; yield return Hold(1.5f);
+                sb.Append("    after 1.5 s at timeScale " + Time.timeScale + " (stage re-asserted each frame; Economy.Changed had reset it " + resets + "x):\n" + Ps("smoke", fx.smoke) + Ps("sparks", fx.sparks));
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_live_" + st.Item2 + ".png"));
+            }
+            // (c) critical flash: per-frame _HiAmount on each core renderer for 6 frames, then 3 captures 0.12 s apart
+            var mpb = new MaterialPropertyBlock(); Zoom(.25f); hold = .1f; yield return Hold(.2f);
+            for (int f = 0; f < 6; f++)
+            {
+                fx.SetHealth01(hold); yield return null; var line = "(c) frame " + f + " t=" + Time.time.ToString("F2") + ":";
+                if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) { r.GetPropertyBlock(mpb); line += " " + r.name + " HiAmount=" + mpb.GetFloat("_HiAmount").ToString("F2") + " HiColor=#" + ColorUtility.ToHtmlStringRGB(mpb.GetColor("_HiColor")) + (r.HasPropertyBlock() ? "" : " (no MPB)") + ";"; }
+                sb.Append(line + "\n");
+            }
+            for (int k = 0; k < 3; k++)
+            {
+                yield return Hold(.12f);
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_critical_flash_" + k + ".png"));
+                var line = "(c) capture " + k + " t=" + Time.time.ToString("F2") + ":";
+                if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) { r.GetPropertyBlock(mpb); line += " " + r.name + " HiAmount=" + mpb.GetFloat("_HiAmount").ToString("F2") + ";"; }
+                sb.Append(line + "\n");
+            }
+            fx.SetHealth01(1); yield return null;
+            cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
+            File.WriteAllText(Path.Combine(dir, "core_check.txt"), sb.ToString()); Debug.Log("CORE CHECK\n" + sb);
         }
         // -portalcloseups: after the main shot, one close-up per spawn portal and one mid-spawn (UI hidden), next to the main png.
         IEnumerator PortalCloseups()
@@ -496,8 +715,14 @@ namespace StoneSignal
                    " missing=[" + missing + "]\n";
         }
         bool captureNoUi;
+        int capFrame = -10;
+        // Capture() renders the camera twice more into a RenderTexture, so the profiler's Draw Calls Count for that frame is ~3x the real
+        // frame (e.g. vfx landing dust 69 -> 159). LastValue reports the previous frame, and the end-of-frame renders can be booked on the NEXT
+        // frame's counters (measured: capFrame+1 still read 163 once) -> read only from capFrame+4 on (two clean frames in between).
+        IEnumerator Clean() { while (Time.frameCount < capFrame + 4) yield return null; }
         void Capture(string path)
         {
+            capFrame = Time.frameCount;
             var cam = s.viewCamera; int W = Screen.width, H = Screen.height; var rt = new RenderTexture(W, H, 24) { antiAliasing = 4 }; // screen size: overlay UI layout matches the real screen
             var hidden = new List<Canvas>(); // URP draws overlay UI into the camera target itself, so hide canvases synchronously around Render
             if (captureNoUi) foreach (var c in FindObjectsOfType<Canvas>()) if (c.enabled) { c.enabled = false; hidden.Add(c); }
