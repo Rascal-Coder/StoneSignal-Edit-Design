@@ -5,19 +5,23 @@ using UnityEngine;
 
 namespace StoneSignal.VFX
 {
-    /// v16.2 art-led spawn portal (PF_VFX_SpawnPortal). Idle: painted rune ring breathing on a scorched decal, 3-4 runestones (1 merged toon mesh).
-    /// PlaySpawn: cracks light up + ring flare, rubble chunks pop (pooled, <=8, shared), dust puff + painted 4x4 flipbook flare (shared emitters),
-    /// enemy rises from y-0.9 (ease-out) clipped at ground by toon _GroundClip MPB, then onDone (start walking).
-    /// Steady state: 2 DC (ground quad + runestones). API unchanged from v16.1.
+    /// v17.2 spawn portal (PF_VFX_SpawnPortal). Idle (calm): light warm scorch, thick notched ember ring that slowly rotates with a gentle
+    /// emissive pulse + soft halo, faint inner glyph (all in SS_SpawnPortal, 1 DC; runestones = ArtCatalog toggle).
+    /// PlaySpawn: 0-0.3 s bright ember flash (ground shader flash + expanding ring wave + alpha-blended HDR Flash billboard + additive painted 4x4 Flare),
+    /// cracks glow, rubble pops (pooled <=8), painted dust puffs (2x2 sheet); enemy rises from y-0.9 clipped by toon _GroundClip, then onDone.
+    /// API unchanged: PlaySpawn(Transform, float, Action), SetActive(bool).
     public class SpawnPortal : MonoBehaviour
     {
         public Renderer ground;               // SS_SpawnPortal quad
         public ParticleSystem dust, flare;    // shared bursts (emit on demand)
+        [Tooltip("v17.2: additive soft flash billboard (optional)")] public ParticleSystem flash;
         public Transform[] rubble;            // pooled chunks (<=8), hidden when idle
-        public float riseDepth = .9f, flareDecay = 2.2f, crackDecay = 1.1f;
-        static readonly int FlareId = Shader.PropertyToID("_Flare"), ActiveId = Shader.PropertyToID("_Active"), CrackId = Shader.PropertyToID("_Crack"), ClipId = Shader.PropertyToID("_GroundClip");
+        public float riseDepth = .9f, crackDecay = 1.1f;
+        [Tooltip("v17.2: flare envelope: full for flareHold s, then fades to 0 at flareLength s")] public float flareHold = .14f, flareLength = .55f;
+        [HideInInspector] public float flareDecay = 2.2f;   // v16.2 field kept for serialized prefabs (unused)
+        static readonly int FlareId = Shader.PropertyToID("_Flare"), FlareTId = Shader.PropertyToID("_FlareT"), ActiveId = Shader.PropertyToID("_Active"), CrackId = Shader.PropertyToID("_Crack"), ClipId = Shader.PropertyToID("_GroundClip");
         MaterialPropertyBlock mpb; static MaterialPropertyBlock enemyMpb;
-        float flareV, crackV, active = 1, rubbleT = -1;
+        float flareV, flareT = 1, crackV, active = 1, rubbleT = -1, spawnT = -1;
         readonly Vector3[] rubbleVel = new Vector3[8];
         static readonly List<Renderer> tmp = new List<Renderer>();
 
@@ -27,7 +31,8 @@ namespace StoneSignal.VFX
 
         public void PlaySpawn(Transform enemy, float duration = .6f, Action onDone = null)
         {
-            flareV = 1; crackV = 1; Push();
+            spawnT = 0; flareV = 1; flareT = 0; crackV = 1; Push();
+            if (flash) flash.Emit(1);
             if (flare) flare.Emit(1);
             if (dust) dust.Emit(6);
             PopRubble();
@@ -72,7 +77,14 @@ namespace StoneSignal.VFX
         void Update()
         {
             float dt = Time.deltaTime; bool dirty = false;
-            if (flareV > 0) { flareV = Mathf.Max(0, flareV - dt * flareDecay); dirty = true; }
+            if (spawnT >= 0)
+            {
+                spawnT += dt; float len = Mathf.Max(flareHold + .01f, flareLength);
+                flareV = spawnT < flareHold ? 1 : Mathf.Clamp01(1 - (spawnT - flareHold) / (len - flareHold));
+                flareT = Mathf.Clamp01(spawnT / len);
+                if (spawnT >= len) { spawnT = -1; flareV = 0; flareT = 1; }
+                dirty = true;
+            }
             if (crackV > 0) { crackV = Mathf.Max(0, crackV - dt * crackDecay); dirty = true; }
             if (dirty) Push();
             if (rubbleT >= 0 && rubble != null)
@@ -93,7 +105,7 @@ namespace StoneSignal.VFX
         void Push()
         {
             if (!ground) return; mpb ??= new MaterialPropertyBlock();
-            ground.GetPropertyBlock(mpb); mpb.SetFloat(FlareId, flareV); mpb.SetFloat(ActiveId, active); mpb.SetFloat(CrackId, crackV); ground.SetPropertyBlock(mpb);
+            ground.GetPropertyBlock(mpb); mpb.SetFloat(FlareId, flareV); mpb.SetFloat(FlareTId, flareT); mpb.SetFloat(ActiveId, active); mpb.SetFloat(CrackId, crackV); ground.SetPropertyBlock(mpb);
         }
     }
 }

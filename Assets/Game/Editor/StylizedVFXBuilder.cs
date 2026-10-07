@@ -135,9 +135,13 @@ public static class StylizedVFXBuilder
         if (e.shards) { var r = deb.GetComponent<ParticleSystemRenderer>(); r.sharedMaterial = M(true, Streak); Stretch(deb, .05f, 2f); }
         var sp = PS(root, "Sparks", M(true, Streak), R(.18f, .4f), R(.05f, .09f), R(6f, 11f), e.flash, e.arcs ? 26 : 16, radius: .15f);
         Stretch(sp, .07f, 1.3f); Fade(sp, e.flash, e.core, .4f); Gravity(sp, .6f);
-        var sm = PS(root, "Smoke", M(false, Smoke, .15f), R(1.0f, 1.7f), R(.7f * s, 1.25f * s), R(.4f, 1.1f), A(Color.Lerp(e.smoke, H("D8CCC8"), .5f), .5f), e.arcs ? 4 : 6, radius: .35f * s); /* v8: lighter smoke */
-        Size(sm, .5f, 1.5f); Fade(sm, Color.Lerp(e.smoke, Color.white, .25f), e.smoke, .35f); Gravity(sm, -.12f); Drag(sm, 1.5f); Spin(sm);
-        var sc = PS(root, "Scorch", M(false, Scorch), 2.2f, 1.1f * s, 0, A(e.scorch, .3f), 1); /* v8: small faint scorch */ Flat(sc, .03f); Fade(sc, e.scorch, e.scorch, .7f); Spin(sc);
+        // v17.2: no dark smudge after kills - smoke is warm/light, short (<=0.9 s) and fades to a light tint (it used to end on the dark
+        // element colour and live 1.7 s); scorch is a small warm-brown mark that is gone in 1.1 s (was near-black for 2.2 s).
+        var smokeC = Color.Lerp(e.smoke, H("E8DCD0"), .65f); var smokeEnd = Color.Lerp(e.smoke, H("E8DCD0"), .45f);
+        var sm = PS(root, "Smoke", M(false, Smoke, .15f), R(.55f, .9f), R(.6f * s, 1.05f * s), R(.4f, 1.1f), A(smokeC, .42f), e.arcs ? 4 : 6, radius: .35f * s);
+        Size(sm, .5f, 1.35f); Fade(sm, Color.Lerp(smokeC, Color.white, .25f), smokeEnd, .2f); Gravity(sm, -.12f); Drag(sm, 1.5f); Spin(sm);
+        var scC = e.scorch.grayscale < .3f ? Color.Lerp(e.scorch, H("6A4A34"), .6f) : e.scorch;
+        var sc = PS(root, "Scorch", M(false, Scorch), 1.1f, .85f * s, 0, A(scC, .2f), 1); Flat(sc, .03f); Fade(sc, scC, scC, .25f); Spin(sc);
         if (e.embers)
         {
             var em = PS(root, "Embers", add, R(.9f, 1.6f), R(.05f, .1f), R(.5f, 2f), H("FFB040"), 22, radius: .5f);

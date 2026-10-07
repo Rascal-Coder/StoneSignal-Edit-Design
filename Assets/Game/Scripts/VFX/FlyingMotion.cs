@@ -18,7 +18,12 @@ namespace StoneSignal.VFX
         Vector3 baseLocal; Quaternion baseRot; float lastYaw, roll, pitch, t0, phase; Vector3 lastPos; bool init;
         public float CurrentHeight { get; private set; }
 
-        void OnEnable() { ResetBase(); }
+        void OnEnable()
+        {
+            // v17.2: never stack lifts (a 2nd FlyingMotion on an inner model child doubled the height to ~2.4 m)
+            for (var p = transform.parent; p != null; p = p.parent) if (p.GetComponent<FlyingMotion>()) { enabled = false; return; }
+            ResetBase();
+        }
         public void ResetBase()
         {
             if (!init) { baseLocal = transform.localPosition; baseRot = transform.localRotation; init = true; }

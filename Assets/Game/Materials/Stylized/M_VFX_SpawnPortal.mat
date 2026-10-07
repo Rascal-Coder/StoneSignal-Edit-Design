@@ -40,9 +40,22 @@ Material:
     - _Active: 1
     - _Crack: 0
     - _Flare: 0
+    - _FlareT: 1
+    - _GlyphAlpha: 0.26
+    - _GlyphSpin: -0.05
+    - _PulseSpeed: 1.6
     - _RuneScale: 0.7
-    - _Spin: 0.12
+    - _ScorchAlpha: 0.85
+    - _Spin: 0.15
     m_Colors:
-    - _CrackColor: {r: 3.2, g: 1.2, b: 0.3, a: 1}
+    - _CrackColor: {r: 3.2, g: 1.3, b: 0.35, a: 1}
+    - _FlashColor: {r: 1.7, g: 0.7, b: 0.2, a: 1}
+    - _GlyphColor: {r: 1, g: 0.72, b: 0.42, a: 1}
+    - _HaloAlpha: {r: 0.1, g: 0.3, b: 0, a: 0}
+    - _HaloColor: {r: 1, g: 0.5, b: 0.15, a: 1}
+    - _RimColor: {r: 0.42, g: 0.17, b: 0.07, a: 0.55}
+    - _RingColor: {r: 1.25, g: 0.78, b: 0.32, a: 1}
+    - _RingEdge: {r: 1, g: 0.42, b: 0.1, a: 1}
     - _RuneTint: {r: 1.4, g: 1, b: 0.8, a: 1}
+    - _WaveColor: {r: 1.6, g: 0.95, b: 0.35, a: 1}
   m_BuildTextureStacks: []

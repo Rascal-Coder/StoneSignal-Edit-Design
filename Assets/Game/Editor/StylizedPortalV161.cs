@@ -22,7 +22,11 @@ public static class StylizedPortalV161
         Debug.Log("TOON INSTANCING enabled on " + inst + " materials");
         var sh = Shader.Find("StoneSignal/SS_SpawnPortal"); if (!sh) throw new System.Exception("SS_SpawnPortal shader missing");
         var m = LoadOrCreate(Mat + "M_VFX_SpawnPortal.mat", sh); m.shader = sh; m.enableInstancing = true; m.renderQueue = 2980;
-        m.SetTexture("_ScorchTex", T("T_Portal_Scorch")); m.SetTexture("_CrackTex", T("T_Portal_CrackMask", false)); m.SetTexture("_RuneTex", T("T_Portal_RuneCircle")); EditorUtility.SetDirty(m);
+        m.SetTexture("_ScorchTex", T("T_Portal_Scorch")); m.SetTexture("_CrackTex", T("T_Portal_CrackMask", false)); m.SetTexture("_RuneTex", T("T_Portal_RuneCircle", false)); // v17.2: rune = linear masks (R ring, G glyph, B halo, A rim)
+        m.SetFloat("_RuneScale", .7f); m.SetFloat("_ScorchAlpha", .85f); m.SetFloat("_Spin", .15f); m.SetFloat("_GlyphSpin", -.05f); m.SetFloat("_PulseSpeed", 1.6f); m.SetFloat("_GlyphAlpha", .26f);
+        m.SetColor("_RingColor", new Color(1.25f, .78f, .32f)); m.SetColor("_RingEdge", new Color(1f, .42f, .1f)); m.SetColor("_RimColor", new Color(.42f, .17f, .07f, .55f));
+        m.SetColor("_HaloColor", new Color(1f, .5f, .15f)); m.SetVector("_HaloAlpha", new Vector4(.10f, .30f, 0, 0)); m.SetColor("_GlyphColor", new Color(1f, .72f, .42f));
+        m.SetColor("_CrackColor", new Color(3.2f, 1.3f, .35f)); m.SetColor("_FlashColor", new Color(1.7f, .7f, .2f)); m.SetColor("_WaveColor", new Color(1.6f, .95f, .35f)); EditorUtility.SetDirty(m);
         var psh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
         Material PMat(string n, Texture2D tex, bool add)
         {
@@ -31,8 +35,9 @@ public static class StylizedPortalV161
             pm.SetInt("_DstBlend", (int)(add ? UnityEngine.Rendering.BlendMode.One : UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha)); pm.SetInt("_ZWrite", 0);
             pm.EnableKeyword("_SURFACE_TYPE_TRANSPARENT"); if (add) pm.EnableKeyword("_BLENDMODE_ADD"); if (tex) pm.SetTexture("_BaseMap", tex); pm.renderQueue = 3000; EditorUtility.SetDirty(pm); return pm;
         }
-        var flareMat = PMat("M_VFX_PortalFlare", T("T_Portal_FlareSheet_4x4"), true);
-        var dustMat = PMat("M_VFX_PortalDust", null, false);
+        var flareMat = PMat("M_VFX_PortalFlare", T("T_Portal_FlareSheet_4x4"), true); flareMat.SetColor("_BaseColor", new Color(1.4f, .75f, .3f, 1)); // v17.2: HDR ember tint (additive rays)
+        var dustMat = PMat("M_VFX_PortalDust", T("T_Portal_DustPuff_2x2"), false);   // v17.2: painted soft puff (was untextured -> white squares)
+        var flashMat = PMat("M_VFX_PortalFlash", T("T_Portal_FlashSoft"), false); flashMat.SetColor("_BaseColor", new Color(1.6f, .72f, .22f, 1)); // v17.2: alpha-blended HDR ember flash: stays orange on bright sand (additive washes to white)
         PMat("M_VFX_PortalEmber", null, true);   // kept for PF_VFX_StatusFx
 
         var stonesMesh = AssetDatabase.LoadAllAssetsAtPath(StylizedArtIntegration.ArtDir + "FX/Portal/SM_Portal_Runestones.fbx").OfType<Mesh>().FirstOrDefault();
@@ -65,10 +70,23 @@ public static class StylizedPortalV161
                    var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1, AnimationCurve.Linear(0, .6f, 1, 1.6f)); }
             var pr = go.GetComponent<ParticleSystemRenderer>(); pr.sharedMaterial = mat; pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; return ps;
         }
-        sp.ground = r; sp.rubble = rub; sp.flare = Burst("Flare", flareMat, 1, .45f, 2.2f, 0, true); sp.dust = Burst("Dust", dustMat, 8, .7f, .45f, .8f, false);
+        sp.ground = r; sp.rubble = rub; sp.flare = Burst("Flare", flareMat, 1, .5f, 2.4f, 0, true); sp.dust = Burst("Dust", dustMat, 8, .8f, .8f, .9f, false);
+        // v17.2 flare: billboard sits a bit lower and in front of the rising enemy; dust = 2x2 painted puffs, random cell, warm sand tint
+        sp.flare.transform.localPosition = Vector3.up * .55f;
+        { var mn = sp.dust.main; mn.startColor = new Color(.96f, .86f, .7f, .8f); var ts = sp.dust.textureSheetAnimation; ts.enabled = true; ts.numTilesX = 2; ts.numTilesY = 2;
+          ts.frameOverTime = new ParticleSystem.MinMaxCurve(0); ts.startFrame = new ParticleSystem.MinMaxCurve(0, .999f); /* normalised 0..1 from script: random cell of 4 */ mn.startRotation = new ParticleSystem.MinMaxCurve(0, Mathf.PI * 2);
+          var sz = sp.dust.sizeOverLifetime; sz.size = new ParticleSystem.MinMaxCurve(1, AnimationCurve.EaseInOut(0, .55f, 1, 1.8f)); }
+        // v17.2 flash: one alpha-blended HDR soft ember flash, 0-0.3 s, grows then fades (spawn only, pooled emitter)
+        { var fgo = new GameObject("Flash"); fgo.transform.SetParent(root.transform, false); fgo.transform.localPosition = Vector3.up * .35f;
+          var fps = fgo.AddComponent<ParticleSystem>(); fps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+          var fm = fps.main; fm.playOnAwake = false; fm.loop = false; fm.maxParticles = 2; fm.startLifetime = .3f; fm.startSize = 2.0f; fm.startSpeed = 0; fm.simulationSpace = ParticleSystemSimulationSpace.World;
+          var fe = fps.emission; fe.enabled = false; var fsh = fps.shape; fsh.enabled = false;
+          var fsz = fps.sizeOverLifetime; fsz.enabled = true; fsz.size = new ParticleSystem.MinMaxCurve(1, new AnimationCurve(new Keyframe(0, .55f, 0, 4), new Keyframe(1, 1.25f, 0, 0)));
+          var fc = fps.colorOverLifetime; fc.enabled = true; var fg = new Gradient(); fg.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(1f, .7f, .4f), 1) }, new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(.9f, .35f), new GradientAlphaKey(0, 1) }); fc.color = fg;
+          var fr = fgo.GetComponent<ParticleSystemRenderer>(); fr.sharedMaterial = flashMat; fr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; fr.sortingFudge = -10; sp.flash = fps; }
         PrefabUtility.SaveAsPrefabAsset(root, Pf + "PF_VFX_SpawnPortal.prefab"); Object.DestroyImmediate(root);
         AssetDatabase.SaveAssets();
-        Debug.Log("PORTAL v16.2 built: PF_VFX_SpawnPortal (ground quad + runestones = 2 DC idle), rubble x8 pooled, dust<=8, flare 4x4");
+        Debug.Log("PORTAL v17.2 built: PF_VFX_SpawnPortal (ground quad + runestones = 2 DC idle), rubble x8 pooled, dust<=8 (painted 2x2), flare 4x4 + flash");
     }
     public static void Checks()
     {
@@ -76,7 +94,7 @@ public static class StylizedPortalV161
         if (!p) throw new System.Exception("PORTAL FAIL: prefab missing");
         var sp = p.GetComponent<SpawnPortal>();
         int idleDC = p.GetComponentsInChildren<MeshRenderer>(false).Where(x => x.gameObject.activeSelf && x.transform.parent.gameObject.activeSelf).Sum(x => x.sharedMaterials.Length);
-        if (!sp || !sp.ground || !sp.flare || !sp.dust || sp.rubble == null || sp.rubble.Length > 8 || idleDC > 2 || !sp.ground.sharedMaterial.enableInstancing) throw new System.Exception("PORTAL FAIL: structure idleDC=" + idleDC);
+        if (!sp || !sp.ground || !sp.flare || !sp.dust || !sp.flash || !sp.dust.GetComponent<ParticleSystemRenderer>().sharedMaterial.GetTexture("_BaseMap") || sp.rubble == null || sp.rubble.Length > 8 || idleDC > 2 || !sp.ground.sharedMaterial.enableInstancing) throw new System.Exception("PORTAL FAIL: structure idleDC=" + idleDC);
         Debug.Log("PORTAL v16.2 PASS (idle DC " + idleDC + ", rubble " + sp.rubble.Length + ")");
     }
     // ---- v16.2 enemy death FX: PF_VFX_EnemyDeath (EnemyDeathFx + shared 4x4 puff particle system, skull sprite)

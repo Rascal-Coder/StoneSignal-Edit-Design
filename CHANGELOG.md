@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-08 — v17.2 Spawn portal polish, dust texture, flyer double lift, footprints, explosion smudge
+
+- **Spawn portal idle:**
+  - SS_SpawnPortal was rewritten. The scorch is now a light warm brown (no black) and smaller, about 0.75 m.
+  - The rune ring is a thick, notched ember band. It rotates slowly (0.15 rad/s), pulses gently over ~4 s with a halo, and has a dark warm rim. The inner glyph is faint and counter-rotates.
+  - `_RuneTex` is now a linear mask texture (R ring / G glyph / B halo / A rim). Still 1 draw call.
+- **Spawn flare:** the envelope stays full for 0.14 s and fades out by 0.55 s. Added a ground flash and an expanding ring wave (`_FlareT`), a new alpha-blended HDR `Flash` billboard, and a repainted, brighter 4x4 flare.
+- **Portal dust:** `M_VFX_PortalDust` now has the painted `T_Portal_DustPuff_2x2` texture, so the white squares are gone.
+- **Flyer / double ground fx:**
+  - Enemies carried both a baked `GroundFx` and a runtime ground fx. Flyers therefore had two FlyingMotions (lift ~2.4 m) and a second shadow riding the model.
+  - `EnemyGroundFx.ClaimEnemy` (called from EnemyManager) keeps only the runtime one, and `FlyingMotion` no longer stacks.
+  - The FBX pivots were checked and are at 0 (Skimmer and bird).
+- **Footprints:** painted paw prints (`T_FX_Footprint` / `M_VFX_Footprint`), dark warm brown at alpha 0.55, 1.5 s, 0.34–0.56 m. They alternate L/R, align to the heading, and are placed per step at the walker's feet (planks/tiles). An optional raycast mask is available.
+- **Post-kill dark smudge:** it came from the `FX_Explosion_*` smoke (1.7 s, ending on a dark colour) and the near-black scorch (2.2 s). The smoke is now light and lasts at most 0.9 s; the scorch is warm brown, alpha 0.2, 1.1 s.
+- **Documentation:** `Docs/portal_footprints_v17_2.md`.
+- **Previews:** `portal_v17_2.png`, `footprints_v17_2.png`.
+
 ## 2026-10-08 — v17.1 出生门清场 + 中文 TMP 字体
 
 - 出生门（PF_VFX_SpawnPortal）下方黄橙斑块的原因：不是 Leaves 道具，而是 `SM_Env_Island_Cliff_4x4_01` 模型自带的 16 个落叶/草丘（最高 +0.2 m）和 40 片落叶碎片，岛顶边缘也被抖动抬高了最多 +0.12 m。新增变体 `SM_Env_Island_Cliff_4x4_Portal_01`：岛的轮廓和随机种子不变，岛顶是平的，半径 1.45 m 内（门贴花半径 1.3 m + 探测余量）没有草丘和碎叶。`level_layout.json` 中 3 个入口岛（item 248/260/272）换成这个变体；东、西两门旁的 4 棵树和营火挪到门后方，任何门 2.6 m 内都没有 `SM_Env_Leaves_01`。`StylizedArtIntegration.Assets` 新增 `PF_Env_Island_Cliff_4x4_Portal`。下次 BatchImport 会重建 LevelDressing。符文石开关（ArtCatalog.portalShowRunestones）和门 prefab 都没改。预览：portal_clear_v17_1.png。

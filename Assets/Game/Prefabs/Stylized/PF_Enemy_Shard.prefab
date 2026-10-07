@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2002119352391138961}
   - component: {fileID: 8759515068100782890}
-  - component: {fileID: 2397556141123925173}
+  - component: {fileID: 8130099047263119121}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: PF_Enemy_Shard
@@ -33,7 +33,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 435102129269439666}
-  - {fileID: 2305474361813096423}
+  - {fileID: 2132118712673872562}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8759515068100782890
@@ -54,7 +54,7 @@ MonoBehaviour:
   deathDissolveDelay: 0.35
   deathDissolveDuration: 0.6
   deathVfx: {fileID: 0}
---- !u!114 &2397556141123925173
+--- !u!114 &8130099047263119121
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -101,7 +101,7 @@ Transform:
   - {fileID: 2053778077870976631}
   m_Father: {fileID: 2002119352391138961}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &729218796254113342
+--- !u!1001 &609897700087026539
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -174,10 +174,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
---- !u!4 &2305474361813096423 stripped
+--- !u!4 &2132118712673872562 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1576264362734156249, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
-  m_PrefabInstance: {fileID: 729218796254113342}
+  m_PrefabInstance: {fileID: 609897700087026539}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1948586644714457500
 PrefabInstance:

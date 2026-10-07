@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 768560140801233014}
   - component: {fileID: 5400320752087074972}
-  - component: {fileID: 6670090288498218580}
+  - component: {fileID: 3092445143192870079}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: PF_Enemy_Drifter
@@ -66,7 +66,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5183094423953120385}
-  - {fileID: 1409984184557279227}
+  - {fileID: 5832251767164454768}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5400320752087074972
@@ -87,7 +87,7 @@ MonoBehaviour:
   deathDissolveDelay: 0.35
   deathDissolveDuration: 0.6
   deathVfx: {fileID: 0}
---- !u!114 &6670090288498218580
+--- !u!114 &3092445143192870079
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -101,7 +101,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   headHeight: 1.2813692
   radius: 0.39502156
---- !u!1001 &464223924424863266
+--- !u!1001 &4976572158099275433
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -174,10 +174,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
---- !u!4 &1409984184557279227 stripped
+--- !u!4 &5832251767164454768 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1576264362734156249, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
-  m_PrefabInstance: {fileID: 464223924424863266}
+  m_PrefabInstance: {fileID: 4976572158099275433}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6998402331477852596
 PrefabInstance:

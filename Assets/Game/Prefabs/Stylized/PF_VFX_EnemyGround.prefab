@@ -143,3 +143,7 @@ MonoBehaviour:
   stepDistance: 0.45
   flyingBlobScale: 0.55
   flyingBlobMaterial: {fileID: 0}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 0
+  footprintLift: 0.045
