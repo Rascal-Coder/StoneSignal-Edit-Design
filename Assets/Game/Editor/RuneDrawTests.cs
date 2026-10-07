@@ -303,8 +303,35 @@ namespace StoneSignal.EditorTools
                 string Seq(int seed) { var rng = new RngStream(seed); var idx = new List<int>(); var rn = new List<int>(); var sb = new System.Text.StringBuilder(); for (int k = 0; k < 2000; k++) { RewardRoll.Offer(pool, 300, r => RuneRules.RollType(c, r), rng, idx, rn, 3); for (int i = 0; i < 3; i++) sb.Append(idx[i]).Append(':').Append(rn[i]).Append(','); } return sb.ToString(); }
                 return Seq(37) == Seq(37) && Seq(37) != Seq(38);
             });
+            // ---- v18.4 block-row fan geometry (HandFanLayout, ref px; card 150, step 162, budget = 1920 - 24 - 512 - 24 - 24)
+            Case("fan: <= 4 slots stay a normal row; 5..7 slots fan into a fixed 4-slot width (636 px), covered cards expose >= 44 px, newest (rightmost) fully visible", () =>
+            {
+                var st = new HandFanStyle(); bool ok = true; float need = (Mathf.Max(38f, st.fanCountBadgePos.x + 56f) + 10f) * 150f / 128f + 2f;
+                for (int n = 1; n <= 4; n++) { var r = HandFanLayout.Compute(n, 150, 162, 1336, st, need); ok &= !r.fanned && r.collapsedStep == 162 && r.exposed == 150; }
+                for (int n = 5; n <= 7; n++)
+                {
+                    var r = HandFanLayout.Compute(n, 150, 162, 1336, st, need);
+                    ok &= r.fanned && Mathf.Abs(r.collapsedWidth - (4 * 162 - 12)) < .01f && r.collapsedStep >= 44f && r.collapsedStep >= need && r.expandedStep >= r.collapsedStep && r.expandedWidth <= 1336 + .01f;
+                    log.Add("  n=" + n + ": collapsed step " + r.collapsedStep.ToString("F1") + " px (exposed strip, badges need " + need.ToString("F1") + "), width " + r.collapsedWidth.ToString("F0") + "; expanded step " + r.expandedStep.ToString("F1") + ", width " + r.expandedWidth.ToString("F0"));
+                }
+                return ok;
+            });
+            Case("fan: the 44 px floor and the badge strip win over the fixed width (narrow row / many cards); expanded row clamped to the budget", () =>
+            {
+                var st = new HandFanStyle { rowSlots = 1.5f }; var r = HandFanLayout.Compute(7, 150, 162, 1336, st, 30f);
+                var st2 = new HandFanStyle(); var r2 = HandFanLayout.Compute(7, 150, 162, 1336, st2, 100f);
+                var r3 = HandFanLayout.Compute(7, 150, 162, 700, st2, 30f);
+                return r.collapsedStep == 44f && r2.collapsedStep == 100f && Mathf.Abs(r3.expandedWidth - 700f) < .01f && r3.expandedStep >= r3.collapsedStep;
+            });
+            Case("fan style: N = 4, 4 slots, 44 px, 2 s idle collapse; neutral visuals (linear easing, no shadow, no tint)", () =>
+            {
+                var st = new HandFanStyle();
+                return st.collapseAbove == 4 && st.rowSlots == 4f && st.minExposedPx == 44f && st.idleCollapseSeconds == 2f && st.shadowColor.a == 0f && st.coveredBrightness == 1f
+                    && Mathf.Abs(st.expandEase.Evaluate(.5f) - .5f) < .01f && Mathf.Abs(st.collapseEase.Evaluate(.5f) - .5f) < .01f;
+            });
             UnityEngine.Object.DestroyImmediate(c);
-            string result = string.Join("\n", log) + "\nRUNE/DRAW TESTS: " + (log.Count - fail) + "/" + log.Count + " passed";
+            int cases = 0; foreach (var l in log) if (l.StartsWith("PASS ") || l.StartsWith("FAIL ")) cases++; // info lines (indented) are not test cases
+            string result = string.Join("\n", log) + "\nRUNE/DRAW TESTS: " + (cases - fail) + "/" + cases + " passed";
             Debug.Log(result);
             return fail == 0 ? result : result + " FAILED";
         }

@@ -14,10 +14,31 @@ namespace StoneSignal
     // Hand card hover: scale 1.06 and +12 px (ui_card_spec_v13).
     public sealed class CardHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        RectTransform card; Vector2 rest; Vector3 restScale; bool lifted;
+        RectTransform card; Vector2 rest; Vector3 restScale; bool lifted, over;
         public void Init(RectTransform target, bool alreadyLifted) { card = target; rest = target.anchoredPosition; restScale = target.localScale; lifted = alreadyLifted; }
-        public void OnPointerEnter(PointerEventData e) { card.localScale = restScale * 1.06f; card.anchoredPosition = rest + (lifted ? Vector2.zero : new Vector2(0, 12)); }
-        public void OnPointerExit(PointerEventData e) { card.localScale = restScale; card.anchoredPosition = rest; }
+        /// v18.4 fan animation moves the rest position.
+        public void SetRest(Vector2 p) { rest = p; card.anchoredPosition = over ? rest + (lifted ? Vector2.zero : new Vector2(0, 12)) : rest; }
+        public void OnPointerEnter(PointerEventData e) { over = true; card.localScale = restScale * 1.06f; card.anchoredPosition = rest + (lifted ? Vector2.zero : new Vector2(0, 12)); }
+        public void OnPointerExit(PointerEventData e) { over = false; card.localScale = restScale; card.anchoredPosition = rest; }
+    }
+    /// v18.4 block-row fan geometry (ref px). n slots of cardW, normal spacing step; budget = widest expanded row (left of the draw pile).
+    public static class HandFanLayout
+    {
+        public struct Row { public bool fanned; public int slots; public float cardW, collapsedStep, expandedStep, collapsedWidth, expandedWidth, exposed; }
+        public static Row Compute(int n, float cardW, float step, float budget, HandFanStyle st, float needExposed)
+        {
+            st = st ?? new HandFanStyle(); var r = new Row { slots = n, cardW = cardW, fanned = n > st.collapseAbove };
+            if (!r.fanned) r.collapsedStep = r.expandedStep = step;
+            else
+            {
+                float gap = step - cardW, rowW = st.rowSlots * step - gap;
+                float f = Mathf.Max((rowW - cardW) / Mathf.Max(1, n - 1), Mathf.Max(st.minExposedPx, needExposed));
+                float e = st.expandedStepPx > 0f ? st.expandedStepPx : step; if (n > 1 && budget > cardW) e = Mathf.Min(e, (budget - cardW) / (n - 1));
+                r.collapsedStep = f; r.expandedStep = Mathf.Max(e, f);
+            }
+            r.collapsedWidth = n > 0 ? cardW + r.collapsedStep * (n - 1) : 0f; r.expandedWidth = n > 0 ? cardW + r.expandedStep * (n - 1) : 0f;
+            r.exposed = r.fanned ? Mathf.Min(r.collapsedStep, cardW) : cardW; return r;
+        }
     }
     public sealed class GameUI : MonoBehaviour
     {
@@ -194,16 +215,26 @@ namespace StoneSignal
                 built.Add(card.gameObject); if (pic != null) pic.HandRects.Add(card); handCards.Add((card.gameObject.AddComponent<CanvasGroup>(), true, i));
             }
             // ---- block hand: ui_card_blueprint 128x128 (9-slice 24) + ui_icon_block_X 128x128 overlay (uniform, never per-shape scaling),
-            // spacing 140, bottom-centre anchor; nudged right only if it would overlap the tower hand.
+            // left-aligned on its own line above the tower hand (bottom 24+220+32) so it never overlaps the tower hand.
+            // v18.4 (玩法策划 option A): groups ordered by their newest card (the newest is always the rightmost = topmost, fully visible);
+            // more than FanStyle.collapseAbove groups fan into a fixed-width overlapping row (HandFanLayout), expanded by tap / hold.
             var groups = session.Blocks.Hand.Groups();
+            {
+                var hc = session.Blocks.Hand.Cards; var hr = session.Blocks.Hand.Runes; var last = new Dictionary<int, int>();
+                for (int gi = 0; gi < groups.Count; gi++) { int l = groups[gi].first; for (int i = 0; i < hc.Count; i++) if (hc[i] == groups[gi].shape && hr[i] == groups[gi].rune) l = i; last[groups[gi].first] = l; }
+                groups.Sort((x, y) => last[x.first].CompareTo(last[y.first]));
+            }
             bool anyStack = groups.Exists(g => g.count > 1);
             // v16: card w = min(150, budget/7 - 12), budget = safeWidth - 24 - 512 - 24 (DRAW + BATTLE block on the right).
-            // Row sits left-aligned on its own line above the tower hand (bottom 24+220+32) so it never overlaps the hand.
             float safeW = ((RectTransform)blockHand.parent).rect.width; if (safeW <= 0) safeW = 1920;
             float cardW = Mathf.Max(88, Mathf.Min(150, (safeW - 24 - 512 - 24) / 7f - 12));
-            float sc = cardW / 128f, step = (cardW + 12) / sc * (anyStack ? 150f / 140f : 1f), left = 24, rowY = 24 + CH + 32;
-            handCount.anchoredPosition = new Vector2(24, rowY + cardW + 8); handCardW = cardW; handRowY = rowY;
+            float sc = cardW / 128f, stepPx = (cardW + 12) * (anyStack ? 150f / 140f : 1f), left = 24, rowY = 24 + CH + 32;
+            handCount.anchoredPosition = new Vector2(24, rowY + cardW + 8); handCardW = cardW; handRowY = rowY; handSafeW = safeW;
             if (PlacementInputController.Instance != null) { var cv = blockHand.GetComponentInParent<Canvas>(); float k = cv ? cv.scaleFactor : 1; PlacementInputController.Instance.CanvasScale = k; PlacementInputController.Instance.HandTop = (rowY + cardW + 8) * k; }
+            var fs = FanStyle; var row = HandFanLayout.Compute(groups.Count, cardW, stepPx, safeW - 24 - 512 - 24 - left, fs, FanNeedExposed(cardW));
+            if (!row.fanned) { fanTarget = false; fanT = 0f; }
+            fanActive = row.fanned; fanRow = row; fanCards.Clear(); fanTApplied = -1f;
+            if (pic != null) { pic.CardTapHook = FanTap; pic.CardHeldHook = FanHeld; }
             int selectedIndex = session.Blocks.Hand.Selected;
             for (int gi = 0; gi < groups.Count; gi++)
             {
@@ -211,14 +242,17 @@ namespace StoneSignal
                 bool selected = session.Towers.SelectedIndex < 0 && session.Blocks.Hand.Cards.Count > 0 && session.Blocks.Hand.Cards[selectedIndex] == shape && session.Blocks.Hand.Runes[selectedIndex] == grp.rune;
                 var holder = Group(blockHand, "Block card " + shape.displayName); holder.anchorMin = holder.anchorMax = Vector2.zero; holder.pivot = Vector2.zero;
                 holder.sizeDelta = new Vector2(128, 128); holder.localScale = Vector3.one * sc;
-                holder.anchoredPosition = new Vector2(left + gi * step * sc, rowY + (selected ? 12 : 0));
+                float y = rowY + (selected ? 12 : 0);
+                var pc = new Vector2(left + gi * row.collapsedStep, y); var pe = new Vector2(left + gi * row.expandedStep, y + (row.fanned ? fs.expandedLiftPx : 0f));
+                holder.anchoredPosition = Vector2.Lerp(pc, pe, FanEase());
                 if (grp.count > 1 && S("ui_card_blueprint_stack") != null) { var st = Img(holder, "Stack", S("ui_card_blueprint_stack"), Color.white); BL(st, 0, -40, 160, 168); }
                 var card = Img(holder, "Card", art ? art.uiCardBlueprint : null, art && art.uiCardBlueprint ? Color.white : Blueprint); Full(card);
                 card.GetComponent<Image>().type = Image.Type.Sliced; card.GetComponent<Image>().raycastTarget = true;
+                if (row.fanned && fs.shadowColor.a > 0f) { var sh = card.gameObject.AddComponent<UnityEngine.UI.Shadow>(); sh.effectColor = fs.shadowColor; sh.effectDistance = fs.shadowOffset; }
                 var b = card.gameObject.AddComponent<Button>(); b.targetGraphic = card.GetComponent<Image>(); b.transition = Selectable.Transition.None;
                 b.interactable = build || (session.config.allowCombatBlocks && session.Game.State == GameState.Combat);
                 { var cp = card.gameObject.AddComponent<CardPointer>(); cp.Tower = false; cp.Index = idx; cp.Enabled = () => b.interactable; }
-                card.gameObject.AddComponent<CardHover>().Init(holder, selected);
+                var hover = card.gameObject.AddComponent<CardHover>(); hover.Init(holder, selected);
                 var iconSprite = BlockIcon(shape);
                 if (iconSprite != null) { var ic = Img(card, "Shape", iconSprite, Color.white); Full(ic); }
                 else
@@ -241,13 +275,68 @@ namespace StoneSignal
                 }
                 if (grp.count > 1)
                 {
-                    var badge = Img(card, "Count", S("ui9_badge_count") ?? Rounded, S("ui9_badge_count") != null ? Color.white : Navy); TL(badge, 84, -12, 56, 40);
+                    var badge = Img(card, "Count", S("ui9_badge_count") ?? Rounded, S("ui9_badge_count") != null ? Color.white : Navy);
+                    if (row.fanned) TL(badge, fs.fanCountBadgePos.x, fs.fanCountBadgePos.y, 56, 40); else TL(badge, 84, -12, 56, 40); // fanned: on the exposed left strip (never covered)
                     badge.GetComponent<Image>().type = Image.Type.Sliced;
                     var n = Txt(badge, "\u00D7" + grp.count, 26, Ink); Full(n.rectTransform); n.fontStyle = FontStyles.Bold; n.outlineWidth = .25f; n.outlineColor = Navy;
                 }
                 if (selected) Outline(card, Gold, 4);
                 built.Add(holder.gameObject); if (pic != null) pic.HandRects.Add(holder); handCards.Add((holder.gameObject.AddComponent<CanvasGroup>(), false, idx));
+                fanCards.Add((holder, hover, card.GetComponent<Image>(), pc, pe, idx));
             }
+            ApplyFan();
+        }
+        // ---- v18.4 block-row fan ----------------------------------------------------------------------------------------------------
+        private HandFanStyle FanStyle => session != null && session.config != null && session.config.handFan != null ? session.config.handFan : defaultFan;
+        private static readonly HandFanStyle defaultFan = new HandFanStyle();
+        private bool fanActive, fanTarget; private float fanT, fanTApplied = -1f, fanLastInput; private int fanDownSeen; private float handSafeW = 1920;
+        private HandFanLayout.Row fanRow;
+        private readonly List<(RectTransform holder, CardHover hover, Image card, Vector2 collapsed, Vector2 expanded, int index)> fanCards = new List<(RectTransform, CardHover, Image, Vector2, Vector2, int)>();
+        /// Exposed strip a covered card needs so its rune badge (card x -10..38) and fanned xN badge stay clear of the next card, whose
+        /// own rune badge reaches 10 card units left of it (ref px).
+        private float FanNeedExposed(float cardW) { var fs = FanStyle; return (Mathf.Max(38f, fs.fanCountBadgePos.x + 56f) + 10f) * cardW / 128f + 2f; }
+        private float FanEase() { var fs = FanStyle; float t = Mathf.Clamp01(fanT); return fanTarget ? fs.expandEase.Evaluate(t) : 1f - fs.collapseEase.Evaluate(1f - t); }
+        private void ApplyFan()
+        {
+            fanTApplied = fanT; float e = FanEase(), dim = FanStyle.coveredBrightness;
+            for (int i = 0; i < fanCards.Count; i++)
+            {
+                var f = fanCards[i]; if (f.holder == null) continue; var p = Vector2.Lerp(f.collapsed, f.expanded, e);
+                if (f.hover != null) f.hover.SetRest(p); else f.holder.anchoredPosition = p;
+                if (dim < 1f && f.card != null) { float v = i < fanCards.Count - 1 && fanActive ? Mathf.Lerp(dim, 1f, e) : 1f; f.card.color = new Color(v, v, v, f.card.color.a); }
+            }
+        }
+        private void SetFan(bool on, string why) { if (fanTarget == on) return; fanTarget = on; fanLastInput = Time.unscaledTime; FanLastEvent = (on ? "expand: " : "collapse: ") + why; FanEvents++; }
+        private bool FanTap(bool tower, int index) { if (tower || !fanActive || fanTarget) return false; SetFan(true, "tap"); return true; }
+        private bool FanHeld(bool tower, int index, float held) { if (tower || !fanActive || fanTarget || held < FanStyle.holdExpandSeconds) return false; SetFan(true, "hold " + held.ToString("F2") + " s"); return true; }
+        private bool OverFan(Vector2 screen) { foreach (var f in fanCards) if (f.holder != null && RectTransformUtility.RectangleContainsScreenPoint(f.holder, screen, null)) return true; return false; }
+        private void UpdateFan()
+        {
+            if (!fanActive) return;
+            var pic = PlacementInputController.Instance; float now = Time.unscaledTime;
+            if (pic != null)
+            {
+                fanLastInput = Mathf.Max(fanLastInput, pic.LastInputTime);
+                if (pic.DownSerial != fanDownSeen) { fanDownSeen = pic.DownSerial; if (fanTarget && !OverFan(pic.DownPos)) SetFan(false, "tap on empty space"); }
+                if (fanTarget && pic.Machine.State == PlacementState.Dragging) SetFan(false, "drag start");
+            }
+            if (fanTarget && now - fanLastInput >= FanStyle.idleCollapseSeconds) SetFan(false, "idle " + FanStyle.idleCollapseSeconds + " s");
+            var fs = FanStyle; float dur = fanTarget ? fs.expandSeconds : fs.collapseSeconds;
+            fanT = dur <= 0f ? (fanTarget ? 1f : 0f) : Mathf.MoveTowards(fanT, fanTarget ? 1f : 0f, Time.unscaledDeltaTime / dur);
+            if (fanT != fanTApplied) ApplyFan();
+        }
+        /// Diagnostics / tests.
+        public bool FanActive => fanActive; public bool FanExpanded => fanTarget; public float FanProgress => fanT;
+        public string FanLastEvent { get; private set; } = ""; public int FanEvents { get; private set; }
+        public HandFanLayout.Row FanRow => fanRow;
+        public void DebugSetFan(bool on) => SetFan(on, "debug");
+        /// Block cards in display order (left -> right = bottom -> top).
+        public List<(RectTransform holder, int index)> FanCards() { var l = new List<(RectTransform, int)>(); foreach (var f in fanCards) if (f.holder != null) l.Add((f.holder, f.index)); return l; }
+        /// Width of the block row reserved by the camera fit for `cards` slots (all different, collapsed fan above collapseAbove), ref px.
+        private float BlockRowWidth(int cards)
+        {
+            float step = handCardW + 12; if (cards <= FanStyle.collapseAbove) return cards * step - 12;
+            var r = HandFanLayout.Compute(cards, handCardW, step, handSafeW - 24 - 512 - 24 - 24, FanStyle, FanNeedExposed(handCardW)); return r.collapsedWidth;
         }
         // ui_icon_block_<T|L|J|S|Z|O|I>: resolved from the shape asset/display name (e.g. "Block_T", "T piece").
         private Sprite BlockIcon(BlockShapeData shape)
@@ -285,9 +374,8 @@ namespace StoneSignal
         public void DebugNotice(string message) => ShowNotice(message);
         /// Picks the toast slot with the most clearance from the core and the route arrows (first slot with >= 48 ref px wins).
         // v18.3 toast anchor (art): inside SafeAreaRoot, top-centre, ToastBelowBanner ref px below the wave banner's bottom edge, every aspect.
-        // Safety guard (玩法策划): if the toast rect would cover an entry bridge landing cell (screen-projected top quad + ToastGuardMargin),
-        // it falls back to the old top-right slot. With the current layout the third entry is the SOUTH bridge (7,0) at the screen bottom,
-        // so the guard is expected never to trigger; it checks every landing so it stays valid if a north entry is added.
+        // Safety guard (玩法策划 v18.4): protects ALL three bridge landings - East, West and South (grid.Spawns; there is no north bridge):
+        // if the toast rect would cover any landing cell (screen-projected top quad + ToastGuardMargin) it falls back to the top-right slot.
         private const float ToastBelowBanner = 12f, ToastGuardMargin = 12f, ToastFallbackRight = 24f;
         public bool ToastGuardTriggered { get; private set; }
         private void PlaceNotice()
@@ -360,18 +448,21 @@ namespace StoneSignal
             if (blockHand != null)
             {   // block row at a fixed card count (left-aligned at x 24, rowY; +12 px selected lift; deep: +20 px rune shield above the card)
                 blockHand.GetWorldCorners(c); var cv = blockHand.GetComponentInParent<Canvas>(); float k = cv ? cv.scaleFactor : 1f;
-                float x0 = c[0].x + 24 * k, y0 = c[0].y + handRowY * k, w = (blockCards * (handCardW + 12) - 12) * k, h = (handCardW + 12 + (deep ? 20 : 0)) * k;
+                float x0 = c[0].x + 24 * k, y0 = c[0].y + handRowY * k, w = BlockRowWidth(blockCards) * k, h = (handCardW + 12 + (deep ? 20 : 0)) * k;
                 list.Add(Rect.MinMaxRect(x0 - padPx, y0 - padPx, x0 + w + padPx, y0 + h + padPx));
             }
         }
         /// v18.3 HudFree experiment (art): the HUD as blocks - top banner band (topBandPx x HUD scale, full width), the bottom-left hand group
         /// (bounding rect of the 7-card block row + tower cards + hand counter) and the bottom-right group (draw pile + BATTLE), plus every
         /// individual element (the core orb / HP reach below the band). Screen px, padded.
-        public void HudFreeObstacles(List<Rect> list, float padPx, float topBandPx)
+        /// v18.4: the block row is the collapsed fan of 7 different cards (BlockRowWidth). groupBlocks = false: the hand / right groups are not
+        /// merged into bounding blocks (each element exact: the open area above the outer tower cards is usable).
+        public void HudFreeObstacles(List<Rect> list, float padPx, float topBandPx, bool groupBlocks = true)
         {
             HudObstacles(list, padPx, BlockHandManager.MaxCards, true);
             var cv = blockHand != null ? blockHand.GetComponentInParent<Canvas>() : null; float k = cv ? cv.scaleFactor : 1f; var safe = HudScaler.SafeArea;
             list.Add(Rect.MinMaxRect(safe.xMin - padPx, safe.yMax - topBandPx * k - padPx, safe.xMax + padPx, safe.yMax + padPx));
+            if (!groupBlocks) return;
             var tmp = new List<Rect>(); HudObstacles(tmp, padPx, BlockHandManager.MaxCards, true);
             Rect? hand = null, right = null; float mid = (safe.xMin + safe.xMax) * .5f, low = safe.yMin + safe.height * .5f;
             foreach (var r in tmp)
@@ -395,6 +486,7 @@ namespace StoneSignal
                 else if (!on) hint.text = DefaultHint;
                 if (noticePill != null && noticePill.gameObject.activeSelf != on) noticePill.gameObject.SetActive(on);
             }
+            UpdateFan();
             {   // drag hand fade
                 var pic = PlacementInputController.Instance; bool fade = pic != null && pic.HandFade;
                 handAlpha = Mathf.MoveTowards(handAlpha, fade ? HandFadeAlpha : 1f, Time.unscaledDeltaTime * (1f - HandFadeAlpha) / HandFadeSeconds);

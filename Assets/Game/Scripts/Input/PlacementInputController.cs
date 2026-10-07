@@ -84,8 +84,19 @@ namespace StoneSignal
         void OnDestroy() { if (Instance == this) Instance = null; }
 
         bool NeedsDirection => Machine.Tower ? towers.SelectedNeedsDirection : true; // every wall block uses direction select
+        /// v18.4 fanned block row (GameUI): a card press that ends as a tap / a still press held this long (seconds) can be taken by the
+        /// fan (collapsed fan: tap or hold expands instead of arming the card). Return true = consumed (the gesture is cancelled).
+        public System.Func<bool, int, bool> CardTapHook;
+        public System.Func<bool, int, float, bool> CardHeldHook;
+        /// Every pointer-down this controller reads (count + position) and the time of the last pointer input (down / held / up).
+        public int DownSerial { get; private set; }
+        public Vector2 DownPos { get; private set; }
+        public float LastInputTime { get; private set; } = -100f;
+        float pressAt;
+        void Consume() { Machine.Reset(); Cancel(); HandFade = GhostOverHand = false; Drive(); }
         public void CardDown(bool tower, int index, Vector2 pos)
         {
+            pressAt = Time.unscaledTime;
             if (tower) towers.Select(index); else { towers.Select(-1); blocks.SelectCard(index); }
             Machine.CardDown(tower, index, tower ? towers.SelectedNeedsDirection : true, pos, Time.unscaledTime);
             Drive();
@@ -244,6 +255,8 @@ namespace StoneSignal
             if (towers == null) return;
             Drive();
             var p = PointerInput.Read(); float now = Time.unscaledTime;
+            if (p.Down) { DownSerial++; DownPos = p.Position; }
+            if (p.Down || p.Held || p.Up) LastInputTime = now;
             bool touch = PointerInput.TouchMode;
             if (p.Count > 1 && Machine.State != PlacementState.Idle) return; // ignore multi-touch during placement (fade state kept)
             var st = Machine.State;
@@ -261,9 +274,14 @@ namespace StoneSignal
                     var c = st == PlacementState.Direction ? (Vector2Int?)null : CellAt(aim);
                     bool ok = c.HasValue && AnchorValid(c.Value);
                     Handle(Machine.Move(p.Position, overHand, c, ok, now), p.Position);
+                    if (Machine.State == PlacementState.Pressed && CardHeldHook != null && CardHeldHook(Machine.Tower, Machine.Card, now - pressAt)) { Consume(); return; }
                     ghost = Machine.State == PlacementState.Direction ? Machine.Cell : Machine.State == PlacementState.Dragging && !overHand ? c : null; // ghost hidden in the cancel zone
                 }
-                if (p.Up || !p.Held) Handle(Machine.Up(p.Position, overHand), p.Position);
+                if (p.Up || !p.Held)
+                {
+                    if (Machine.State == PlacementState.Pressed && CardTapHook != null && CardTapHook(Machine.Tower, Machine.Card)) { Consume(); return; }
+                    Handle(Machine.Up(p.Position, overHand), p.Position);
+                }
                 bool drag = p.Held && !p.Up && (Machine.State == PlacementState.Dragging || (Machine.State == PlacementState.Direction && Machine.Held));
                 GhostOverHand = drag && ghost.HasValue && GhostInHand(ghost.Value);
                 HandFade = drag && (OverHand(p.Position) || GhostOverHand);

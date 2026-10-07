@@ -36,6 +36,7 @@ namespace StoneSignal
             yield return new WaitForSecondsRealtime(1f);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fantest") >= 0) { yield return FanTest(); Debug.Log("FAN TEST DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-camcompare") >= 0) { yield return CamCompare(); Debug.Log("CAM COMPARE DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-dragthrough") >= 0) { yield return DragThrough(); Debug.Log("DRAG THROUGH DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cardtext") >= 0) { yield return CardText(); Debug.Log("CARD TEXT DONE " + path); Application.Quit(0); yield break; }
@@ -319,12 +320,19 @@ namespace StoneSignal
         // ---- v18.3 diagnostics ------------------------------------------------------------------------------------------------
         bool Notch() { bool n = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-notch") >= 0; if (n) HudScaler.SimulatedSafeArea = new Rect(132, 63, Screen.width - 264, Screen.height - 63); return n; }
         IEnumerator WaitRt(float sec) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < sec) yield return null; }
-        /// Worst-case hand: free draw, then top up to BlockHandManager.MaxCards (7) block cards.
+        /// Worst-case hand (v18.4): BlockHandManager.MaxCards (7) block cards, all different (shape + rune) so nothing stacks.
         IEnumerator FullHand()
         {
             if (s.Game.State == GameState.Build) s.Draw();
-            var hand = s.Blocks.Hand; int g = 0;
-            while (hand.Cards.Count < BlockHandManager.MaxCards && g++ < 20) hand.AddCard(s.config.blocks[g % s.config.blocks.Length], RuneRules.NoRune);
+            var spec = new List<(int shape, int rune)>(); var B = s.config.blocks;
+            for (int i = 0; i < BlockHandManager.MaxCards; i++) spec.Add((i % B.Length, i < B.Length ? RuneRules.NoRune : i - B.Length));
+            yield return SetHand(spec);
+        }
+        /// Replace the hand: (shape index, rune) per card, in draw order (the last one is the newest).
+        IEnumerator SetHand(List<(int shape, int rune)> spec)
+        {
+            var hand = s.Blocks.Hand; hand.Draw(null, 0);
+            foreach (var c in spec) hand.AddCard(s.config.blocks[c.shape], c.rune);
             s.Blocks.NotifyChanged(); yield return null; yield return null;
         }
         IEnumerator ShotNamed(string dir, string name) { yield return Clean(); for (int f = 0; f < 6; f++) yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, name + ".png")); }
@@ -336,23 +344,180 @@ namespace StoneSignal
             var sb = new System.Text.StringBuilder("camera compare " + res + " aspect " + ((float)Screen.width / Screen.height).ToString("F3") + " touch=" + PointerInput.TouchMode + " safe=" + HudScaler.SafeArea + "\n");
             yield return FullHand(); yield return WaitRt(.6f);
             sb.Append("hand: " + s.Blocks.Hand.Cards.Count + " block cards + " + s.config.towers.Length + " tower cards\n");
-            foreach (var mode in new[] { CameraFitMode.Screen, CameraFitMode.HudFree })
+            var mode0 = CameraFit.Mode; bool groups0 = CameraFit.HudFreeGroupBlocks;
+            sb.Append("hand groups (display order): " + ui.FanCards().Count + ", fanned=" + ui.FanActive + " expanded=" + ui.FanExpanded + " collapsed row " + ui.FanRow.collapsedWidth.ToString("F0") + " ref px (step " + ui.FanRow.collapsedStep.ToString("F1") + ")\n");
+            foreach (var (mode, groupBlocks, tag) in new[] { (CameraFitMode.Screen, false, "screen"), (CameraFitMode.HudFree, false, "hudfree"), (CameraFitMode.HudFree, true, "hudfree_artblocks") })
             {
-                CameraFit.Mode = mode; int f0 = fit.Fits; fit.Refit(); float tw = Time.realtimeSinceStartup;
+                CameraFit.Mode = mode; CameraFit.HudFreeGroupBlocks = groupBlocks; int f0 = fit.Fits; fit.Refit(); float tw = Time.realtimeSinceStartup;
                 while (fit.Fits == f0 && Time.realtimeSinceStartup - tw < 4f) yield return null;
                 yield return WaitRt(.5f);
-                bool pass = fit.CoveredCells == 0 && fit.LandingsVisible && fit.ArrowsVisible && fit.CellPx1080 >= fit.minCellPx1080 && fit.EnemyPx1080 >= fit.minEnemyPx1080;
-                sb.Append("=== mode " + mode + "\n" + fit.Report + fit.Coverage + "\n");
-                yield return ShotNamed(dir, "hud_" + mode.ToString().ToLowerInvariant() + "_" + res);
+                bool pass = fit.CoveredBad == 0 && fit.LandingsVisible && fit.ArrowsVisible && fit.CellPx1080 >= fit.minCellPx1080 && fit.EnemyPx1080 >= fit.minEnemyPx1080; // v18.4 acceptance: interior / landing / path cells
+                sb.Append("=== mode " + tag + "\n" + fit.Report + fit.Coverage + "\n");
+                yield return ShotNamed(dir, "hud_" + tag + "_" + res);
                 yield return WaitRt(.3f);
                 ui.DebugNotice("Cell occupied / protected"); yield return WaitRt(.4f);
                 string toast = ui.NoticeDebug; bool guard = ui.ToastGuardTriggered; yield return WaitRt(1.4f);
                 sb.Append("  toast: " + toast + " | guard triggered=" + guard + "\n");
-                sb.Append("SUMMARY\t" + mode + "\t" + res + "\tortho " + fit.Size.ToString("F2") + "\tpan " + fit.Pan.ToString("F2") + "\tcell1080 " + fit.CellPx1080.ToString("F1") + "\tenemy1080 " + fit.EnemyPx1080.ToString("F1") +
-                          "\tcovered " + fit.CoveredCells + "\tbad " + fit.CoveredBad + "\tlandings " + fit.LandingsVisible + "\tarrows " + fit.ArrowsVisible + "\tpanfix " + fit.PanFixed + "\ttoastGuard " + guard + "\tHUDFREE-CRITERIA " + (pass ? "PASS" : "FAIL") + "\n");
+                sb.Append("SUMMARY\t" + tag + "\t" + res + "\tortho " + fit.Size.ToString("F2") + "\tpan " + fit.Pan.ToString("F2") + "\tcell1080 " + fit.CellPx1080.ToString("F1") + "\tenemy1080 " + fit.EnemyPx1080.ToString("F1") +
+                          "\tcovered " + fit.CoveredCells + "\tbad " + fit.CoveredBad + "\tlandings " + fit.LandingsVisible + "\tarrows " + fit.ArrowsVisible + "\tpanfix " + fit.PanFixed + "\ttoastGuard " + guard + "\tACCEPTANCE " + (pass ? "PASS" : "FAIL") + "\n");
             }
-            CameraFit.Mode = CameraFitMode.Screen; fit.Refit();
+            CameraFit.Mode = mode0; CameraFit.HudFreeGroupBlocks = groups0; fit.Refit();
             File.WriteAllText(Path.Combine(dir, "cam_" + res + ".txt"), sb.ToString());
+            HudScaler.SimulatedSafeArea = null;
+        }
+        /// -fantest [-touch] [-notch]: v18.4 fanned block row - geometry, hit-testing of exposed parts, badges never covered, newest card
+        /// fully visible, collapse triggers (drag start / empty tap / idle), expand by tap / hold, placement from the expanded fan;
+        /// shots: expanded fan, mid-drag from an exposed covered card, xN stack + rune badges. Writes fan_<res>.txt.
+        IEnumerator FanTest()
+        {
+            bool notch = Notch(); var ui = FindObjectOfType<GameUI>(); var pic = PlacementInputController.Instance; var grid = s.grid; var cam = s.viewCamera != null ? s.viewCamera : Camera.main;
+            string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height + (notch ? "_notch" : "");
+            var sb = new System.Text.StringBuilder("fan test " + res + " touch=" + PointerInput.TouchMode + " canvas scale " + pic.CanvasScale.ToString("F3") + "\n"); int nPass = 0, nFail = 0;
+            void Check(bool ok, string what) { if (ok) nPass++; else nFail++; sb.Append(ok ? "PASS " : "FAIL ").Append(what).Append('\n'); }
+            float k = pic.CanvasScale; var c4 = new Vector3[4];
+            Rect R(RectTransform r) { r.GetWorldCorners(c4); return Rect.MinMaxRect(c4[0].x, c4[0].y, c4[2].x, c4[2].y); }
+            var es = UnityEngine.EventSystems.EventSystem.current; var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+            int HitIndex(Vector2 p)
+            {
+                hits.Clear(); es.RaycastAll(new UnityEngine.EventSystems.PointerEventData(es) { position = p }, hits);
+                foreach (var h in hits) { var cp = h.gameObject.GetComponentInParent<CardPointer>(); if (cp != null) return cp.Tower ? -100 - cp.Index : cp.Index; return -1; }
+                return -1;
+            }
+            // graphics drawn above holder i (later block holders), screen rects
+            List<Rect> Above(List<(RectTransform holder, int index)> fc, int i)
+            {
+                var l = new List<Rect>();
+                for (int j = i + 1; j < fc.Count; j++) foreach (var g in fc[j].holder.GetComponentsInChildren<UnityEngine.UI.Graphic>(false)) if (g.enabled && g.color.a > .05f) l.Add(R(g.rectTransform));
+                return l;
+            }
+            string BadgeCheck(List<(RectTransform holder, int index)> fc, out int badges)
+            {
+                badges = 0; var bad = "";
+                for (int i = 0; i < fc.Count; i++)
+                {
+                    var above = Above(fc, i);
+                    foreach (var g in fc[i].holder.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                    {
+                        if (g.name != "Rune badge" && g.name != "Count") continue; badges++; var b = R(g.rectTransform);
+                        foreach (var a in above) { float ox = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin), oy = Mathf.Min(a.yMax, b.yMax) - Mathf.Max(a.yMin, b.yMin); if (ox > .5f && oy > .5f) { bad += " card#" + i + "/" + g.name + " covered " + ox.ToString("F0") + "x" + oy.ToString("F0") + " px"; break; } }
+                    }
+                }
+                return bad;
+            }
+            IEnumerator Tap(Vector2 p, int cardIndex = -999)
+            {
+                PointerInput.Inject(p, true, true, false); if (cardIndex != -999) pic.CardDown(false, cardIndex, p); yield return null;
+                PointerInput.Inject(p, false, false, true); yield return null; yield return null; PointerInput.ClearInjection();
+            }
+            var B = s.config.blocks;
+            // ---- 1. worst case: 7 different cards, collapsed
+            yield return FullHand(); yield return WaitRt(.5f);
+            var fc = ui.FanCards(); var row = ui.FanRow;
+            Check(ui.FanActive && !ui.FanExpanded && fc.Count == 7, "7 different cards -> fanned, collapsed (groups " + fc.Count + ")");
+            float slots4 = 4 * (row.cardW + 12) - 12;
+            Check(Mathf.Abs(row.collapsedWidth - slots4) < 1f, "collapsed row width " + row.collapsedWidth.ToString("F1") + " = 4 card slots " + slots4.ToString("F1") + " ref px (card " + row.cardW.ToString("F0") + ", step " + row.collapsedStep.ToString("F1") + ")");
+            float minExp = float.MaxValue; for (int i = 0; i + 1 < fc.Count; i++) minExp = Mathf.Min(minExp, R(fc[i + 1].holder).xMin - R(fc[i].holder).xMin);
+            Check(minExp >= 44f * k - .5f, "every covered card exposes >= 44 px x HUD scale: min " + minExp.ToString("F1") + " screen px (need " + (44f * k).ToString("F1") + ")");
+            {   // hit-testing: exposed strip -> that card, covered part -> the card on top; topmost wins
+                string bad = ""; int tests = 0;
+                for (int i = 0; i < fc.Count; i++)
+                {
+                    var r = R(fc[i].holder); float xr = i + 1 < fc.Count ? R(fc[i + 1].holder).xMin : r.xMax;
+                    foreach (float fy in new[] { .2f, .5f, .85f }) foreach (float fx in new[] { .15f, .5f, .85f })
+                    {
+                        var p = new Vector2(Mathf.Lerp(r.xMin + 2, xr - 2, fx), Mathf.Lerp(r.yMin, r.yMax, fy)); tests++; int h = HitIndex(p);
+                        if (h != fc[i].index) bad += " exposed card#" + i + " at " + p.ToString("F0") + " -> hit " + h;
+                    }
+                    if (i + 1 < fc.Count) { var p = new Vector2(xr + 10, r.center.y); tests++; int h = HitIndex(p); bool upper = false; for (int j = i + 1; j < fc.Count; j++) upper |= fc[j].index == h; if (!upper) bad += " covered part of card#" + i + " -> hit " + h; }
+                }
+                Check(bad == "", "hit test of exposed / covered parts (" + tests + " points, topmost wins)" + bad);
+            }
+            { string bad = BadgeCheck(fc, out int nb); Check(bad == "", "badges never covered, worst-case hand (" + nb + " badges)" + bad); }
+            // ---- 2. xN stack + rune badges in the fan (shot)
+            yield return SetHand(new List<(int, int)> { (0, RuneRules.NoRune), (0, RuneRules.NoRune), (1, 0), (2, 1), (3, RuneRules.NoRune), (4, 3), (0, 4) }); yield return WaitRt(.5f);
+            fc = ui.FanCards();
+            { string bad = BadgeCheck(fc, out int nb); bool count = false; foreach (var f in fc) count |= f.holder.Find("Card/Count") != null; Check(bad == "" && count && ui.FanActive, "xN stack + rune badges fanned: " + fc.Count + " groups, " + nb + " badges, none covered" + bad); }
+            yield return ShotNamed(dir, "fan_badges_" + res);
+            // ---- 3. newest card goes to the far right, fully visible
+            {
+                var spec = new List<(int, int)>(); for (int i = 0; i < 6; i++) spec.Add((i % B.Length, i < B.Length ? RuneRules.NoRune : 2)); yield return SetHand(spec);
+                s.Blocks.Hand.AddCard(B[1], 5); s.Blocks.NotifyChanged(); yield return null; yield return null; yield return WaitRt(.2f);
+                fc = ui.FanCards(); var last = fc[fc.Count - 1]; var lr = R(last.holder); bool covered = false;
+                int hc = 0, ht = 0; foreach (float fx in new[] { .05f, .5f, .95f }) foreach (float fy in new[] { .05f, .5f, .95f }) { ht++; if (HitIndex(new Vector2(Mathf.Lerp(lr.xMin, lr.xMax, fx), Mathf.Lerp(lr.yMin, lr.yMax, fy))) == last.index) hc++; }
+                covered = hc != ht;
+                Check(last.index == 6 && !covered && lr.xMax <= Screen.width, "newest card (hand #6) is the rightmost and fully visible (" + hc + "/" + ht + " points hit it)");
+                var spec2 = new List<(int, int)> { (0, RuneRules.NoRune), (1, RuneRules.NoRune), (2, RuneRules.NoRune), (3, RuneRules.NoRune), (4, RuneRules.NoRune), (1, 0) }; yield return SetHand(spec2);
+                s.Blocks.Hand.AddCard(B[0], RuneRules.NoRune); s.Blocks.NotifyChanged(); yield return null; yield return null; yield return WaitRt(.2f);
+                fc = ui.FanCards(); last = fc[fc.Count - 1];
+                Check(last.index == 0 && last.holder.Find("Card/Count") != null, "a drawn card that stacks moves its xN stack to the far right (rightmost = hand #" + last.index + ")");
+            }
+            // ---- 4. collapse / expand triggers
+            yield return FullHand(); yield return WaitRt(.4f); fc = ui.FanCards();
+            Vector2 Exposed(int i) { var r = R(fc[i].holder); float xr = i + 1 < fc.Count ? R(fc[i + 1].holder).xMin : r.xMax; return new Vector2((r.xMin + xr) * .5f, r.yMin + r.height * .6f); }
+            yield return Tap(Exposed(2), fc[2].index); yield return WaitRt(.35f);
+            Check(ui.FanExpanded && ui.FanProgress >= .99f && pic.Machine.State == PlacementState.Idle, "tap on the collapsed fan expands it (no card armed): " + ui.FanLastEvent + ", state " + pic.Machine.State);
+            yield return ShotNamed(dir, "fan_expanded_" + res);
+            yield return Tap(new Vector2(Screen.width * .5f, Screen.height * .72f)); yield return WaitRt(.35f);
+            Check(!ui.FanExpanded && ui.FanProgress <= .01f, "tap on empty space collapses: " + ui.FanLastEvent);
+            fc = ui.FanCards();
+            {   // press-and-hold expands
+                var p = Exposed(3); PointerInput.Inject(p, true, true, false); pic.CardDown(false, fc[3].index, p); float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < .6f) { PointerInput.Inject(p, false, true, false); yield return null; }
+                bool during = ui.FanExpanded; PointerInput.Inject(p, false, false, true); yield return null; yield return null; PointerInput.ClearInjection();
+                Check(during && pic.Machine.State == PlacementState.Idle, "press-and-hold (0.6 s) on the collapsed fan expands it: " + ui.FanLastEvent + ", state after release " + pic.Machine.State);
+            }
+            yield return WaitRt(1.6f); bool still = ui.FanExpanded; yield return WaitRt(.7f);
+            Check(still && !ui.FanExpanded, "idle: still expanded at 1.6 s, collapsed by 2.3 s without input: " + ui.FanLastEvent);
+            {   // drag start collapses
+                ui.DebugSetFan(true); yield return WaitRt(.35f); fc = ui.FanCards(); var r = R(fc[1].holder); var p = r.center;
+                PointerInput.Inject(p, true, true, false); pic.CardDown(false, fc[1].index, p); yield return null;
+                for (int i = 1; i <= 6; i++) { PointerInput.Inject(p + Vector2.up * 15 * i * k, false, true, false); yield return null; }
+                bool dragging = pic.Machine.State == PlacementState.Dragging; bool collapsed = !ui.FanExpanded; string ev = ui.FanLastEvent;
+                PointerInput.Inject(p + Vector2.up * 90 * k, false, false, true); yield return null; yield return null; PointerInput.ClearInjection(); pic.CancelPlacement(); yield return WaitRt(.3f);
+                Check(dragging && collapsed, "drag start from the expanded fan collapses it: " + ev + " (state " + (dragging ? "Dragging" : "?") + ")");
+            }
+            // ---- 5. expanded fan does not break placement (tap card -> tap cell -> tap direction)
+            {
+                yield return FullHand(); yield return WaitRt(.3f); ui.DebugSetFan(true); yield return WaitRt(.35f); fc = ui.FanCards(); int pick = 4, before = s.Blocks.Hand.Cards.Count;
+                yield return Tap(R(fc[pick].holder).center, fc[pick].index);
+                bool armed = pic.Machine.State == PlacementState.Armed && pic.Machine.Card == fc[pick].index;
+                Vector2 Top(Vector2Int c) => cam.WorldToScreenPoint(grid.ToWorld(c) + Vector3.up * grid.tileTop);
+                Vector2Int cell = new Vector2Int(-1, -1); bool placed = false; string how = "";
+                if (armed)
+                    for (int y = grid.height - 3; y >= 2 && !placed; y--) for (int x = 2; x < grid.width - 2 && !placed; x++)
+                    {
+                        var c = new Vector2Int(x, y); if (!grid.CanPlace(c) || OnRoute(c)) continue;
+                        yield return Tap(Top(c)); if (pic.Machine.State != PlacementState.Direction) { if (pic.Machine.State != PlacementState.Armed) break; continue; }
+                        for (int d = 0; d < 4 && !placed; d++) if (pic.Machine.ValidFor(d))
+                        {
+                            var v = d == 0 ? Vector2.up : d == 1 ? Vector2.right : d == 2 ? Vector2.down : Vector2.left;
+                            yield return Tap(pic.Machine.Centre + v * (pic.Machine.SwipeThreshold + 50) * k); placed = s.Blocks.Hand.Cards.Count == before - 1; cell = c; how = "dir " + d;
+                        }
+                        break;
+                    }
+                Check(armed && placed, "expanded fan: tap card #" + pick + " arms it (" + armed + "), tap cell " + cell + " + direction (" + how + ") places it: hand " + before + " -> " + s.Blocks.Hand.Cards.Count + ", fan " + (ui.FanExpanded ? "expanded" : "collapsed") + " (" + ui.FanLastEvent + ")");
+                pic.CancelPlacement();
+            }
+            // ---- 6. drag directly from an exposed covered card (collapsed) - mid-drag shot
+            {
+                yield return FullHand(); yield return WaitRt(.4f); fc = ui.FanCards(); int i1 = 1; var p = Exposed(i1);
+                Vector2 target = new Vector2(Screen.width * .55f, Screen.height * .55f);
+                PointerInput.Inject(p, true, true, false); pic.CardDown(false, fc[i1].index, p); yield return null;
+                for (int i = 1; i <= 14; i++) { PointerInput.Inject(Vector2.Lerp(p, target, i / 14f), false, true, false); yield return null; }
+                float wig = (pic.Machine.HoldStill + 3f) * k; int fr = 0; float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < .45f) { PointerInput.Inject(target + new Vector2((fr++ & 1) == 0 ? wig : 0, 0), false, true, false); yield return null; }
+                PointerInput.Inject(target, false, true, false); yield return null;
+                bool ok = pic.Machine.State == PlacementState.Dragging && pic.Machine.Card == fc[i1].index && !ui.FanExpanded;
+                string st = "state " + pic.Machine.State + " card " + pic.Machine.Card + " (expected hand #" + fc[i1].index + ") alphas " + ui.HandAlphas;
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "fan_drag_exposed_" + res + ".png"));
+                PointerInput.Inject(target + Vector2.right * 40 * k, false, true, false); yield return null; PointerInput.Inject(target, false, true, false); yield return null;
+                PointerInput.Inject(target, false, false, true); yield return null; yield return null; PointerInput.ClearInjection();
+                Check(ok && (pic.Machine.State == PlacementState.Direction || pic.Machine.State == PlacementState.Idle), "drag straight from the exposed strip of covered card #" + i1 + " (collapsed): " + st + "; after release " + pic.Machine.State);
+                pic.CancelPlacement();
+            }
+            sb.Insert(0, "FAN TESTS: " + nPass + "/" + (nPass + nFail) + " passed\n");
+            File.WriteAllText(Path.Combine(dir, "fan_" + res + ".txt"), sb.ToString());
+            Debug.Log("FAN TESTS: " + nPass + "/" + (nPass + nFail) + " passed\n" + sb);
             HudScaler.SimulatedSafeArea = null;
         }
         /// -dragthrough [-touch]: full hand (Screen fit); a wall ghost dragged onto a board cell under a FADED block card (shot mid-drag),

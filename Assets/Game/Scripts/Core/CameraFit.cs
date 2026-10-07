@@ -16,7 +16,7 @@ namespace StoneSignal
     /// v18.3 pan fix (Screen, aspect < 2, i.e. 16:9 and 4:3): with a FULL 7-card block hand the hand may only cover board EDGE cells - never an
     /// interior cell, an entry landing cell or a flow-arrow path cell (current routes at fit time). If it would, the camera is panned (same size,
     /// never zoomed out further). 19.5:9 / 20:9 are left exactly as accepted.
-    /// HudFree mode (art experiment, Mode = HudFree / -camfit hudfree): the board's top-surface parallelogram must not touch any HUD block
+    /// HudFree mode (default since v18.4; -camfit screen / -camfit hudfree to choose): the board's top-surface parallelogram must not touch any HUD block
     /// (GameUI.HudFreeObstacles: top banner band, bottom-left hand group with 7 block cards + tower cards, bottom-right draw pile + BATTLE,
     /// plus each element) and must lie inside the safe area; each entry's landing cell and the first arrow segment (bridge head, half a cell
     /// beyond the board edge) must be visible too. Islands, bridge tails and portals may be covered or off-screen. Readability floor at
@@ -25,7 +25,12 @@ namespace StoneSignal
     /// offset is untouched.
     public sealed class CameraFit : MonoBehaviour
     {
-        public static CameraFitMode Mode = CameraFitMode.Screen;
+        /// v18.4: HudFree is the default fit (passed the worst-case acceptance at 1920x1080, 2340x1080, 2400x1080, 2400x1080 notch and
+        /// 2048x1536 with the fanned N=4 block row); Screen stays available via -camfit screen.
+        public static CameraFitMode Mode = CameraFitMode.HudFree;
+        /// HudFree obstacle model: true = art's blocks (bounding rect of the bottom-left hand group and of the bottom-right group);
+        /// false = every HUD element exact (v18.4: with the fanned block row the area above the outer tower cards is free board space).
+        public static bool HudFreeGroupBlocks = false;
         public bool fitPortals = false, panFixFullHand = true;
         public float marginPx = 12f, hudPadPx = 8f, maxZoomOut = 2.2f, sizeStep = .05f;
         public float topBandPx = 120f, minCellPx1080 = 52f, minEnemyPx1080 = 44f, bridgeHeadCells = .5f;
@@ -201,7 +206,7 @@ namespace StoneSignal
             }
             else
             {   // ---- HudFree (art experiment)
-                ui.HudFreeObstacles(obstacles, hudPadPx * k, topBandPx);
+                ui.HudFreeObstacles(obstacles, hudPadPx * k, topBandPx, HudFreeGroupBlocks);
                 var heads = new List<Vector2>(); var must = new List<Vector2>(boardV);
                 foreach (var sp in grid.Spawns)
                 {
