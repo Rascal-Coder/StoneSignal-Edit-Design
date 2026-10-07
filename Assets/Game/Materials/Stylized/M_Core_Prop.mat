@@ -7,15 +7,15 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Core_Enclosure
-  m_Shader: {fileID: 4800000, guid: 68f8ea763826ddf4091dc3834572a1d3, type: 3}
+  m_Name: M_Core_Prop
+  m_Shader: {fileID: 4800000, guid: dcc75a12d8535e243b4646eea3bcb892, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _USERAMP_ON
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -39,26 +39,26 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientStrength: 0.35
-    - _BaseAO: 0.2
-    - _BaseAOHeight: 0.22
+    - _BaseAO: 0.3
+    - _BaseAOHeight: 0.35
     - _Dissolve: 0
     - _DissolveEdge: 0.08
     - _HiAmount: 0
     - _HitFlash: 0
     - _LayerTint: 0
-    - _Mottle: 0.18
-    - _OutlineWidthPx: 3
-    - _OutlineZOffset: 0.0004
+    - _Mottle: 0
+    - _OutlineWidthPx: 4
+    - _OutlineZOffset: 0.0006
     - _RimIntensity: 0.2
     - _RimLitBias: 0.3
     - _RimMax: 0.75
     - _RimMin: 0.55
     - _RuneIdx: -1
-    - _ShadowSmooth: 0.02
+    - _ShadowSmooth: 0.04
     - _ShadowStrength: 0.85
     - _ShadowThreshold: 0.45
     - _UseRamp: 1
-    - _VColorEmission: 1.45
+    - _VColorEmission: 0
     - _WindStrength: 0
     - _Wobble: 0
     - _WobbleFreq: 5
@@ -71,7 +71,7 @@ Material:
     - _InnerTint: {r: 0.69, g: 0.43999997, b: 0.56499994, a: 1}
     - _LitColor: {r: 1, g: 1, b: 1, a: 1}
     - _OuterTint: {r: 1, g: 0.94, b: 0.784, a: 1}
-    - _OutlineColor: {r: 0.11799998, g: 0.101999976, b: 0.22699997, a: 1}
+    - _OutlineColor: {r: 0.11764706, g: 0.101960786, b: 0.22745098, a: 1}
     - _RimColor: {r: 1, g: 0.902, b: 0.78, a: 1}
     - _RuneColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowColor: {r: 0.43099996, g: 0.35299996, b: 0.54899997, a: 1}

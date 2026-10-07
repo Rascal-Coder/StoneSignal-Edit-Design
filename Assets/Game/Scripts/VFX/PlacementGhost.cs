@@ -7,6 +7,8 @@ namespace StoneSignal.VFX
     /// Placement preview (visual only, no gameplay). Block: SetCells(cells) builds one translucent stone + soft outline per cell.
     /// Tower: SetModel(prefab) clones the tower renderers with the ghost material. SetValid(true/false) = green / red tint.
     /// PlayDrop(pos) = squash-in + dust puff where the real piece lands.
+    /// v17.5: puffs 0.5-0.8 m growing 1.6x, #D9B48A a 1, life ~0.55 s, at the block base just outside the outer edges, slight outward
+    /// push (dustSpeed) + upward drift (dustRise); still max DustMax (12), pooled (StylizedPlacementFX FX_DropDust).
     /// v17.4: PlayDrop is called once per placed cell in the same frame; the cells are collected and ONE soft dust ring is emitted
     /// in LateUpdate around the outer edges of the whole shape (max DustMax particles, world space, pooled system, no Instantiate,
     /// no material instances).
@@ -103,8 +105,9 @@ namespace StoneSignal.VFX
 
         // ---- v17.4 landing dust ring
         public const int DustMax = 12;
-        [Tooltip("v17.4: outward puff speed (m/s, drag slows it)")] public Vector2 dustSpeed = new Vector2(.7f, 1.15f);
-        [Tooltip("v17.4: puff centre height above the ghost's base (m)")] public float dustLift = .12f;
+        [Tooltip("v17.5: outward puff speed (m/s, drag slows it) - slight push, v17.4 was 0.7-1.15")] public Vector2 dustSpeed = new Vector2(.45f, .8f);
+        [Tooltip("v17.5: upward drift speed (m/s)")] public Vector2 dustRise = new Vector2(.25f, .45f);
+        [Tooltip("v17.5: puff centre height above the ghost's base (m) - at the block base (v17.4 0.12)")] public float dustLift = .06f;
         [Tooltip("v17.4: seconds after PlayDrop = when the dropping block touches down (Drop: 0.35 m drop over 0.11 s)")] public float dustDelay = .1f;
         float dustWait;
         static readonly HashSet<Vector2Int> dustKeys = new HashSet<Vector2Int>();
@@ -139,8 +142,8 @@ namespace StoneSignal.VFX
                 int e = edges <= count ? i % edges : Mathf.FloorToInt(i * edges / (float)count);   // spread evenly round the outline
                 var n = dustNormals[e]; var along = new Vector3(-n.z, 0, n.x);
                 float slide = edges < count && i >= edges ? (i / edges % 2 == 1 ? .3f : -.3f) : Random.Range(-.18f, .18f);
-                ep.position = dustEdges[e] + along * slide * cs + n * Random.Range(-.04f, .06f) * cs;
-                ep.velocity = (n * Random.Range(dustSpeed.x, dustSpeed.y) + along * Random.Range(-.15f, .15f)) + Vector3.up * Random.Range(.12f, .3f);
+                ep.position = dustEdges[e] + along * slide * cs + n * Random.Range(.02f, .1f) * cs;   // v17.5: just outside the outer edge
+                ep.velocity = (n * Random.Range(dustSpeed.x, dustSpeed.y) + along * Random.Range(-.12f, .12f)) + Vector3.up * Random.Range(dustRise.x, dustRise.y);
                 dust.Emit(ep, 1);
             }
         }

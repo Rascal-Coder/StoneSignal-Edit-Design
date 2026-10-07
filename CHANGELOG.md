@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-10-08 — v17.5 Core look and crystal, core damage flash, landing dust, plank footprints
+
+- **Core cream-white/bloom, root cause:**
+  - The enclosure vertex colours were correct (stone R = 0).
+  - The cream body was the core prop `SM_Prop_Core_01` on `M_Tower_Cannon` under the warm 1.35 sun: MechWhite #FFF2E8, crystal #96FFFF, both at the bloom threshold.
+- **Core prop:**
+  - New `M_Core_Prop` (`StylizedCoreV173.BuildCorePropMaterial`): `_BaseColor` #D9DFF0 warm-light compensation, rim .2, no `_HiAmount`/`_VColorEmission`.
+  - It is assigned to every `PF_Prop_Core` renderer. Towers are unchanged.
+- **Enclosure:**
+  - `M_Core_Enclosure` `_BaseColor` #D9DFF0, rim .2.
+  - `_VColorEmission` 2.2 → 1.45, and ToonCore now blends toward the ember colour (`lerp`, not `+=`). Accents peak at about 1.0; only R ≥ .95 (the Broken crack glow) gets ×1.35, a slight bloom.
+  - Obelisk ember caps re-exported at R .35/.45/.55 (geometry, UVs and normals identical).
+- **Crystal:**
+  - New palette cell 48 `CoreCrystal` #61A1D5 (sampled from the v17.3 mockup).
+  - `StylizedModelPostprocessor` remaps the SlotIce UVs of `SM_Prop_Core_01` only, so frost towers keep #5FD0FF.
+- **CoreDamageFx:**
+  - Whole-object red through the existing per-instance `_StatusTint`/`_StatusRim` on the core renderers plus the enclosure (×.6). No keyword, no new material, DC unchanged; idle restores SRP batching.
+  - PlayHit: #FF5A5A, a .65 → 0 over 0.12 s.
+  - Critical: 1.5 Hz pulse #FF8087, a .20–.55, tint ×2.3 (mockup intensity).
+- **Landing dust:**
+  - #D9B48A a 1; .5–.8 m growing 1.6×; life .5–.6 s.
+  - Spawned at the block base along the outer edges, with outward + upward drift.
+  - New denser `T_FX_LandingDust_2x2` (the portal keeps its own sheet). Max 12, pooled.
+- **Plank footprints:**
+  - `WalkSurface` records the surface kind from the palette UV (Trunk/Wood = plank).
+  - `EnemyGroundFx` passes it to `EnemyGroundFxSystem.Footprint(..., plank)`.
+  - `SS_GroundPrint` uses `_PlankColor` #C9A57A a .55 there. Sand/tile prints are unchanged.
+- **Checks:** fail on `_VColorEmission` > 2, PF_Prop_Core not on M_Core_Prop, zero crystal remap, or stale v17.4 CoreDamageFx colours.
+- **Documentation:** `Docs/core_dust_v17_5.md`. Preview script: `ArtSource/Stylized/Core/core_preview_v17_5.py`.
+
 ## 2026-10-08 — v17.4 VFX texture check fix, footprint value in the builder, reward-card icons, landing dust
 
 - **VFX TEXTURES FAIL (18) fixed:**

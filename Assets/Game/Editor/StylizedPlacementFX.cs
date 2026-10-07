@@ -30,16 +30,20 @@ public static class StylizedPlacementFX
     }
 
     /// v17.4 landing dust colour: spec FX_Build_Dust #E9C9A0 (light tan), texture is the painted soft puff sheet (light grey).
-    public static readonly Color LandingDustColor = new Color(0xE9 / 255f, 0xC9 / 255f, 0xA0 / 255f, .9f);
-    const string DustTex = StylizedArtIntegration.ArtDir + "FX/Portal/T_Portal_DustPuff_2x2.png";
+    /// v17.5: #D9B48A, alpha 1 (the puff sheet is soft: only ~15% of each 2x2 cell is above alpha 0.5, so the v17.4 0.34-0.5 m puffs read
+    /// as ~0.15 m smudges at gameplay zoom).
+    public static readonly Color LandingDustColor = new Color(0xD9 / 255f, 0xB4 / 255f, 0x8A / 255f, 1f);
+    const string DustTex = StylizedArtIntegration.ArtDir + "FX/Placement/T_FX_LandingDust_2x2.png";   // v17.5: denser copy of the portal puff sheet
+    const string DustTexFallback = StylizedArtIntegration.ArtDir + "FX/Portal/T_Portal_DustPuff_2x2.png"; // (alpha^0.6 x 1.2, 128 px; portal keeps its own)
 
-    /// M_VFX_LandingDust: URP Particles/Unlit, alpha blended, T_Portal_DustPuff_2x2 (2x2 soft puffs), shared by both ghost prefabs.
+    /// M_VFX_LandingDust: URP Particles/Unlit, alpha blended, T_FX_LandingDust_2x2 (v17.5; 2x2 soft puffs), shared by both ghost prefabs.
     static Material LandingDustMaterial()
     {
         const string p = "Assets/Game/Materials/Stylized/M_VFX_LandingDust.mat";
         var sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
         var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(DustTex);
-        if (!tex) throw new System.Exception("LANDING DUST: " + DustTex + " missing");
+        if (!tex) { Debug.LogWarning("LANDING DUST: " + DustTex + " missing - using " + DustTexFallback); tex = AssetDatabase.LoadAssetAtPath<Texture2D>(DustTexFallback); }
+        if (!tex) throw new System.Exception("LANDING DUST: " + DustTexFallback + " missing");
         var m = AssetDatabase.LoadAssetAtPath<Material>(p); if (!m) { m = new Material(sh); AssetDatabase.CreateAsset(m, p); }
         m.shader = sh; m.SetTexture("_BaseMap", tex); m.SetColor("_BaseColor", Color.white);
         m.SetFloat("_Surface", 1); m.SetFloat("_Blend", 0); m.SetOverrideTag("RenderType", "Transparent");
@@ -62,6 +66,7 @@ public static class StylizedPlacementFX
         var stone = AssetDatabase.LoadAllAssetsAtPath(StylizedArtIntegration.ArtDir + "Environment/SM_Env_Rock_1x1_01.fbx").OfType<Mesh>().FirstOrDefault();
 
         // v17.4 landing dust: short, soft, light-tan puff ring at the block's base, readable ~0.4 s at gameplay zoom.
+        // v17.5: bigger + more opaque: start 0.5-0.8 m growing 1.6x, life ~0.55 s, #D9B48A a 1, slight outward push + upward drift (PlacementGhost).
         // One pooled system per ghost prefab, world space, max 12 particles, no emission module: PlacementGhost.PlayDrop queues the
         // placed cells and emits once per frame along the outer edges of the whole shape (EmitParams). Own material
         // M_VFX_LandingDust (was M_FX_Snow, shared with snow: white, 0.12-0.26 m, burst at the last cell in ghost-local space).
@@ -71,18 +76,18 @@ public static class StylizedPlacementFX
             var ps = new GameObject("FX_DropDust").AddComponent<ParticleSystem>(); ps.transform.SetParent(parent, false);
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var mn = ps.main; mn.playOnAwake = false; mn.loop = true; mn.duration = 1f;
-            mn.startLifetime = new ParticleSystem.MinMaxCurve(.42f, .55f); mn.startSpeed = 0;   // speed/direction come from EmitParams
-            mn.startSize = new ParticleSystem.MinMaxCurve(.34f, .5f); mn.startRotation = new ParticleSystem.MinMaxCurve(0, Mathf.PI * 2);
+            mn.startLifetime = new ParticleSystem.MinMaxCurve(.5f, .6f); mn.startSpeed = 0;   // speed/direction come from EmitParams
+            mn.startSize = new ParticleSystem.MinMaxCurve(.5f, .8f); mn.startRotation = new ParticleSystem.MinMaxCurve(0, Mathf.PI * 2);
             mn.startColor = LandingDustColor; mn.maxParticles = PlacementGhost.DustMax;
             mn.simulationSpace = ParticleSystemSimulationSpace.World; mn.scalingMode = ParticleSystemScalingMode.Shape;
-            mn.gravityModifier = -.06f; mn.stopAction = ParticleSystemStopAction.None; mn.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;
+            mn.gravityModifier = -.10f;   // v17.5 gentle rise mn.stopAction = ParticleSystemStopAction.None; mn.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;
             var em = ps.emission; em.enabled = false; em.rateOverTime = 0; em.SetBursts(new ParticleSystem.Burst[0]);
             var sh = ps.shape; sh.enabled = false;
-            var lv = ps.limitVelocityOverLifetime; lv.enabled = true; lv.drag = 3.2f; lv.multiplyDragByParticleSize = false; lv.multiplyDragByParticleVelocity = true;
-            var so = ps.sizeOverLifetime; so.enabled = true; so.size = new ParticleSystem.MinMaxCurve(1, new AnimationCurve(new Keyframe(0, .55f, 0, 3f), new Keyframe(.35f, 1.05f), new Keyframe(1, 1.4f)));
+            var lv = ps.limitVelocityOverLifetime; lv.enabled = true; lv.drag = 2.6f; lv.multiplyDragByParticleSize = false; lv.multiplyDragByParticleVelocity = true;
+            var so = ps.sizeOverLifetime; so.enabled = true; so.size = new ParticleSystem.MinMaxCurve(1, new AnimationCurve(new Keyframe(0, 1f, 0, 1.6f), new Keyframe(.4f, 1.38f), new Keyframe(1, 1.6f)));   // v17.5: x1.6 over life
             var col = ps.colorOverLifetime; col.enabled = true; var gr = new Gradient();
             gr.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(1f, .96f, .9f), 1) },
-                       new[] { new GradientAlphaKey(.95f, 0), new GradientAlphaKey(.85f, .55f), new GradientAlphaKey(0, 1) });   // holds ~0.25 s, gone by ~0.5 s
+                       new[] { new GradientAlphaKey(1f, 0), new GradientAlphaKey(.92f, .5f), new GradientAlphaKey(0, 1) });   // v17.5: holds ~0.28 s, gone by ~0.55 s
             col.color = gr;
             var tsa = ps.textureSheetAnimation; tsa.enabled = true; tsa.mode = ParticleSystemAnimationMode.Grid; tsa.numTilesX = 2; tsa.numTilesY = 2;
             tsa.animation = ParticleSystemAnimationType.WholeSheet; tsa.frameOverTime = new ParticleSystem.MinMaxCurve(0f, .99f);   // random fixed puff per particle

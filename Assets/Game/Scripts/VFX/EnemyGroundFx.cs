@@ -85,17 +85,17 @@ namespace StoneSignal.VFX
                 float yaw = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
                 var right = new Vector3(d.z, 0, -d.x).normalized; side = 1 - side;
                 var at = p + right * ((side == 0 ? -1 : 1) * radius * .32f);
-                at.y = SurfaceY(at, p) + footprintLift;
-                EnemyGroundFxSystem.Footprint(at, radius, yaw);
+                at.y = SurfaceY(at, p, out bool plank) + footprintLift;
+                EnemyGroundFxSystem.Footprint(at, radius, yaw, plank);   // v17.5: plank prints get the light dusty tint
                 last = p;
             }
         }
 
         /// v17.3: walk-surface top under a footprint (see class summary for the order).
-        float SurfaceY(Vector3 at, Vector3 root)
+        float SurfaceY(Vector3 at, Vector3 root, out bool plank)
         {
-            var v = Visual(); float feet = v ? v.position.y : root.y + groundY;
-            if (StoneSignal.WalkSurface.TryGet(at, out var y) && Mathf.Abs(y - feet) < .35f) return y;   // sanity: never far from the feet
+            var v = Visual(); float feet = v ? v.position.y : root.y + groundY; plank = false;
+            if (StoneSignal.WalkSurface.TryGet(at, out var y, out var kind) && Mathf.Abs(y - feet) < .35f) { plank = kind == StoneSignal.WalkSurface.Kind.Plank; return y; }   // sanity: never far from the feet
             if (groundMask.value != 0 && Physics.Raycast(new Vector3(at.x, feet + .6f, at.z), Vector3.down, out var hit, 1.4f, groundMask, QueryTriggerInteraction.Ignore)) return hit.point.y;
             return feet;
         }

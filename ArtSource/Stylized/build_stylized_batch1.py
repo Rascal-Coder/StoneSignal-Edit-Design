@@ -36,6 +36,7 @@ PALETTE = [
     ("SlotFire", "FF7A1F"), ("SlotIce", "7FE3FF"), ("SlotElec", "C77DFF"), ("SteelBlue", "C8D6FF"),
     ("GroundLavTop2", "84664F"), ("Dirt", "967259"), ("DirtDark", "7A5444"), ("Moss", "A4784C"),
     ("WallSide", "9A90AC"), ("WallSideDark", "7A7090"), ("StrataA", "9A5A4E"), ("StrataB", "7A4A52"), ("StrataC", "B07A68"), ("GrassTop", "B4844A"),
+    ("CoreCrystal", "61A1D5"),   # v17.5 cell 48: core crystal, mid blue sampled from the v17.3 mockup (NOT frost cyan #5FD0FF / SlotIce)
 ]
 PIDX = {n: i for i, (n, _) in enumerate(PALETTE)}
 def hex_rgb(h): return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -888,7 +889,8 @@ def core():  # signal core the enemies walk to (2x2, ally colours, outlined)
         a = k * math.tau / 6
         base.append(box((.16, .16, .7), (math.cos(a) * .62, math.sin(a) * .62, .7), "MechWhite", bevel=.03, rot=(0, 0, a)))
         base.append(box((.17, .17, .08), (math.cos(a) * .62, math.sin(a) * .62, 1.08), "AllyYellow", bevel=.02, rot=(0, 0, a)))
-    base += [cyl(.18, .0, .9, 6, (0, 0, 1.4), "SlotIce"), cyl(.18, .18, .4, 6, (0, 0, .75), "SlotIce"), cyl(.32, .32, .08, 10, (0, 0, .55), "Indigo")]
+    # v17.5: crystal = CoreCrystal (cell 48). The shipped FBX still carries SlotIce UVs; StylizedModelPostprocessor remaps them on import.
+    base += [cyl(.18, .0, .9, 6, (0, 0, 1.4), "CoreCrystal"), cyl(.18, .18, .4, 6, (0, 0, .75), "CoreCrystal"), cyl(.32, .32, .08, 10, (0, 0, .55), "Indigo")]
     return [to_object("SM_Prop_Core_01", base)]
 
 # ------------------------------------------------------------------ build

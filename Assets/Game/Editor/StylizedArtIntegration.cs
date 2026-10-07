@@ -677,6 +677,29 @@ public class StylizedModelPostprocessor : AssetPostprocessor
         if (!IsStylized || !NeedsOutline) return;
         foreach (var f in go.GetComponentsInChildren<MeshFilter>()) Bake(f.sharedMesh);
         foreach (var f in go.GetComponentsInChildren<SkinnedMeshRenderer>()) Bake(f.sharedMesh);
+        if (assetPath.EndsWith("/Towers/SM_Prop_Core_01.fbx"))   // v17.5: core crystal SlotIce (#7FE3FF, cyan) -> CoreCrystal (#61A1D5, mockup blue)
+        {
+            CrystalRemapped = 0;
+            foreach (var f in go.GetComponentsInChildren<MeshFilter>()) CrystalRemapped += RemapPaletteCell(f.sharedMesh, StylizedCoreV173.SlotIceCell, StylizedCoreV173.CoreCrystalCell);
+            if (CrystalRemapped == 0) Debug.LogWarning("CORE v17.5: SM_Prop_Core_01 has no SlotIce faces to remap (already CoreCrystal?)");
+        }
+    }
+
+    /// v17.5: loops of SM_Prop_Core_01 moved SlotIce -> CoreCrystal by the last import in this editor session (-1 = not imported yet).
+    public static int CrystalRemapped = -1;
+    /// Moves every UV0 inside palette cell `from` (16x16 cells, T_Env_Palette_D) to the centre of cell `to`. Returns the vertex count.
+    public static int RemapPaletteCell(Mesh m, int from, int to)
+    {
+        if (!m) return 0;
+        var uv = new List<Vector2>(); m.GetUVs(0, uv); int n = 0;
+        var dst = new Vector2((to % 16 + .5f) / 16f, 1f - (to / 16 + .5f) / 16f);
+        for (int i = 0; i < uv.Count; i++)
+        {
+            int cx = Mathf.Clamp(Mathf.FloorToInt(uv[i].x * 16f), 0, 15), cy = Mathf.Clamp(Mathf.FloorToInt((1f - uv[i].y) * 16f), 0, 15);
+            if (cy * 16 + cx == from) { uv[i] = dst; n++; }
+        }
+        if (n > 0) m.SetUVs(0, uv);
+        return n;
     }
 
     static void Bake(Mesh m)

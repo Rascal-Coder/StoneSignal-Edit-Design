@@ -7,6 +7,8 @@ Builds SM_Core_Enclosure_Intact / _Cracked / _Broken, each ONE merged mesh objec
   * shared palette texture T_Env_Palette_D (16 px cells, UV = palette cell centre, same as build_stylized_batch1.py),
   * vertex colour R = crack/rune glow mask (0..1) read by StoneSignal/ToonLit `_VColorEmission` (v17.3), G = AO (1),
     B = layer (1), A = phase (1). M_Core_Enclosure has _WindStrength 0, so R is never used as wind here.
+    v17.5: stone R = 0 (verified in the exported FBX), rune/crack/fissure R = GLOW, obelisk ember caps R = GLOW["cap"] (new);
+    ToonCore blends to the ember colour (lerp, not add) so accents peak ~1.0 and only R >= 0.95 (Broken) blooms slightly.
   * pivot = enclosure base = tile top (GridView places PF_Core_Enclosure at ArtCatalog.tileTop above the core pivot),
     fits the 2x2 core footprint (|x|,|y| <= 1.0), front = Blender -Y (-> Unity +Z); camera side = Blender +Y (low wall).
 Exports FBX (-Z forward / Y up / bake space transform / linear vertex colours) into Assets/Game/Art/Stylized/Environment/Core/
@@ -36,12 +38,16 @@ PALETTE = [  # must match build_stylized_batch1.py (T_Env_Palette_D)
     ("SlotFire", "FF7A1F"), ("SlotIce", "7FE3FF"), ("SlotElec", "C77DFF"), ("SteelBlue", "C8D6FF"),
     ("GroundLavTop2", "84664F"), ("Dirt", "967259"), ("DirtDark", "7A5444"), ("Moss", "A4784C"),
     ("WallSide", "9A90AC"), ("WallSideDark", "7A7090"), ("StrataA", "9A5A4E"), ("StrataB", "7A4A52"), ("StrataC", "B07A68"), ("GrassTop", "B4844A"),
+    ("CoreCrystal", "61A1D5"),   # v17.5 cell 48: SM_Prop_Core_01 crystal (mockup blue; StylizedModelPostprocessor remaps the SlotIce faces)
 ]
 PIDX = {n: i for i, (n, _) in enumerate(PALETTE)}
 def pal_uv(i): cx, cy = i % 16, i // 16; return ((cx + .5) / 16.0, 1.0 - (cy + .5) / 16.0)
 
-# glow levels (vertex R) per state
-GLOW = {"Intact": dict(rune=.45, crack=0, fissure=0), "Cracked": dict(rune=.7, crack=.85, fissure=.6), "Broken": dict(rune=.9, crack=1., fissure=1.)}
+# glow levels (vertex R) per state. Stone / walls / obelisk bodies always R = 0 (no emission).
+# v17.5: ToonCore blends towards baseCol * _VColorEmission (1.45) by R, so every accent peaks ~1.0 (no bloom); only R >= 0.95
+# (Broken crack + fissure = 1.0) gets the 1.35x HDR boost -> slight bloom. cap = obelisk ember caps (SlotHE), were R = 0 in v17.3.
+GLOW = {"Intact": dict(rune=.45, crack=0, fissure=0, cap=.35), "Cracked": dict(rune=.7, crack=.85, fissure=.6, cap=.45),
+        "Broken": dict(rune=.9, crack=1., fissure=1., cap=.55)}
 
 rng = random.Random(173)
 
@@ -177,11 +183,11 @@ def obelisks(state, glow):
         parts.append(box((.28, .28, .07), (x, y, .015), "StoneDark", top="WallSideDark", bevel=.015))         # footing
         parts.append(box((.2, .2, hb), (x, y, hb / 2), "WallSideDark", bevel=.02, top="WallSide", jitter_top=.08 if snapped else (.03 if state == "Broken" else 0)))
         if not snapped:
-            parts.append(cone(.15, .0, .14, 4, (x, y, h + .07), "SlotHE", rot=(0, 0, math.pi / 4)))            # ember cap
+            parts.append(cone(.15, .0, .14, 4, (x, y, h + .07), "SlotHE", rot=(0, 0, math.pi / 4), vc=(glow["cap"], 1, 1, 1)))   # ember cap (v17.5 R glow)
             parts.append(box((.24, .24, .035), (x, y, h + .005), "StoneDark"))                               # collar
         else:  # the broken top lies on the ground, tipped away from the core
             parts.append(box((.2, .2, h * .5), (x - sx * .07, y - sy * .40, .12), "WallSideDark", rot=(sy * 1.35, 0, .25), bevel=.02, top="WallSide"))
-            parts.append(cone(.15, 0, .14, 4, (x - sx * .07, y - sy * .70, .1), "SlotHE", rot=(sy * 1.7, 0, math.pi / 4 + .25)))
+            parts.append(cone(.15, 0, .14, 4, (x - sx * .07, y - sy * .70, .1), "SlotHE", rot=(sy * 1.7, 0, math.pi / 4 + .25), vc=(glow["cap"], 1, 1, 1)))
         # rune slit on the two outward faces (vertex R glow)
         top = (hb - .1) if not snapped else hb - .06
         for n in (Vector((sx, 0, 0)), Vector((0, sy, 0))):
@@ -239,14 +245,15 @@ def toon_material(name, emission_strength=0.0, red=0.0):
     nt.links.new(diff.outputs[0], s2r.inputs[0]); nt.links.new(s2r.outputs[0], ramp.inputs[0])
     nt.links.new(tex.outputs[0], mul.inputs[6]); nt.links.new(ramp.outputs[0], mul.inputs[7])
     col = mul.outputs[2]
-    if emission_strength > 0:   # == ToonCore: c += baseCol * vertex.r * _VColorEmission
+    if emission_strength > 0:   # == ToonCore v17.5: c = lerp(c, baseCol * _VColorEmission * hot, vertex.r)
         va = nt.nodes.new("ShaderNodeVertexColor"); va.layer_name = "Color"
         sep = nt.nodes.new("ShaderNodeSeparateColor"); nt.links.new(va.outputs[0], sep.inputs[0])
-        k = nt.nodes.new("ShaderNodeMath"); k.operation = 'MULTIPLY'; k.inputs[1].default_value = emission_strength; nt.links.new(sep.outputs[0], k.inputs[0])
+        hot = nt.nodes.new("ShaderNodeMapRange"); hot.clamp = True; nt.links.new(sep.outputs[0], hot.inputs[0])   # 1 + 0.35 * saturate(R*20-19)
+        hot.inputs[1].default_value = .95; hot.inputs[2].default_value = 1.0; hot.inputs[3].default_value = emission_strength; hot.inputs[4].default_value = emission_strength * 1.35
         em = nt.nodes.new("ShaderNodeMix"); em.data_type = 'RGBA'; em.blend_type = 'MULTIPLY'; em.inputs[0].default_value = 1
-        nt.links.new(tex.outputs[0], em.inputs[6]); nt.links.new(k.outputs[0], em.inputs[7])
-        add = nt.nodes.new("ShaderNodeMix"); add.data_type = 'RGBA'; add.blend_type = 'ADD'; add.inputs[0].default_value = 1
-        nt.links.new(col, add.inputs[6]); nt.links.new(em.outputs[2], add.inputs[7]); col = add.outputs[2]
+        nt.links.new(tex.outputs[0], em.inputs[6]); nt.links.new(hot.outputs[0], em.inputs[7])
+        lrp = nt.nodes.new("ShaderNodeMix"); lrp.data_type = 'RGBA'; lrp.blend_type = 'MIX'; nt.links.new(sep.outputs[0], lrp.inputs[0])
+        nt.links.new(col, lrp.inputs[6]); nt.links.new(em.outputs[2], lrp.inputs[7]); col = lrp.outputs[2]
     if red > 0:                 # CoreDamageFx critical: _HiColor (1,.12,.08) * _HiAmount on the core
         add = nt.nodes.new("ShaderNodeMix"); add.data_type = 'RGBA'; add.blend_type = 'ADD'; add.inputs[0].default_value = 1
         nt.links.new(col, add.inputs[6]); add.inputs[7].default_value = (red, red * .12, red * .08, 1); col = add.outputs[2]
@@ -281,7 +288,7 @@ if RENDER:
     sc.render.film_transparent = False; sc.view_settings.view_transform = 'Standard'
     world = bpy.data.worlds.new("W"); world.use_nodes = True; world.node_tree.nodes["Background"].inputs[0].default_value = (.05, .05, .07, 1); sc.world = world
     sun = bpy.data.objects.new("Sun", bpy.data.lights.new("Sun", 'SUN')); sun.data.energy = 3; sun.rotation_euler = (math.radians(50), 0, math.radians(-35)); sc.collection.objects.link(sun)
-    envm = toon_material("Env", 0); encm = toon_material("Enc", 2.2)
+    envm = toon_material("Env", 0); encm = toon_material("Enc", 1.45)   # v17.5 _VColorEmission
     for o in objs.values(): o.data.materials[0] = encm
     # ground tiles: 4x4 cells around the 2x2 core, tile top = 0 (enclosure pivot)
     tiles = []

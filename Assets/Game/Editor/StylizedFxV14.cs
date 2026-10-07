@@ -111,6 +111,8 @@ public static class StylizedFxV14
     /// 0.73-ish particle alpha, folded into one number). Effective luminance step: ~-30 on dark bridge planks (v17.3: -22), ~-85 on
     /// light island sand (dev #1E120A x 0.7: -99, the "black stamp" look).
     public static readonly Color FootprintColor = new Color(0x24 / 255f, 0x16 / 255f, 0x0C / 255f, .62f);
+    /// v17.5: prints on bridge planks (WalkSurface.Kind.Plank -> particle colour R 0 -> SS_GroundPrint _PlankColor): light dusty #C9A57A, a 0.55.
+    public static readonly Color PlankFootprintColor = new Color(0xC9 / 255f, 0xA5 / 255f, 0x7A / 255f, .55f);
 
     static void BuildEnemyGround()
     {
@@ -128,7 +130,7 @@ public static class StylizedFxV14
         var psh = Shader.Find("StoneSignal/SS_GroundPrint"); if (!psh) throw new System.Exception("SS_GroundPrint shader missing");
         var fpm = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_VFX_Footprint.mat"); if (!fpm) { fpm = new Material(psh); AssetDatabase.CreateAsset(fpm, MatDir + "M_VFX_Footprint.mat"); }
         fpm.shader = psh; fpm.shaderKeywords = new string[0];
-        fpm.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(fpTex)); fpm.SetColor("_BaseColor", FootprintColor);
+        fpm.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(fpTex)); fpm.SetColor("_BaseColor", FootprintColor); fpm.SetColor("_PlankColor", PlankFootprintColor);
         fpm.renderQueue = 2995; fpm.enableInstancing = false; EditorUtility.SetDirty(fpm);
         var dust = EmitPS(sysGo.transform, "Dust", fpm, 1.5f, .40f, Color.white, EnemyGroundFxSystem.MaxFootprints);   // v17.4: opacity lives in FootprintColor.a
         dust.GetComponent<ParticleSystemRenderer>().renderMode = ParticleSystemRenderMode.HorizontalBillboard;

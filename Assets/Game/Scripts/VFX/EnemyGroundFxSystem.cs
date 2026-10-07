@@ -10,6 +10,8 @@ namespace StoneSignal.VFX
     /// (queue 2995 after opaque, ZTest LEqual, small depth offset); heights resolved by EnemyGroundFx from StoneSignal.WalkSurface.
     /// v17.4: colour + opacity come ONLY from M_VFX_Footprint _BaseColor, written by StylizedFxV14.FootprintColor (#24160C, a 0.62);
     /// the particle start colour is white. Change the value in the builder (BatchImport overwrites the material).
+    /// v17.5: prints on bridge planks (WalkSurface.Kind.Plank) are emitted with colour (0,1,1,1); SS_GroundPrint then uses _PlankColor
+    /// (StylizedFxV14.PlankFootprintColor #C9A57A, a 0.55) instead of _BaseColor. Sand / tile prints unchanged (white -> _BaseColor).
     public class EnemyGroundFxSystem : MonoBehaviour
     {
         public static EnemyGroundFxSystem Instance { get; private set; }
@@ -28,12 +30,16 @@ namespace StoneSignal.VFX
         /// Emit one footprint (random rotation). Silently dropped when no system exists or the cap is reached.
         public static void Footprint(Vector3 pos, float radius) => Footprint(pos, radius, Random.Range(0, 360f));
         /// v17.2: footprint aligned to the walk heading (yaw degrees, world).
-        public static void Footprint(Vector3 pos, float radius, float yaw)
+        public static void Footprint(Vector3 pos, float radius, float yaw) => Footprint(pos, radius, yaw, false);
+        /// v17.5: plank = print lies on a bridge deck (light dusty tint via SS_GroundPrint _PlankColor).
+        public static void Footprint(Vector3 pos, float radius, float yaw, bool plank)
         {
             var s = Instance; if (s == null || s.dust == null || s.dust.particleCount >= MaxFootprints) return;
             float size = Mathf.Lerp(s.footprintSize.x, s.footprintSize.y, Mathf.InverseLerp(.2f, 1f, radius));
-            s.dust.Emit(new ParticleSystem.EmitParams { position = pos, startSize = size, rotation = yaw * s.footprintYawSign + s.footprintYawOffset, applyShapeToPosition = false }, 1);
+            s.dust.Emit(new ParticleSystem.EmitParams { position = pos, startSize = size, rotation = yaw * s.footprintYawSign + s.footprintYawOffset,
+                startColor = plank ? PlankMark : (Color32)Color.white, applyShapeToPosition = false }, 1);
         }
+        static readonly Color32 PlankMark = new Color32(0, 255, 255, 255);   // R 0 = plank (SS_GroundPrint); alpha stays 1 (lifetime fade multiplies it)
         public void Clear() { if (dust) dust.Clear(); }
     }
 }
