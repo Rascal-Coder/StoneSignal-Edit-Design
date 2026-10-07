@@ -16,5 +16,11 @@ namespace StoneSignal
         public EnemyKind kind;
         public EnemyData splitChild;
         [Min(0)] public int splitCount;
+        [Header("Presentation (visual only)")]
+        [Tooltip("Scale applied to split children; 1 when the child has its own sized prefab.")]
+        [Min(.05f)] public float splitChildScale = .65f;
+        public GameObject deathVfx;
+        public GameObject coinVfx;
+        public GameObject splitVfx;
     }
 }

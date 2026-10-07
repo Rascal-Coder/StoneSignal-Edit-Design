@@ -98,7 +98,7 @@ namespace StoneSignal
         private void DrawPath()
         {
             route.positionCount = pathfinding.CurrentPath.Count;
-            for (int i = 0; i < pathfinding.CurrentPath.Count; i++) route.SetPosition(i, grid.ToWorld(pathfinding.CurrentPath[i]) + Vector3.up * (art != null ? .22f : .03f));
+            for (int i = 0; i < pathfinding.CurrentPath.Count; i++) route.SetPosition(i, grid.ToWorld(pathfinding.CurrentPath[i]) + Vector3.up * (art != null ? art.tileTop + .02f : .03f));
             var vertices = new List<Vector3>(); var triangles = new List<int>();
             float lift = art != null ? .25f : .05f;
             for (int i = 0; i < pathfinding.CurrentPath.Count - 1; i += 2)

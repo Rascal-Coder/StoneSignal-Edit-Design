@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using StoneSignal.VFX;
 
 namespace StoneSignal
 {
@@ -37,6 +38,10 @@ namespace StoneSignal
             }
         }
         public event System.Action<Enemy, float> Damaged;
+        // Presentation info about the most recent hit, read by CombatFeedback inside Damaged.
+        public DamageKind LastHitKind { get; private set; }
+        public bool LastHitCrit { get; private set; }
+        public EnemyHitFeedback Feedback { get; private set; }
 
         public void Initialize(EnemyManager manager, GridManager map, EnemyData data, VisualPalette palette, float hpScale, float speedScale)
         {
@@ -54,6 +59,9 @@ namespace StoneSignal
         }
         private void BindAnimator()
         {
+            Feedback = GetComponentInChildren<EnemyHitFeedback>();
+            // Death VFX are data-driven via EnemyData; avoid a second copy from the prefab field.
+            if (Feedback != null) Feedback.deathVfx = null;
             animator = GetComponentInChildren<Animator>();
             if (animator == null) return;
             animator.applyRootMotion = false;
@@ -84,8 +92,10 @@ namespace StoneSignal
         }
         private void Update()
         {
+            if (!Alive) return; // dead: leave the animator running the death clip
             bool moving = Alive && owner != null && owner.CanMove();
             if (animator != null) animator.speed = moving ? 1 : 0;
+            if (Feedback != null && Alive && Data != null) Feedback.SetMoveSpeed(speed * owner.SpeedMultiplier() * slowMultiplier / Mathf.Max(.01f, Data.moveSpeed));
             if (moving) Advance(Time.deltaTime);
         }
         public void Advance(float deltaTime)
@@ -109,9 +119,12 @@ namespace StoneSignal
             if (hpBar != null) hpBar.position = transform.position + Vector3.up * .75f;
             if (node >= path.Count) Resolve(EnemyResolution.Escaped);
         }
-        public void TakeDamage(float damage)
+        public void TakeDamage(float damage) => TakeDamage(damage, DamageKind.Physical, false);
+        public void TakeDamage(float damage, DamageKind kind, bool crit)
         {
             if (!Alive || damage <= 0) return;
+            LastHitKind = kind; LastHitCrit = crit;
+            if (Feedback != null) Feedback.OnHit();
             HP = Mathf.Max(0, HP - damage);
             flashUntil = Time.time + .09f;
             if (healthFill != null) healthFill.localScale = new Vector3(HP / maxHP, 1, 1);
@@ -124,7 +137,13 @@ namespace StoneSignal
             Alive = false;
             owner.Resolve(this, reason);
             if (hpBar != null) PrimitiveVisual.DestroyObject(hpBar.gameObject);
-            if (Application.isPlaying && reason == EnemyResolution.Killed) StartCoroutine(DeathRoutine());
+            if (Application.isPlaying && reason == EnemyResolution.Killed && Feedback != null)
+            {
+                if (animator != null) animator.speed = 1;
+                // Registry already released this enemy; only the visual lingers until the dissolve finishes.
+                Feedback.PlayDeath(() => { if (this != null) Destroy(gameObject); });
+            }
+            else if (Application.isPlaying && reason == EnemyResolution.Killed) StartCoroutine(DeathRoutine());
             else PrimitiveVisual.DestroyObject(gameObject);
         }
         private System.Collections.IEnumerator DeathRoutine()
@@ -140,7 +159,8 @@ namespace StoneSignal
         }
         private void LateUpdate()
         {
-            if (bodies == null) return;
+            // Stylized enemies flash through EnemyHitFeedback; writing a property block here would erase it.
+            if (bodies == null || Feedback != null) return;
             bool flash=Time.time<flashUntil;
             tint.SetColor("_BaseColor",Color.white*2);
             foreach(var body in bodies) if(body!=null) body.SetPropertyBlock(flash ? tint : null);

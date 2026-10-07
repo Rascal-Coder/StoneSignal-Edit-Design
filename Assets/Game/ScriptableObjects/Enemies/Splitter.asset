@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065fe556319f0084397adab15e367e3e, type: 3}
   m_Name: Splitter
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 8568733656481870027, guid: ecb42254d1a954f4ab11b820d8635972, type: 3}
+  visualPrefab: {fileID: 3894358837676424050, guid: 058e6e5e660a7a345b154aabb59f5812, type: 3}
   displayName: Splitter
   hp: 42
   moveSpeed: 1.1
@@ -22,3 +22,7 @@ MonoBehaviour:
   kind: 3
   splitChild: {fileID: 11400000, guid: 7f4ee6a2515e42b4bd6cd8b5dd01fce1, type: 2}
   splitCount: 2
+  splitChildScale: 1
+  deathVfx: {fileID: 1471683524797061847, guid: 1a24321d256d67145a0f66567153eeec, type: 3}
+  coinVfx: {fileID: 1247375302900105625, guid: 15519893c6c62c443857c055167f1602, type: 3}
+  splitVfx: {fileID: 3938352299960152859, guid: 5f5862b5cc23cce499153bac5e299ee4, type: 3}

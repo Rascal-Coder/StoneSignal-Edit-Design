@@ -93,3 +93,21 @@ Validation：引擎编译、美术引用/尺度/URP/无碰撞器检查、第二�
 - New visual-only runtime scripts in Assets/Game/Scripts/VFX (namespace StoneSignal.VFX): EnemyHitFeedback, DamageNumbers/DamageNumber (TextMeshPro), CameraShake, HitStop, TeslaArc, StylizedVfx. No gameplay values changed; Game.unity/ArtCatalog untouched.
 - 26 VFX prefabs in Assets/Game/VFX/Stylized (+ Resources/StylizedVFX/PF_FX_DamageNumber); showcase scene Assets/Game/Scenes/StylizedVFXShowcase.unity.
 - Added com.unity.textmeshpro 3.0.9 + TMP Essential Resources (Assets/TextMesh Pro).
+
+## 2026-10-07 — Stylized 美术接入玩法（塔 / 敌人 / 核心 / 战斗特效）
+
+Added:
+
+- `StoneSignal/Stylized art/Wire gameplay (towers, enemies, core, VFX)`（`Assets/Game/Editor/StylizedGameplayWiring.cs`）：幂等地把 Stylized 预制体与 VFX 写入 Towers/Enemies/ArtCatalog 资产；`Check gameplay wiring` 校验塔头、EnemyHitFeedback、Animator 与伤害数字预制体。注意：`Import third-party art pack` 会把这些字段改回 Kenney/Quaternius，之后需重跑本工具。
+- `TowerData` 表现字段：`headName`（空 = 自动找 `*_Head`）、`muzzleHeight/Forward`、`lobbedShot/lobHeight`、`damageKind`、`muzzleVfx/projectileVfx/hitVfx/explosionVfx`、`explosionOnEveryHit/OnCrit/OnKill`、`impactShake`、`impactHitStop`；玩法字段 `critChance/critMultiplier`。
+- `EnemyData` 表现字段：`deathVfx`、`coinVfx`、`splitVfx`、`splitChildScale`；`ArtCatalog.coreHitVfx`。
+
+Changed:
+
+- 映射：Needle→PF_Tower_Gatling_1x1、Pulse→PF_Tower_Tesla_1x1、Seismic→PF_Tower_Mortar_2x2、Chill→PF_Tower_Frost_1x1；Drifter/Skimmer/Bulwark/Splitter/Shard→PF_Enemy_*；核心→PF_Prop_Core；墙块→PF_Env_Rock_1x1，地块→PF_Env_Tile_Stone_A/B、路面→PF_Env_Tile_Dirt。Cannon/Flamer/Flyer/Boss 未接入。
+- 度量改为 `tileTop` 0.25 / `blockTop` 0.6：塔预制体以底面为轴心，站在地面 0.25 或墙顶 0.6；敌人视觉站在地面 0.25。
+- 瞄准时只旋转塔头（Tesla 无塔头不转）；Seismic 炮口取塔头包围盒顶部并沿 60° 上仰，炮弹走抛物线（仅视觉，命中时机不变）；Pulse 用 TeslaArc 瞬间电弧，逻辑弹体不可见。
+- 敌人受击走 `EnemyHitFeedback.OnHit()`，移动速度驱动 `MoveSpeed`；击杀后注册表立即释放（波次/金币时序不变），视觉在 `PlayDeath` 回调后才销毁；死亡播放 DeathPuff + CoinPop，Splitter 额外 SplitBurst，Shard 用自身预制体不再缩放 0.65。
+- 伤害数字改为 `DamageNumbers.Spawn`（按塔伤害类型着色，暴击放大）；敌人抵达核心播放 FX_Hit_Core + Heavy 震屏；Seismic 爆炸 Light 震屏；Needle 暴击 0.03s HitStop；普通子弹不震屏。`Time.timeScale` 改动前先 `HitStop.Cancel()`。
+
+Validation：Tuanjie 2022.3.62t16 batchmode 编译通过；`StylizedGameplayWiring.BatchWire` problems=0；`Stage2Validation.Run` 全部 MILESTONE 与 SCENE REFERENCES PASS。Play 模式 VFX 尺寸未目检。

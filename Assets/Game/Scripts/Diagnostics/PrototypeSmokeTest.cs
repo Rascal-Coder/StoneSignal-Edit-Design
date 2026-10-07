@@ -129,10 +129,10 @@ namespace StoneSignal
                     yield return new WaitForSecondsRealtime(1.3f);
                     yield return Capture("03-combat");
                 }
-                Time.timeScale=4;
+                StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=4;
                 float deadline=Time.realtimeSinceStartup+45;
                 while(session.Game.State==GameState.Combat && Time.realtimeSinceStartup<deadline) yield return null;
-                Time.timeScale=1;
+                StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1;
                 Require(session.Game.State==GameState.Reward && session.Waves.Remaining==0 && session.Enemies.Active.Count==0,"Wave "+(wave+1)+" completed through real combat");
                 Require(spawnCounts[wave]==session.config.waves[wave].Total+childCounts[wave],"Wave "+(wave+1)+" exact spawn count");
                 Require(session.Economy.Gold>goldBefore,"Wave "+(wave+1)+" kills earn gold");
@@ -154,7 +154,7 @@ namespace StoneSignal
         }
         private void Finish()
         {
-            Time.timeScale=1;
+            StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1;
             results.Add("CHECKS: "+checks+"; RESULT: "+(failed?"FAIL":"PASS"));
             File.WriteAllLines(Path.Combine(captureDirectory,"play-verification.txt"),results);
             Debug.Log(failed?"PROTOTYPE SMOKE FAILED":"PROTOTYPE SMOKE PASSED");

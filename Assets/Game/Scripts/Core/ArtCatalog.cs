@@ -27,6 +27,9 @@ namespace StoneSignal
         [Header("Scene")]
         public Material atlas;
         public Material backdrop;
+        [Header("Combat VFX")]
+        [Tooltip("Played where an enemy reaches the core.")]
+        public GameObject coreHitVfx;
         [Header("Metrics")]
         public float tileTop = .2f;
         public float blockTop = .7f;

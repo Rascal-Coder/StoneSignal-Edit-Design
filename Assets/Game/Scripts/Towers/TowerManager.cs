@@ -48,7 +48,8 @@ namespace StoneSignal
             string reason = validator.ValidateTower(cell);
             if (reason != null) { Notice?.Invoke(reason); return false; }
             if (!spend(Cost(Data[index]))) { Notice?.Invoke("Not enough gold"); return false; }
-            float elevation=grid.Get(cell)==CellState.Blocked && palette.art!=null ? palette.art.blockTop - palette.art.tileTop : 0;
+            // Tower prefabs pivot at their base: stand on the wall block top face or on the ground tile top.
+            float elevation=palette.art==null ? 0 : grid.Get(cell)==CellState.Blocked ? palette.art.blockTop : palette.art.tileTop;
             grid.CommitTower(cell);
             var obj = new GameObject(Data[index].displayName); obj.transform.SetParent(transform); obj.transform.position = grid.ToWorld(cell);
             var tower = obj.AddComponent<Tower>(); tower.Initialize(Data[index],enemies,palette,modifiers,canAttack,missiles,elevation); towers.Add(tower);

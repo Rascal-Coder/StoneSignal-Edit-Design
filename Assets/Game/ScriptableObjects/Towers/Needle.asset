@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 748c5553e075d5d40a5411fb592bc497, type: 3}
   m_Name: Needle
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 6826785426990125707, guid: 9ff8c4d794f8b6044acdabe107c4de70, type: 3}
+  visualPrefab: {fileID: 7138806917834664, guid: 7ba34cd81fa10f748a312b503e2a0562, type: 3}
   icon: {fileID: 21300000, guid: e396d248d7e65ea4192aa746228e8799, type: 3}
   displayName: Needle Beacon
   role: Focused single target DPS.
@@ -25,3 +25,20 @@ MonoBehaviour:
   damage: 12
   projectileSpeed: 13
   splashRadius: 0
+  critChance: 0.1
+  critMultiplier: 1.5
+  headName: 
+  muzzleHeight: 0.65
+  muzzleForward: 0.45
+  lobbedShot: 0
+  lobHeight: 1.5
+  damageKind: 0
+  muzzleVfx: {fileID: 3198075339997902729, guid: c93e3c96bb1fe344f8921e2c1ea72813, type: 3}
+  projectileVfx: {fileID: 5088249297589364784, guid: 48bc6beacd0f3824a9dd6dddd396860d, type: 3}
+  hitVfx: {fileID: 2844797562527334250, guid: 940590338b33ee847841183a2036e72d, type: 3}
+  explosionVfx: {fileID: 2555124146446620558, guid: 9baa4ecff97e5414ca5455c5b45ca9e4, type: 3}
+  explosionOnEveryHit: 0
+  explosionOnCrit: 1
+  explosionOnKill: 0
+  impactShake: 0
+  impactHitStop: 0.03

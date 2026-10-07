@@ -80,3 +80,10 @@ Quaternius 四只怪物全部导入，映射为：Drifter = Slime、Skimmer = Ba
 Kenney 全部模型共用一张 `colormap.png` 图集，UV 由模型自带。工具把 FBX 内嵌材质统一重映射到一张 URP/Lit 图集材质（Metallic 0、Smoothness 0.1），四座塔各有一份色调变体作为乘法叠加以区分武器。**注意：包内的 `Models/Textures/variation-a.png` 是配色样板，不是模型贴图**（它去掉了中间的绿色带），误用会让整块棋盘变橙；正确贴图在 `Models/FBX format/Textures/colormap.png`。
 
 Quaternius 怪物是纯色材质、无贴图，工具在导入时解析包内 `.mtl` 生成对应颜色的 URP 材质，运行时颜色与原始设定一致。
+
+## Stylized 战斗表现（2026-10-07）
+
+- 表现全部由 TowerData / EnemyData / ArtCatalog 数据驱动，编辑器工具 `StylizedGameplayWiring` 负责写入；运行时代码不硬编码预制体。
+- 表现层不改变命中时机与伤害结算：抛物线、电弧、死亡溶解都只是视觉；敌人在击杀瞬间就离开注册表。
+- 反馈克制：震屏只用于 Seismic 爆炸（Light）与敌人抵达核心（Heavy），HitStop 只用于 Needle 暴击；普通子弹不震屏。
+- 当前例外：Cannon/Flamer/Flyer/Boss 资产已导入但未接入玩法；Mortar 预制体为 2×2 外观但玩法仍占 1 格；塔图标仍是旧 Kenney 渲染。

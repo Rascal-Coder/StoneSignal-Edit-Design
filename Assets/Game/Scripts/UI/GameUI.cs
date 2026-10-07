@@ -104,7 +104,7 @@ namespace StoneSignal
             var panel=Panel(root,"Game over",new Color(.03f,.035f,.055f,.97f)); Fill(panel); overPanel=panel.gameObject;
             var text=Label(panel,"THE CORE WENT DARK",38,ink,0,0,800,70); Center(text.rectTransform,0,-85,800,70); text.alignment=TextAnchor.MiddleCenter;
             var tip=Label(panel,"Extend the route and spread your beacons along it.",19,muted,0,0,850,44); Center(tip.rectTransform,0,-10,850,44); tip.alignment=TextAnchor.MiddleCenter;
-            var restart=MakeButton(panel,"RESTART RUN",19,0,0,270,60,() => { Time.timeScale=1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }); Center((RectTransform)restart.transform,0,90,270,60);
+            var restart=MakeButton(panel,"RESTART RUN",19,0,0,270,60,() => { StoneSignal.VFX.HitStop.Cancel(); Time.timeScale=1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }); Center((RectTransform)restart.transform,0,90,270,60);
             overPanel.SetActive(false);
         }
         private void Refresh()

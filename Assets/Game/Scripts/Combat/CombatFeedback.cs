@@ -1,32 +1,46 @@
 using UnityEngine;
+using StoneSignal.VFX;
 
 namespace StoneSignal
 {
+    // Presentation-only reactions to combat events: damage numbers, death/coin/split VFX and core hits.
     public sealed class CombatFeedback : MonoBehaviour
     {
         private EnemyManager enemies;
         private VisualPalette palette;
         private Camera viewCamera;
-        private Font font;
         public void Initialize(EnemyManager registry, VisualPalette colors, Camera camera)
         {
-            enemies=registry; palette=colors; viewCamera=camera; font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            enemies=registry; palette=colors; viewCamera=camera;
+            if (viewCamera != null && viewCamera.GetComponent<CameraShake>() == null) viewCamera.gameObject.AddComponent<CameraShake>();
             enemies.Spawned+=OnSpawn; enemies.Resolved+=OnResolved; Projectile.Impact+=OnImpact;
         }
         private void OnSpawn(Enemy enemy) { enemy.Damaged+=OnDamage; }
         private void OnDamage(Enemy enemy,float damage)
         {
-            var obj=new GameObject("Damage number"); obj.transform.SetParent(transform); obj.transform.position=enemy.transform.position+Vector3.up;
-            var text=obj.AddComponent<TextMesh>(); text.font=font; text.fontSize=42; text.characterSize=.07f; text.anchor=TextAnchor.MiddleCenter; text.alignment=TextAlignment.Center; text.color=new Color(1,.89f,.5f); text.text=Mathf.RoundToInt(damage).ToString();
-            text.GetComponent<MeshRenderer>().sharedMaterial=font.material;
-            obj.AddComponent<FloatingDamage>().Initialize(viewCamera);
+            DamageNumbers.Spawn(enemy.transform.position+Vector3.up*.6f,damage,enemy.LastHitKind,enemy.LastHitCrit,enemy);
         }
         private void OnResolved(Enemy enemy,EnemyResolution reason)
         {
             enemy.Damaged-=OnDamage;
-            if(reason==EnemyResolution.Killed) Burst(enemy.transform.position,new Color(1,.65f,.25f),16);
+            var data=enemy.Data; Vector3 at=enemy.transform.position;
+            if(reason==EnemyResolution.Killed)
+            {
+                bool styled=data.deathVfx!=null || data.coinVfx!=null;
+                if(data.deathVfx!=null) StylizedVfx.Play(data.deathVfx,at);
+                if(data.coinVfx!=null) StylizedVfx.Play(data.coinVfx,at+Vector3.up*.3f);
+                if(data.splitChild!=null && data.splitCount>0 && data.splitVfx!=null) StylizedVfx.Play(data.splitVfx,at);
+                if(!styled) Burst(at,new Color(1,.65f,.25f),16);
+            }
+            else if(reason==EnemyResolution.Escaped)
+            {
+                var art=palette!=null ? palette.art : null;
+                if(art!=null && art.coreHitVfx!=null) StylizedVfx.Play(art.coreHitVfx,at);
+                CameraShake.Shake(CameraShake.Preset.Heavy);
+            }
         }
-        private void OnImpact(Vector3 point,float radius) { Burst(point,radius>0 ? new Color(1,.6f,.25f) : new Color(.5f,1,.9f),radius>0?20:7); }
+        // Stylized towers play their own impact VFX; only primitive fallbacks use the old particle burst.
+        private void OnImpact(Vector3 point,float radius) { if(palette!=null && palette.art!=null && palette.art.coreHitVfx!=null) return; Burst(point,radius>0 ? new Color(1,.6f,.25f) : new Color(.5f,1,.9f),radius>0?20:7); }
         private void Burst(Vector3 point,Color color,int count)
         {
             var obj=new GameObject("Impact particles"); obj.transform.SetParent(transform); obj.transform.position=point;
@@ -40,6 +54,7 @@ namespace StoneSignal
         private void OnDestroy()
         {
             Projectile.Impact-=OnImpact;
+            HitStop.Cancel();
             if(enemies==null) return;
             enemies.Spawned-=OnSpawn; enemies.Resolved-=OnResolved;
             foreach(Enemy enemy in enemies.Active) if(enemy!=null) enemy.Damaged-=OnDamage;

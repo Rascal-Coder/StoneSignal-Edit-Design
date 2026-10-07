@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using StoneSignal.VFX;
 
 namespace StoneSignal
 {
@@ -26,7 +27,9 @@ namespace StoneSignal
             GameObject obj;
             if(data.visualPrefab!=null) {
                 obj=new GameObject(data.displayName);obj.transform.SetParent(transform);obj.transform.position=grid.ToWorld(grid.spawn);
-                ArtVisual.Create(data.visualPrefab,obj.transform,obj.transform.position-Vector3.up*.45f);
+                // Logical enemy height is +0.45 over the grid plane; the visual stands on the ground tile top.
+                float ground = palette != null && palette.art != null ? palette.art.tileTop : 0;
+                ArtVisual.Create(data.visualPrefab,obj.transform,obj.transform.position+Vector3.up*(ground-.45f));
             } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(grid.spawn), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
             Enemy enemy = obj.AddComponent<Enemy>();
             enemy.Initialize(this, grid, data, palette, hpScale, speedScale);
@@ -42,7 +45,7 @@ namespace StoneSignal
                 for(int i=0;i<enemy.Data.splitCount;i++) {
                     var child=Spawn(enemy.Data.splitChild,enemy.HPScale,enemy.SpeedScale);
                     child.ResumeFrom(enemy.transform.position,enemy.NavigationAnchor);
-                    child.transform.localScale *= .65f;
+                    child.transform.localScale *= enemy.Data.splitChildScale;
                 }
             }
             Resolved?.Invoke(enemy, reason);
@@ -68,11 +71,12 @@ namespace StoneSignal
                 { best = enemy; remaining = enemy.RemainingDistance; }
             return best;
         }
-        public void DamageArea(Vector3 position, float radius, float damage)
+        public void DamageArea(Vector3 position, float radius, float damage) => DamageArea(position, radius, damage, DamageKind.Physical, false);
+        public void DamageArea(Vector3 position, float radius, float damage, DamageKind kind, bool crit)
         {
             // Damage can remove entries immediately; iterate a small snapshot.
             foreach (Enemy enemy in active.ToArray())
-                if (enemy.Alive && (enemy.transform.position - position).sqrMagnitude <= radius * radius) enemy.TakeDamage(damage);
+                if (enemy.Alive && (enemy.transform.position - position).sqrMagnitude <= radius * radius) enemy.TakeDamage(damage, kind, crit);
         }
         private void OnDestroy() { if (Paths != null) Paths.PathChanged -= RepathAll; }
     }

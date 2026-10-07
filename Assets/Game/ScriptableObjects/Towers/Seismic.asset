@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 748c5553e075d5d40a5411fb592bc497, type: 3}
   m_Name: Seismic
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 2587311301516743327, guid: 702a8eb0baa0e2b4eb8ad667658f1b2d, type: 3}
+  visualPrefab: {fileID: 3591868079714275055, guid: 4e1219d8bb777c744869ff5e82d152ae, type: 3}
   icon: {fileID: 21300000, guid: 75106159361f442498c788de2a53847c, type: 3}
   displayName: Seismic Beacon
   role: Heavy area burst. Pair with Chill.
@@ -25,3 +25,20 @@ MonoBehaviour:
   damage: 30
   projectileSpeed: 9
   splashRadius: 1.35
+  critChance: 0
+  critMultiplier: 1.5
+  headName: 
+  muzzleHeight: 0.65
+  muzzleForward: 0.45
+  lobbedShot: 1
+  lobHeight: 1.5
+  damageKind: 4
+  muzzleVfx: {fileID: 3074966715372117092, guid: 4fc289eaec825644d93c36cec5a7edac, type: 3}
+  projectileVfx: {fileID: 6039740202961131875, guid: 6e47ed2253b4b9d45a5317f05719220f, type: 3}
+  hitVfx: {fileID: 0}
+  explosionVfx: {fileID: 6527737813856084784, guid: f90d78be03692c742b4e9a9cc0c14d7b, type: 3}
+  explosionOnEveryHit: 1
+  explosionOnCrit: 0
+  explosionOnKill: 0
+  impactShake: 1
+  impactHitStop: 0

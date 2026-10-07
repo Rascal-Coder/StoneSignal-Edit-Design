@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using StoneSignal.VFX;
 
 namespace StoneSignal
 {
@@ -10,10 +11,20 @@ namespace StoneSignal
         private float speed, damage, radius, lifetime, slowFraction, slowDuration;
         private Func<bool> canMove;
         private bool resolved;
+        // Presentation only; never changes hit timing or damage.
+        private TowerData source;
+        private bool crit;
+        private float lobHeight, travelled;
+        private Vector3 groundPosition;
         public static event Action<Vector3, float> Impact;
         public void Initialize(Enemy destination, EnemyManager registry, float moveSpeed, float hitDamage, float splash, Func<bool> allowed, float slow = 0, float duration = 0)
         {
             slowFraction=slow; slowDuration=duration; target = destination; enemies = registry; speed = moveSpeed; damage = hitDamage; radius = splash; canMove = allowed;
+            groundPosition = transform.position;
+        }
+        public void SetPresentation(TowerData data, bool critical, float arcHeight)
+        {
+            source = data; crit = critical; lobHeight = arcHeight;
         }
         private void Update() { if (canMove != null && canMove()) Advance(Time.deltaTime); }
         public void Advance(float deltaTime)
@@ -22,16 +33,41 @@ namespace StoneSignal
             if (target == null || !target.Alive) { Dispose(); return; }
             lifetime += deltaTime;
             Vector3 destination = target.transform.position;
-            float distance = Vector3.Distance(transform.position, destination);
+            float distance = Vector3.Distance(groundPosition, destination);
             if (distance <= speed * deltaTime + .1f)
             {
+                var kind = source != null ? source.damageKind : DamageKind.Physical;
                 target.ApplySlow(slowFraction,slowDuration);
-                if (radius > 0) enemies.DamageArea(destination, radius, damage); else target.TakeDamage(damage);
+                if (radius > 0) enemies.DamageArea(destination, radius, damage, kind, crit); else target.TakeDamage(damage, kind, crit);
                 Impact?.Invoke(destination, radius);
+                PlayImpact(destination, !target.Alive);
                 Dispose();
             }
             else if (lifetime > 6) Dispose();
-            else transform.position = Vector3.MoveTowards(transform.position, destination, speed * deltaTime);
+            else
+            {
+                groundPosition = Vector3.MoveTowards(groundPosition, destination, speed * deltaTime);
+                travelled += speed * deltaTime;
+                float lift = 0;
+                if (lobHeight > 0) { float k = travelled / Mathf.Max(.01f, travelled + distance); lift = 4 * lobHeight * k * (1 - k); }
+                Vector3 next = groundPosition + Vector3.up * lift;
+                Vector3 step = next - transform.position;
+                transform.position = next;
+                if (step.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(step);
+            }
+        }
+        private void PlayImpact(Vector3 point, bool killed)
+        {
+            if (source == null) return;
+            Vector3 at = point + Vector3.up * .3f;
+            bool big = source.explosionVfx != null && (source.explosionOnEveryHit || (crit && source.explosionOnCrit) || (killed && source.explosionOnKill));
+            if (big) StylizedVfx.Play(source.explosionVfx, point);
+            else if (source.hitVfx != null) StylizedVfx.Play(source.hitVfx, at);
+            if (big || crit)
+            {
+                if (source.impactShake != FeedbackShake.None) CameraShake.Shake((CameraShake.Preset)((int)source.impactShake - 1));
+                if (source.impactHitStop > 0) HitStop.Trigger(source.impactHitStop, .05f);
+            }
         }
         private void Dispose() { resolved = true; PrimitiveVisual.DestroyObject(gameObject); }
     }

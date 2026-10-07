@@ -105,3 +105,12 @@ KillGold = RoundToInt(data.reward * KillGold倍率 * CurrentWaveGold)
 怪物原始高度：Slime 1.95、Bat 4.68、Skeleton 5.00、Dragon 3.50。Kenney `tile-wide-*` 路网件实测为 2 格长，与 1×1 网格不匹配，未使用。
 
 塔图标和方块图标改由引擎内离屏渲染从新模型生成（256×256 透明 PNG），不再是 Blender 外部渲染。方块图标按 `BlockShapeData.cells` 摆放四块墙块，每块缩到 0.86 以留出缝隙。
+
+## 暴击（2026-10-07 Stylized 接入）
+
+| 塔 | critChance | critMultiplier | 期望 DPS 变化 |
+|---|---:|---:|---|
+| Needle | 0.10 | 1.5 | ×1.05（12×1.15=13.8 → 14.49） |
+| Pulse / Seismic / Chill | 0 | — | 不变 |
+
+暴击只在发射时掷骰一次，AOE 内全部目标同享。其余塔、敌人、波次数值未改；新增的 VFX/震屏/HitStop 字段仅影响表现。
