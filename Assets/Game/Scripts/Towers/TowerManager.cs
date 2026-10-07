@@ -143,7 +143,8 @@ namespace StoneSignal
         /// Footprint origin (lower-left) for a footprint that starts at anchor and extends in direction dir (0 up,1 right,2 down,3 left).
         public Vector2Int OriginFor(Vector2Int anchor, int dir)
         {
-            if (SelectedIndex < 0) return anchor; var size = SizeOf(Data[SelectedIndex], dir);
+            if (SelectedIndex < 0) return anchor; if (!Data[SelectedIndex].footprintRotates) dir = 0; // non-rotating footprints ignore a stale Rotation (validation already did)
+            var size = SizeOf(Data[SelectedIndex], dir);
             return dir == 2 ? anchor - new Vector2Int(0, size.y - 1) : dir == 3 ? anchor - new Vector2Int(size.x - 1, 0) : anchor;
         }
         public string ReasonFor(Vector2Int anchor, int dir)
@@ -226,20 +227,22 @@ namespace StoneSignal
             cell = default; onBoard = false;
             if (SelectedIndex < 0 || !canBuild()) { HidePreview(); return "No tower selected"; }
             Camera camera = Camera.main;
-            var plane = new Plane(Vector3.up,grid.transform.position);
-            Ray ray = camera.ScreenPointToRay(screen);
-            if (!plane.Raycast(ray,out float distance)) { HideGhost(); return "Off board"; }
+            if (!grid.RaycastCell(camera.ScreenPointToRay(screen), out var hitCell, out var hit)) { HideGhost(); return "Off board"; } // visible surface (wall top), not y = 0
             var data = Data[SelectedIndex];
             var size = SizeOf(data, Rotation);
-            cell = grid.FootprintOrigin(ray.GetPoint(distance), size);
-            if (!grid.InBounds(grid.ToCell(ray.GetPoint(distance)))) { HideGhost(); return "Off board"; }
+            cell = grid.ClampOrigin(grid.FootprintOrigin(hit, size), size);
+            if (!grid.InBounds(hitCell)) { HideGhost(); return "Off board"; }
             onBoard = true;
             return PreviewOrigin(cell);
         }
         /// Ghost + highlight for the selected tower at a footprint origin with the current Rotation. Returns reason (null = valid).
+        /// Footprint origin of the last preview (diagnostics / drag report) and whether a ghost is currently shown.
+        public Vector2Int PreviewCell { get; private set; }
+        public bool PreviewShown => (artGhost != null && artGhost.gameObject.activeSelf) || (ghost != null && ghost.activeSelf);
         public string PreviewOrigin(Vector2Int cell)
         {
             if (SelectedIndex < 0 || !canBuild()) { HidePreview(); return "No tower selected"; }
+            PreviewCell = cell;
             var data = Data[SelectedIndex];
             var size = SizeOf(data, Rotation);
             string reason = validator.ValidateTower(cell, size);

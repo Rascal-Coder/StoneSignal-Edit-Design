@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using Loc = StoneSignal.UI.Loc;
 
 namespace StoneSignal
 {
@@ -33,7 +34,7 @@ namespace StoneSignal
         private readonly TextMeshProUGUI[] rewardNames = new TextMeshProUGUI[3], rewardDescriptions = new TextMeshProUGUI[3], rewardEffects = new TextMeshProUGUI[3];
         private float noticeUntil; private string notice; private bool handDirty = true;
         private int speedIndex = 1; private bool paused;
-        private const string DefaultHint = "R rotate  ·  RMB cancel";
+        private const string DefaultHint = Loc.RotateHint;
 
         static readonly Color Ink = Color.white, Navy = Hex("1E2A4A"), Slate = Hex("3B4566"), Blue = Hex("2F5FD0"),
             Red = Hex("D9404A"), Gold = Hex("F7C948"), Orange = Hex("F59A3A"), Blueprint = Hex("2A5DB0"), Shadow = new Color(0, 0, 0, .35f);
@@ -67,7 +68,7 @@ namespace StoneSignal
             goldPill = pill;
             // ---- top-centre wave banner
             var banner = Panel(root, "Wave banner", "ui9_banner_wave_red", Red); TC(banner, 0, 24, 440, 92);
-            wave = Txt(banner, "", 44, Ink); Full(wave.rectTransform); wave.outlineWidth = .2f; wave.outlineColor = Navy;
+            wave = Txt(banner, "", 44, Ink); UseCn(wave); Full(wave.rectTransform); wave.outlineWidth = .2f; wave.outlineColor = Navy;
             // ---- top-right speed + strike target
             string[] speeds = { "II", "x1", "x2", "x3" };
             for (int i = 0; i < 4; i++)
@@ -89,8 +90,8 @@ namespace StoneSignal
             // hand counter "5/7" (navy pill above the block row, left-aligned)
             handCount = Panel(root, "Hand count", "ui9_panel_navy", Navy); BL(handCount, 24, 0, 108, 52);
             var hc = Txt(handCount, "", 28, Ink); Full(hc.rectTransform); hc.fontStyle = FontStyles.Bold; drawPile.handCountLabel = hc;
-            battle = Btn(root, "BATTLE", 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 24, 256, 104);
-            battle.name = "BATTLE"; { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableWordWrapping = false; bl.overflowMode = TextOverflowModes.Overflow; bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
+            battle = Btn(root, Loc.Battle, 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave(), CnFont); BR((RectTransform)battle.transform, -24, 24, 256, 104);
+            battle.name = "BATTLE"; if (drawPile.statusLabel != null) UseCn(drawPile.statusLabel); { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableWordWrapping = false; bl.overflowMode = TextOverflowModes.Overflow; bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
             var handCanvas = Canvas("Hand", 1);
             towerHand = Group(handCanvas, "Tower hand"); Full(towerHand);
             blockHand = Group(handCanvas, "Block hand"); Full(blockHand);
@@ -109,10 +110,11 @@ namespace StoneSignal
             if (session == null) return;
             hpNumber.text = session.Economy.HP.ToString();
             hpSmall.text = session.Economy.HP + "/" + session.Economy.MaxHP;
-            wave.text = "WAVE " + Mathf.Min(session.Waves.WaveIndex + 1, Mathf.Max(1, session.config.waves.Length)) + " / " + session.config.waves.Length;
+            wave.text = Loc.Wave(Mathf.Min(session.Waves.WaveIndex + 1, Mathf.Max(1, session.config.waves.Length)), session.config.waves.Length);
             var offer = session.Draws.Next;
             var st = session.Blocks.Hand.IsFull ? StoneSignal.VFX.DrawPileState.Full : offer == DrawRules.Offer.Free ? StoneSignal.VFX.DrawPileState.Free : offer == DrawRules.Offer.Ad ? StoneSignal.VFX.DrawPileState.Ad : StoneSignal.VFX.DrawPileState.Used;
             if (drawPile.State != st) drawPile.SetState(st);
+            { var dl = Loc.DrawStatus(st); if (drawPile.statusLabel != null && drawPile.statusLabel.text != dl) drawPile.statusLabel.text = dl; } // art DrawPileUI writes English; label text is ours
             drawPile.SetStackCount(st == StoneSignal.VFX.DrawPileState.Free || st == StoneSignal.VFX.DrawPileState.Full ? 5 : st == StoneSignal.VFX.DrawPileState.Ad ? 4 : 3);
             if (session.Game.State != GameState.Build && drawPile.button.interactable) drawPile.button.interactable = false;
             drawPile.SetHandCount(session.Blocks.Hand.Cards.Count, BlockHandManager.MaxCards);
@@ -126,6 +128,7 @@ namespace StoneSignal
         {
             handDirty = false;
             foreach (var g in built) Destroy(g); built.Clear();
+            var pic = PlacementInputController.Instance; if (pic != null) { pic.HandRects.Clear(); pic.HandRects.Add(handCount); } // touch "over the hand" = these rects
             bool build = session.Game.State == GameState.Build;
             var towers = session.config.towers;
             // ---- tower hand per ui_card_spec_v13: 200x220 cards, pivot bottom-centre, bottom-left anchor (24,24), spacing 212, fan +-4 deg.
@@ -162,7 +165,7 @@ namespace StoneSignal
                     if (badgeSprite == null) { var t = Txt(badge, size.x + "x" + size.y, 22, Ink); Full(t.rectTransform); }
                 }
                 if (selected) Outline(face, Gold, 5);
-                built.Add(card.gameObject);
+                built.Add(card.gameObject); if (pic != null) pic.HandRects.Add(card);
             }
             // ---- block hand: ui_card_blueprint 128x128 (9-slice 24) + ui_icon_block_X 128x128 overlay (uniform, never per-shape scaling),
             // spacing 140, bottom-centre anchor; nudged right only if it would overlap the tower hand.
@@ -217,7 +220,7 @@ namespace StoneSignal
                     var n = Txt(badge, "\u00D7" + grp.count, 26, Ink); Full(n.rectTransform); n.fontStyle = FontStyles.Bold; n.outlineWidth = .25f; n.outlineColor = Navy;
                 }
                 if (selected) Outline(card, Gold, 4);
-                built.Add(holder.gameObject);
+                built.Add(holder.gameObject); if (pic != null) pic.HandRects.Add(holder);
             }
         }
         // ui_icon_block_<T|L|J|S|Z|O|I>: resolved from the shape asset/display name (e.g. "Block_T", "T piece").
@@ -245,7 +248,7 @@ namespace StoneSignal
         }
         private void CycleTarget() { session.Enemies.Targeting = (TargetMode)(((int)session.Enemies.Targeting + 1) % Enum.GetValues(typeof(TargetMode)).Length); Refresh(); }
         private void OnState(GameState state) { handDirty = true; Refresh(); }
-        private void ShowNotice(string message) { notice = message; noticeUntil = Time.unscaledTime + 2.4f; }
+        private void ShowNotice(string message) { notice = Loc.Notice(message); noticeUntil = Time.unscaledTime + 2.4f; }
         private void Update()
         {
             if (session == null) return;
@@ -257,19 +260,19 @@ namespace StoneSignal
         private void BuildRewardPanel(RectTransform root)
         {
             var panel = Img(root, "Rewards", null, new Color(.06f, .09f, .18f, .88f)); Full(panel); rewardPanel = panel.gameObject;
-            var title = Txt(panel, "CHOOSE AN UPGRADE", 52, Ink); Center(title.rectTransform, 0, -300, 1100, 70); title.outlineWidth = .2f; title.outlineColor = Navy;
+            var title = Txt(panel, Loc.ChooseUpgrade, 52, Ink); Center(title.rectTransform, 0, -300, 1100, 70); title.outlineWidth = .2f; title.outlineColor = Navy;
             for (int i = 0; i < 3; i++)
             {
                 int idx = i; var card = Img(panel, "Reward " + i, null, Blueprint); Center(card, (i - 1) * 380, 20, 340, 400); Outline(card, Navy, 4);
                 rewardNames[i] = Txt(card, "", 32, Ink); TL(rewardNames[i].rectTransform, 20, 24, 300, 90);
                 rewardDescriptions[i] = Txt(card, "", 22, new Color(.86f, .93f, 1f)); TL(rewardDescriptions[i].rectTransform, 20, 120, 300, 130);
                 rewardEffects[i] = Txt(card, "", 26, Gold); TL(rewardEffects[i].rectTransform, 20, 250, 300, 50);
-                var choose = Btn(card, "CHOOSE", 30, Orange, () => session.Rewards.Choose(idx)); TL((RectTransform)choose.transform, 40, 316, 260, 64);
+                var choose = Btn(card, Loc.Choose, 30, Orange, () => session.Rewards.Choose(idx)); TL((RectTransform)choose.transform, 40, 316, 260, 64);
             }
             rewardPanel.SetActive(false);
             var over = Img(root, "Game over", null, new Color(.05f, .06f, .12f, .92f)); Full(over); overPanel = over.gameObject;
-            var text = Txt(over, "THE CORE WENT DARK", 64, Ink); Center(text.rectTransform, 0, -90, 1200, 90);
-            var restart = Btn(over, "RESTART", 40, Orange, () => { TimeController.ResetAll(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); });
+            var text = Txt(over, Loc.CoreDark, 64, Ink); Center(text.rectTransform, 0, -90, 1200, 90);
+            var restart = Btn(over, Loc.Restart, 40, Orange, () => { TimeController.ResetAll(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); });
             Center((RectTransform)restart.transform, 0, 60, 300, 84);
             overPanel.SetActive(false);
         }
@@ -299,7 +302,7 @@ namespace StoneSignal
                 pickGlow.glow = art.UiSprite("ui_rune_socket_glow") ?? art.UiSprite("ui_counter_glow_ring");
                 Debug.Log("REWARD GLOW sprite=" + (pickGlow.glow ? pickGlow.glow.name + " tex=" + pickGlow.glow.texture.name + " packed=" + pickGlow.glow.packed : "MISSING") +
                           " | frame tex=" + (pickUi.frames[0] ? pickUi.frames[0].texture.name + " packed=" + pickUi.frames[0].packed : "-") + " sameTexture=" + (pickGlow.glow && pickUi.frames[0] && pickGlow.glow.texture == pickUi.frames[0].texture));
-                pickUi.font = TMP_Settings.defaultFontAsset;
+                pickUi.font = CnFont ?? TMP_Settings.defaultFontAsset; // v18: card text is Chinese -> CN font primary (one material per text, no Latin/CJK sub-mesh split)
                 if ((float)Screen.width / Mathf.Max(1, Screen.height) < 1.5f) pickUi.cardSize = new Vector2(380, 540); // 4:3
                 pickUi.OnPicked += i =>
                 {
@@ -309,29 +312,79 @@ namespace StoneSignal
             }
             if (debugRarity != null)
             {
-                var dn = new[] { "Common", "Rare", "Epic", "Legendary" }; var dopts = new StoneSignal.UI.RewardOption[debugRarity.Length];
-                for (int i = 0; i < dopts.Length; i++) dopts[i] = new StoneSignal.UI.RewardOption { title = dn[(int)debugRarity[i]] + " reward", desc = "Debug card (" + dn[(int)debugRarity[i]] + ")", icon = art.UiSprite("ui_card_reward_rune") };
-                pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(dopts, debugRarity); if (pickGlow != null) pickGlow.Begin(debugRarity); return true;
+                // forced rarities, real content: Rare = a rune option (as in a real offer), other tiers = wave rewards from the actual pool
+                var dopts = new StoneSignal.UI.RewardOption[debugRarity.Length]; var used = new HashSet<RewardData>();
+                RewardEffect[][] pref = { new[] { RewardEffect.AddBlock, RewardEffect.WaveGold }, null, new[] { RewardEffect.AllAttackSpeed, RewardEffect.CannonRadius }, new[] { RewardEffect.AllDamage, RewardEffect.BonusSlot } };
+                for (int i = 0; i < dopts.Length; i++)
+                {
+                    int ri = (int)debugRarity[i];
+                    if (debugRarity[i] == StoneSignal.UI.RewardRarity.Rare) { dopts[i] = RuneOption(i % RuneRules.Names.Length); continue; }
+                    RewardData pick = null;
+                    foreach (var e in pref[ri]) foreach (var r in session.config.rewards) if (pick == null && r != null && r.effect == e && !used.Contains(r)) pick = r;
+                    if (pick == null) foreach (var r in session.config.rewards) if (pick == null && r != null && !used.Contains(r)) pick = r;
+                    if (pick != null) { used.Add(pick); dopts[i] = RewardOption(pick); }
+                }
+                pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(dopts, debugRarity); FitRewardText(); if (pickGlow != null) pickGlow.Begin(debugRarity); return true;
             }
             int n = Mathf.Min(3, session.Rewards.Choices.Count);
             var opts = new StoneSignal.UI.RewardOption[n]; var rar = new StoneSignal.UI.RewardRarity[n];
             for (int i = 0; i < n; i++)
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
-                if (rune != RuneRules.NoRune) { opts[i] = new StoneSignal.UI.RewardOption { title = "Rune: " + RuneRules.Names[rune], desc = RuneRules.Effects[rune], icon = art.UiSprite("ui_card_reward_rune") }; rar[i] = StoneSignal.UI.RewardRarity.Rare; }
-                else { var r = session.Rewards.Choices[i]; opts[i] = new StoneSignal.UI.RewardOption { title = r.displayName, desc = r.effectText }; rar[i] = StoneSignal.UI.RewardRarity.Common; } // rarity placeholder until gameplay assigns tiers
+                if (rune != RuneRules.NoRune) { opts[i] = RuneOption(rune); rar[i] = StoneSignal.UI.RewardRarity.Rare; }
+                else { opts[i] = RewardOption(session.Rewards.Choices[i]); rar[i] = StoneSignal.UI.RewardRarity.Common; } // rarity placeholder until gameplay assigns tiers
             }
-            pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(opts, rar); if (pickGlow != null) pickGlow.Begin(rar); Refresh();
+            pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(opts, rar); FitRewardText(); if (pickGlow != null) pickGlow.Begin(rar); Refresh();
             return true;
         }
+        private StoneSignal.UI.RewardOption RuneOption(int rune) =>
+            new StoneSignal.UI.RewardOption { title = Loc.RuneTitle(rune), desc = Loc.RuneDesc(rune), icon = S(StoneSignal.VFX.RuneArt.Icon[Mathf.Clamp(rune, 0, 5)]) ?? S("ui_card_reward_rune") };
+        private StoneSignal.UI.RewardOption RewardOption(RewardData r) => new StoneSignal.UI.RewardOption { title = Loc.RewardTitle(r), desc = Loc.RewardDesc(r), icon = RewardIcon(r) };
+        // Reward icons: no per-reward art yet -> closest existing HUD sprite (placeholder mapping, listed in the v18 report for art). Rune icons are
+        // reserved for rune options (a global damage reward must not look like the Blade rune).
+        private Sprite RewardIcon(RewardData r)
+        {
+            Sprite T(string kind) { foreach (var d in session.config.towers) if (d != null && d.icon != null && d.name.StartsWith(kind)) return d.icon; return null; }
+            switch (r.effect)
+            {
+                case RewardEffect.AllDamage: return S("ui_reward_gem") ?? S("ui_coin_gold");
+                case RewardEffect.AllAttackSpeed: return S("ui_reward_gem") ?? S("ui_coin_gold");
+                case RewardEffect.AllRange: return S("ui_reward_gem") ?? S("ui_coin_gold");
+                case RewardEffect.PathSlow: return S("ui_reward_shard") ?? S("ui_coin_gold");
+                case RewardEffect.CannonRadius: return T("Seismic");
+                case RewardEffect.ArrowRange: return T("Needle");
+                case RewardEffect.AddBlock: return r.blockShape != null ? BlockIcon(r.blockShape) : S("ui_icon_block_O");
+                case RewardEffect.BonusSlot: return r.blockShape != null ? BlockIcon(r.blockShape) : S("ui_icon_block_L");
+                case RewardEffect.NextDraw: return S("ui_draw_pile");
+                case RewardEffect.BaseHP: case RewardEffect.WaveHeal: return art != null ? art.uiOrbCore : null;
+                default: return S("ui_coin_gold"); // KillGold, WaveGold, NextWaveGold, TowerDiscount
+            }
+        }
+        // Card text fit (art RewardPickUI untouched): title one line, auto-size 44 -> 26; description wraps inside the band, 28 -> 18.
+        private void FitRewardText()
+        {
+            for (int i = 0; ; i++)
+            {
+                var card = pickUi.transform.Find("RewardCard" + i); if (card == null) break;
+                var title = card.Find("Title")?.GetComponent<TMP_Text>();
+                if (title != null) { title.enableWordWrapping = false; title.overflowMode = TextOverflowModes.Overflow; title.enableAutoSizing = true; title.fontSizeMin = 26; title.fontSizeMax = 44; }
+                foreach (var t in card.GetComponentsInChildren<TMP_Text>(true))
+                    if (t.name == "Desc") { t.enableWordWrapping = true; t.enableAutoSizing = true; t.fontSizeMin = 18; t.fontSizeMax = 28; t.overflowMode = TextOverflowModes.Overflow; }
+            }
+        }
+        // StoneSignalRoundedCN-Heavy SDF (first TMP fallback, Editor/CjkFontSetup). Labels that are Chinese use it as primary font so digits and
+        // CJK come from one atlas/material; pure-number HUD text stays on the default font.
+        private static TMP_FontAsset cnFont; private static bool cnLooked;
+        private static TMP_FontAsset CnFont { get { if (!cnLooked) { cnLooked = true; foreach (var f in TMP_Settings.fallbackFontAssets) if (f != null && f.name.Contains("RoundedCN")) cnFont = f; } return cnFont; } }
+        private static void UseCn(TMP_Text t) { if (t != null && CnFont != null) { float ow = t.outlineWidth; Color32 oc = t.outlineColor; t.font = CnFont; t.fontSharedMaterial = CnFont.material; var inst = t.fontMaterial; t.outlineWidth = ow; t.outlineColor = oc; } } // re-instance on the CN atlas: an outline set earlier left a Liberation material instance that TMP restores on the next outline change (garbled BATTLE label)
         private void ShowRewards()
         {
             if (ShowRewardPick()) return;
             for (int i = 0; i < 3 && i < session.Rewards.Choices.Count; i++)
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
-                if (rune != RuneRules.NoRune) { rewardNames[i].text = "Rune: " + RuneRules.Names[rune]; rewardDescriptions[i].text = "A wall block inlaid with this rune. Towers on that cell gain it."; rewardEffects[i].text = RuneRules.Effects[rune]; continue; }
-                var r = session.Rewards.Choices[i]; rewardNames[i].text = r.displayName; rewardDescriptions[i].text = r.description; rewardEffects[i].text = r.effectText;
+                if (rune != RuneRules.NoRune) { rewardNames[i].text = Loc.RuneTitle(rune); rewardDescriptions[i].text = "镶嵌此符文的墙块，其上的塔获得符文效果"; rewardEffects[i].text = Loc.RuneEffects[rune]; continue; }
+                var r = session.Rewards.Choices[i]; rewardNames[i].text = Loc.RewardTitle(r); rewardDescriptions[i].text = ""; rewardEffects[i].text = Loc.RewardDesc(r);
             }
             rewardPanel.SetActive(true); Refresh();
         }
@@ -360,14 +413,14 @@ namespace StoneSignal
         }
         private Button Btn(Transform parent, string label, float size, Color color, Action action) => Btn(parent, label, size, null, color, action);
         // 9-slice art button (ui9_*): rounded, thick dark outline, bottom thickness. Missing sprite -> generated rounded placeholder.
-        private Button Btn(Transform parent, string label, float size, string sprite, Color color, Action action)
+        private Button Btn(Transform parent, string label, float size, string sprite, Color color, Action action, TMP_FontAsset font = null)
         {
             var r = Panel(parent, label, sprite, color); r.GetComponent<Image>().raycastTarget = true;
             var b = r.gameObject.AddComponent<Button>(); b.targetGraphic = r.GetComponent<Image>(); b.onClick.AddListener(() => action());
             var pressed = sprite != null ? S(sprite.Replace("_normal", "_pressed")) : null;
             if (pressed != null && sprite.EndsWith("_normal")) { b.transition = Selectable.Transition.SpriteSwap; b.spriteState = new SpriteState { pressedSprite = pressed }; }
             var colors = b.colors; colors.disabledColor = new Color(.8f, .8f, .8f, 1); b.colors = colors;
-            var t = Txt(r, label, size, Ink); Full(t.rectTransform); t.rectTransform.offsetMin = new Vector2(0, 6); t.outlineWidth = .18f; t.outlineColor = Navy; return b;
+            var t = Txt(r, label, size, Ink); if (font != null) t.font = font; /* before the outline creates a material instance */ Full(t.rectTransform); t.rectTransform.offsetMin = new Vector2(0, 6); t.outlineWidth = .18f; t.outlineColor = Navy; return b;
         }
         private Sprite S(string name) => art != null ? art.UiSprite(name) : null;
         private RectTransform Panel(Transform parent, string name, string sprite, Color fallback)

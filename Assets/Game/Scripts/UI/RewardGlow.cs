@@ -47,15 +47,15 @@ namespace StoneSignal.UI
             var go = new GameObject(n, typeof(RectTransform), typeof(Image)); go.transform.SetParent(transform, false);
             var im = go.GetComponent<Image>(); im.sprite = glow; im.raycastTarget = false; im.color = new Color(1, 1, 1, 0); return im;
         }
-        // glow (and legendary flare) directly below its card: Glow0 Card0 Glow1 Card1 ... (interleaved, no cross-card overlap)
+        // All glows (and legendary flares) below all cards: [Flare..] Glow0 Glow1 Glow2 Card0 Card1 Card2. SizeFor keeps every glow
+        // inside the gap to its neighbours, so this looks identical to the old interleaved order (Glow0 Card0 Glow1 Card1 ...), but the
+        // interleaved order cost +1 batch whenever a Legendary card was shown (UGUI sort: 130 vs 129 at 1920/2400/2048, measured v18).
         void Order()
         {
-            foreach (var g in gs)
-            {
-                int ci = g.card.GetSiblingIndex();
-                if (g.flare != null) { g.flare.transform.SetSiblingIndex(ci); ci = g.card.GetSiblingIndex(); }
-                g.img.transform.SetSiblingIndex(ci);
-            }
+            int m = int.MaxValue;
+            foreach (var g in gs) { m = Mathf.Min(m, g.card.GetSiblingIndex(), g.img.transform.GetSiblingIndex()); if (g.flare != null) m = Mathf.Min(m, g.flare.transform.GetSiblingIndex()); }
+            foreach (var g in gs) if (g.flare != null) g.flare.transform.SetSiblingIndex(m++);
+            foreach (var g in gs) g.img.transform.SetSiblingIndex(m++);
         }
         // Base size so the glow quad at peak pulse (1 + scaleAmp) stays inside the gap to the neighbour card: a glow quad
         // overlapping the neighbour card breaks the canvas batch (measured +3 DC for Legendary 1.25 x 1.06 at 16:9).

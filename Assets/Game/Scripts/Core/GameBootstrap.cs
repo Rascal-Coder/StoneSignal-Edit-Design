@@ -52,6 +52,7 @@ namespace StoneSignal
         {
             if (config == null || grid == null || viewCamera == null) { Debug.LogError("Game scene configuration is missing. Run StoneSignal > Create / repair game scene."); enabled = false; return; }
             Application.targetFrameRate = 60;
+            GameRng.BeginRun(); // v18 P0: fresh seed per real run (logged); tests/diagnostics stay deterministic
             Modifiers = new RunModifiers();
             TimeController.ResetAll();
             Runes = config.runes != null ? config.runes : RuneConfig.CreateDefault();
@@ -64,6 +65,7 @@ namespace StoneSignal
             Game = Service<GameManager>("Game state");
             if (config.layout != null) grid.layout = config.layout;
             grid.Initialize();
+            if (art != null) { grid.tileTop = art.tileTop; grid.wallTop = art.blockTop; } // touch / mouse picking on the visible surface
             Paths = Service<PathfindingManager>("A star paths"); Paths.Initialize(grid);
             var mapView = Service<GridView>("Map visuals"); mapView.Initialize(grid,Paths,config.palette); MapView = mapView;
             Validator = Service<PlacementValidator>("Placement validation"); Validator.Initialize(grid,Paths);
@@ -109,7 +111,9 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-stonesignal-smoke") >= 0)
                 Service<PrototypeSmokeTest>("Automated play verification").Initialize(this);
             { var a = System.Environment.GetCommandLineArgs(); int i = System.Array.IndexOf(a,"-stonesignal-shot");
-              if (i >= 0 && i + 1 < a.Length) Service<GameplayShot>("Gameplay screenshot").Initialize(this, a[i + 1]); }
+              if (i >= 0 && i + 1 < a.Length) Service<GameplayShot>("Gameplay screenshot").Initialize(this, a[i + 1]);
+              int j = System.Array.IndexOf(a,"-stonesignal-drag");
+              if (j >= 0 && j + 1 < a.Length) Service<DragOffsetProbe>("Drag offset probe").Initialize(this, a[j + 1]); }
 #endif
         }
     }

@@ -8,6 +8,9 @@ namespace StoneSignal
     public sealed class HudScaler : MonoBehaviour
     {
         CanvasScaler scaler; RectTransform safe; Rect lastSafe; Vector2Int lastSize;
+        /// Diagnostics / device simulation: overrides Screen.safeArea (e.g. a landscape notch) when set.
+        public static Rect? SimulatedSafeArea;
+        public static Rect SafeArea => SimulatedSafeArea ?? Screen.safeArea;
         public void Init(CanvasScaler s, RectTransform safeRoot) { scaler = s; safe = safeRoot; scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize; Apply(); }
         public static float ScaleFor(int w, int h)
         {
@@ -17,11 +20,11 @@ namespace StoneSignal
         }
         void Apply()
         {
-            lastSize = new Vector2Int(Screen.width, Screen.height); lastSafe = Screen.safeArea;
+            lastSize = new Vector2Int(Screen.width, Screen.height); lastSafe = SafeArea;
             scaler.scaleFactor = ScaleFor(Screen.width, Screen.height);
             var a = lastSafe; Vector2 size = new Vector2(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height));
             safe.anchorMin = a.position / size; safe.anchorMax = (a.position + a.size) / size; safe.offsetMin = safe.offsetMax = Vector2.zero;
         }
-        void Update() { if (Screen.width != lastSize.x || Screen.height != lastSize.y || Screen.safeArea != lastSafe) Apply(); }
+        void Update() { if (Screen.width != lastSize.x || Screen.height != lastSize.y || SafeArea != lastSafe) Apply(); }
     }
 }

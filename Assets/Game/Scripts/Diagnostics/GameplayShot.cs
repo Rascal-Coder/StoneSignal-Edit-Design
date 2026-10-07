@@ -88,6 +88,7 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-portalcloseups") >= 0) yield return PortalCloseups();
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-groundshot") >= 0) yield return GroundShot();
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-stepshots") >= 0) yield return StepShots();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-vfxcheck") >= 0) yield return VfxCheck(valid, fv);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-rewardshot") >= 0) yield return RewardShots();
             Debug.Log("GAMEPLAY SHOT " + path + "\n" + stats);
             Application.Quit(0);
@@ -185,17 +186,48 @@ namespace StoneSignal
             var sets = new[] { new[] { StoneSignal.UI.RewardRarity.Common, StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic },
                                new[] { StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic, StoneSignal.UI.RewardRarity.Legendary } };
             TimeController.SetSpeed(0);
+            info += TextAudit("HUD");
             for (int k = 0; k < sets.Length; k++)
             {
                 if (!ui.DebugShowRewardPick(sets[k])) { info += "reward pick UI unavailable\n"; break; }
                 float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .8f) yield return null; // glow fade-in done
                 for (int f = 0; f < 4; f++) yield return null; long dOn = draws.LastValue, bOn = batches.LastValue;
+                info += TextAudit("reward cards " + (k == 0 ? "C,R,E" : "R,E,L"));
                 yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_" + (k == 0 ? "CRE" : "REL") + ".png"));
                 ui.PickGlow.enabled = false; for (int f = 0; f < 6; f++) yield return null; long dOff = draws.LastValue, bOff = batches.LastValue;
                 yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_noglow_" + (k == 0 ? "CRE" : "REL") + ".png"));
                 ui.PickGlow.enabled = true; for (int f = 0; f < 4; f++) yield return null;
                 info += "set " + (k == 0 ? "Common,Rare,Epic" : "Rare,Epic,Legendary") + ": glow ON drawCalls=" + dOn + " batches=" + bOn + " | glow OFF drawCalls=" + dOff + " batches=" + bOff + " | delta DC=" + (dOn - dOff) + " batches=" + (bOn - bOff) + "\n";
             }
+            // Legendary +1 batch probe: batch / draw-call range over 2.5 s (two 1.2 s legendary pulses) per variant
+            string probe = "legendary batch probe (min..max over 2.5 s, " + Screen.width + "x" + Screen.height + "):\n";
+            IEnumerator Range(string name)
+            {
+                long bMin = long.MaxValue, bMax = 0, dMin = long.MaxValue, dMax = 0; for (int f = 0; f < 4; f++) yield return null;
+                float r0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - r0 < 2.5f) { long b = batches.LastValue, d = draws.LastValue; if (b > 0) { bMin = System.Math.Min(bMin, b); bMax = System.Math.Max(bMax, b); dMin = System.Math.Min(dMin, d); dMax = System.Math.Max(dMax, d); } yield return null; }
+                probe += "  " + name + ": batches " + bMin + ".." + bMax + " drawCalls " + dMin + ".." + dMax + "\n";
+            }
+            void Act(string n, bool on) { var t = ui.PickGlow.transform.Find(n); if (t == null) t = ui.PickUi.transform.Find(n); if (t != null) t.gameObject.SetActive(on); }
+            var rel = sets[1];
+            ui.DebugShowRewardPick(rel); ui.PickGlow.enabled = true; yield return Range("R,E,L all glows on");
+            ui.PickGlow.enabled = false; yield return Range("R,E,L glows off"); ui.PickGlow.enabled = true;
+            Act("Glow2", false); yield return Range("R,E,L legendary glow hidden"); Act("Glow2", true);
+            Act("Glow0", false); Act("Glow1", false); yield return Range("R,E,L only legendary glow"); Act("Glow0", true); Act("Glow1", true);
+            for (int k = 0; k < 3; k++) Act("RewardCard2/Sparkle" + k, false); yield return Range("R,E,L legendary sparkles hidden"); for (int k = 0; k < 3; k++) Act("RewardCard2/Sparkle" + k, true);
+            ui.PickGlow.enabled = false; for (int k = 0; k < 3; k++) Act("RewardCard2/Sparkle" + k, false); yield return Range("R,E,L glows off + sparkles hidden"); ui.PickGlow.enabled = true;
+            ui.DebugShowRewardPick(new[] { StoneSignal.UI.RewardRarity.Legendary, StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic }); yield return Range("L,R,E all glows on");
+            ui.PickGlow.enabled = false; yield return Range("L,R,E glows off"); ui.PickGlow.enabled = true;
+            ui.DebugShowRewardPick(sets[0]); yield return Range("C,R,E all glows on");
+            ui.PickGlow.enabled = false; yield return Range("C,R,E glows off"); ui.PickGlow.enabled = true;
+            // v18: RewardGlow now orders all glows below all cards; re-measure the old interleaved order (Glow_i directly below Card_i) for comparison
+            void Interleave() { for (int k = 0; k < 3; k++) { var g = ui.PickGlow.transform.Find("Glow" + k); var c = ui.PickGlow.transform.Find("RewardCard" + k); if (g != null && c != null) { g.SetAsLastSibling(); g.SetSiblingIndex(c.GetSiblingIndex()); } } }
+            ui.DebugShowRewardPick(new[] { StoneSignal.UI.RewardRarity.Legendary, StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic }); Interleave(); yield return Range("L,R,E old interleaved order");
+            ui.DebugShowRewardPick(rel); Interleave(); yield return Range("R,E,L old interleaved order");
+            ui.DebugShowRewardPick(new[] { StoneSignal.UI.RewardRarity.Legendary, StoneSignal.UI.RewardRarity.Rare, StoneSignal.UI.RewardRarity.Epic }); yield return Range("L,R,E glows-first again (Begin re-orders)");
+            ui.DebugShowRewardPick(rel); for (int f = 0; f < 30; f++) yield return null;
+            info += probe;
+            info += CnAtlas();
             // mid-pick: legendary card (index 2) flash
             ui.PickUi.PlayPick(2, new Vector2(Screen.width * .5f, Screen.height * .12f), null); ui.PickGlow.Pick(2);
             float p0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - p0 < .1f) yield return null;
@@ -215,25 +247,27 @@ namespace StoneSignal
             TimeController.ResetAll(); captureNoUi = true;
             var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
             if (cam.orthographic) cam.orthographicSize = ortho * .38f; else cam.fieldOfView = fov * .42f;
-            int bottom = -1, left = -1;
-            for (int i = 0; i < s.grid.Spawns.Count; i++) { var e = s.grid.Spawns[i]; if (e.y == 0) bottom = i; else if (e.x == 0) left = i; }
-            foreach (var run in new[] { ("drifter_bottom_bridge", drifter, bottom), ("skimmer_left_bridge", skimmer, left) })
+            int bottom = -1, left = -1, right = -1;
+            for (int i = 0; i < s.grid.Spawns.Count; i++) { var e = s.grid.Spawns[i]; if (e.y == 0) bottom = i; else if (e.x == 0) left = i; else if (e.x == s.grid.width - 1) right = i; }
+            info += "WalkSurface tiles=" + WalkSurface.TileCount + " profiles=" + WalkSurface.ProfileCount + "\n";
+            foreach (var run in new[] { ("drifter_bottom_bridge", drifter, bottom), ("skimmer_left_bridge", skimmer, left), ("drifter_right_bridge", drifter, right) })
             {
                 if (run.Item2 == null || run.Item3 < 0) { info += run.Item1 + ": data/spawn missing\n"; continue; }
-                if (s.Game.State != GameState.Combat) info += "(state " + s.Game.State + " -> StartWave=" + s.Waves.StartWave() + ")\n"; // enemies only move in Combat
+                if (s.Game.State != GameState.Combat) { var was = s.Game.State; ToBuild(); info += "(state " + was + " -> " + s.Game.State + " -> StartWave=" + s.Waves.StartWave() + ")\n"; } // enemies only move in Combat
                 var entry = s.grid.Spawns[run.Item3]; var en = s.Enemies.Spawn(run.Item2, 40, 1, run.Item3);
                 float t0 = Time.realtimeSinceStartup; var bridge = s.grid.BridgeWaterPoint(entry);
                 // follow the enemy once it reaches the bridge; frames while it crosses toward the board
                 float shotAt = -1; int k = 0;
-                while (Time.realtimeSinceStartup - t0 < 9f && k < 3 && en != null && en.Alive)
+                while (Time.realtimeSinceStartup - t0 < 12f && k < 5 && en != null && en.Alive)
                 {
                     var p = en.transform.position; float along = Vector3.Dot(p - bridge, -GridManager.OutwardOf(entry, s.grid.width, s.grid.height));
-                    if (shotAt < 0 && along > -.4f) shotAt = Time.realtimeSinceStartup;
-                    if (shotAt >= 0 && Time.realtimeSinceStartup - shotAt >= k * .45f)
+                    if (shotAt < 0 && !en.HeldBySpawn && along > -2.2f) shotAt = Time.realtimeSinceStartup; // v17.3: from the island end of the bridge onto the tiles
+                    if (shotAt >= 0 && Time.realtimeSinceStartup - shotAt >= k * .7f)
                     {
                         cam.transform.position = p - cam.transform.forward * 6f; yield return null; yield return new WaitForEndOfFrame();
                         long dc = draws.LastValue; Capture(Path.Combine(dir, run.Item1 + "_" + k + ".png"));
-                        info += run.Item1 + "_" + k + ": " + Describe(en) + " | frame drawCalls=" + dc + "\n" + Prints(en) + "\n";
+                        var cell = s.grid.ToCell(p); string where = s.grid.InBounds(cell) ? "tiles" : along > -.4f ? "bridge" : "island/bridge start";
+                        info += run.Item1 + "_" + k + " [" + where + "]: " + Describe(en) + " | frame drawCalls=" + dc + "\n" + Prints(en) + "\n";
                         k++;
                     }
                     else yield return null;
@@ -264,7 +298,7 @@ namespace StoneSignal
             {
                 var wp = local ? sys.dust.transform.TransformPoint(ps[i].position) : ps[i].position;
                 if ((new Vector2(wp.x - en.transform.position.x, wp.z - en.transform.position.z)).magnitude > 2.5f) continue;
-                if (near++ < 6) sb.Append(" [" + wp.x.ToString("F2") + "," + wp.y.ToString("F2") + "," + wp.z.ToString("F2") + " rot=" + ps[i].rotation.ToString("F0") + " age=" + (ps[i].startLifetime - ps[i].remainingLifetime).ToString("F2") + "]");
+                if (near++ < 6) sb.Append(" [" + wp.x.ToString("F2") + "," + wp.y.ToString("F2") + "," + wp.z.ToString("F2") + " surf=" + (WalkSurface.TryGet(wp, out var sy) ? sy.ToString("F2") : "-") + " rot=" + ps[i].rotation.ToString("F0") + " age=" + (ps[i].startLifetime - ps[i].remainingLifetime).ToString("F2") + "]");
             }
             var r = sys.dust.GetComponent<ParticleSystemRenderer>();
             return "    footprints total=" + n + " near enemy=" + near + " align=" + (r ? r.alignment.ToString() + " renderMode=" + r.renderMode : "-") + " yawOffset=" + sys.footprintYawOffset + " yawSign=" + sys.footprintYawSign + sb;
@@ -290,6 +324,67 @@ namespace StoneSignal
         static long Tris(Mesh m) { long t = 0; for (int i = 0; i < m.subMeshCount; i++) t += m.GetIndexCount(i) / 3; return t; }
         static float VisualTop(Component en) { float t = float.MinValue; foreach (var r in StoneSignal.Enemy.ModelRenderers(en.transform)) t = Mathf.Max(t, StoneSignal.Enemy.MeshTop(r)); return t; }
         static string RendererTops(Component en) { var sb = new System.Text.StringBuilder(); foreach (var r in en.GetComponentsInChildren<Renderer>()) sb.Append("\n    " + r.GetType().Name + " " + r.name + " enabled=" + r.enabled + " boundsTop=" + r.bounds.max.y.ToString("F2") + " meshTop=" + StoneSignal.Enemy.MeshTop(r).ToString("F2")); return sb.ToString(); }
+        // -vfxcheck (v17.3 white squares): block landing dust (M_FX_Snow), enemy status FX (M_VFX_PortalEmber), and every particle
+        // material in the scene: texture + surface. Close-ups with UI hidden.
+        bool ToBuild() { if (s.Game.State == GameState.Reward && !s.Rewards.Choose(0)) s.Game.SetState(GameState.Build); return s.Game.State == GameState.Build; }
+        IEnumerator VfxCheck(Vector2Int valid, bool haveValid)
+        {
+            string dir = Path.GetDirectoryName(path), info = "";
+            var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
+            void Zoom(float k) { if (cam.orthographic) cam.orthographicSize = ortho * k; else cam.fieldOfView = fov * k; }
+            captureNoUi = true; TimeController.ResetAll();
+            // 1. block landing dust (placement needs the Build state: earlier capture steps may have ended the wave)
+            if (s.Game.State != GameState.Build) { var was = s.Game.State; ToBuild(); info += "state " + was + " -> " + s.Game.State + "\n"; }
+            s.Blocks.enabled = true; s.Blocks.Pinned = false;
+            if (s.Blocks.Hand.Cards.Count == 0) s.Blocks.DrawCards(1);
+            s.Blocks.SelectCard(0); haveValid = false;
+            for (int y = 2; y < s.grid.height - 2 && !haveValid; y++) for (int x = 2; x < s.grid.width - 2 && !haveValid; x++) { var c = new Vector2Int(x, y); if (s.Blocks.CurrentShape != null && s.Blocks.ValidatePlacement(c) == null) { valid = c; haveValid = true; } }
+            if (haveValid)
+            {
+                var at = s.grid.ToWorld(valid); cam.transform.position = at - cam.transform.forward * 6f; Zoom(.32f);
+                s.Blocks.Pinned = false; bool ok = s.Blocks.CommitPlacement(valid); float t0 = Time.realtimeSinceStartup;
+                foreach (var t in new[] { .06f, .16f, .32f })
+                {
+                    while (Time.realtimeSinceStartup - t0 < t) yield return null;
+                    long d = draws.LastValue; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "vfx_landing_dust_t" + Mathf.RoundToInt(t * 100).ToString("00") + ".png"));
+                    info += "landing dust t=" + t + " committed=" + ok + " drawCalls=" + d + "\n";
+                }
+            }
+            else info += "landing dust: no valid block placement available\n";
+            // 2. status FX on a live enemy (all five statuses)
+            Enemy target = null; foreach (var e in s.Enemies.Active) if (e != null && e.Alive && !e.HeldBySpawn && s.grid.InBounds(s.grid.ToCell(e.transform.position))) { target = e; break; }
+            if (target == null && s.Enemies.Active.Count > 0) target = s.Enemies.Active[0];
+            if (target != null)
+            {
+                var sfx = target.GetComponentInChildren<StoneSignal.VFX.EnemyStatusFx>(true);
+                if (sfx == null) info += "status fx: enemy has no EnemyStatusFx\n";
+                else
+                {
+                    TimeController.SetSpeed(0);
+                    foreach (StoneSignal.VFX.StatusId id in System.Enum.GetValues(typeof(StoneSignal.VFX.StatusId))) sfx.Apply(id, 30f);
+                    var tp = target.transform.position; cam.transform.position = tp - cam.transform.forward * 6f; Zoom(.22f);
+                    TimeController.ResetAll(); TimeController.SetSpeed(1);
+                    float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .9f) { cam.transform.position = target.transform.position - cam.transform.forward * 6f; yield return null; }
+                    TimeController.SetPaused(true); yield return null; yield return null;
+                    long d = draws.LastValue; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "vfx_status_all.png"));
+                    info += "status fx: all 5 on " + target.name + " drawCalls=" + d + "\n"; TimeController.ResetAll(); sfx.ClearAll();
+                }
+            }
+            else info += "status fx: no enemy\n";
+            // 3. particle materials actually used in the scene
+            var seen = new HashSet<Material>();
+            foreach (var r in FindObjectsOfType<ParticleSystemRenderer>(true))
+                foreach (var m in r.sharedMaterials)
+                {
+                    if (m == null || !seen.Add(m)) continue;
+                    var tex = m.HasProperty("_BaseMap") ? m.GetTexture("_BaseMap") : m.mainTexture;
+                    string surf = m.HasProperty("_Surface") ? (m.GetFloat("_Surface") > .5f ? "transparent" : "OPAQUE") : "queue " + m.renderQueue;
+                    bool bad = tex == null || surf == "OPAQUE";
+                    info += (bad ? "  PARTICLE MATERIAL PROBLEM " : "  particle material ") + m.name + " shader=" + m.shader.name + " tex=" + (tex ? tex.name : "NONE") + " " + surf + " queue=" + m.renderQueue + " (e.g. " + r.name + ")\n";
+                }
+            cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
+            File.WriteAllText(Path.Combine(dir, "vfx_check.txt"), info); Debug.Log("VFX CHECK\n" + info);
+        }
         // -stepshots: art step 2 (SpawnRipple, shader-only) and step 3 (core enclosure Intact/Cracked/Broken/Critical + CoreDamageFx hit),
         // close-ups with UI hidden, draw calls per frame and the enclosure's own draw-call cost (renderer toggled off, profiler delta).
         IEnumerator StepShots()
@@ -366,19 +461,53 @@ namespace StoneSignal
             File.WriteAllText(Path.Combine(dir, "portal_closeups.txt"), info); Debug.Log("PORTAL CLOSEUPS\n" + info);
             cam.transform.position = home; foreach (var c in canvases) c.enabled = true; captureNoUi = false;
         }
+        // v18 CN UI: every visible TMP text with its fit (size / lines / rect vs preferred), Latin letters and glyphs missing from font + fallbacks.
+        string TextAudit(string label)
+        {
+            var sb = new System.Text.StringBuilder("text audit (" + label + ", " + Screen.width + "x" + Screen.height + "):\n");
+            foreach (var t in FindObjectsOfType<TMPro.TMP_Text>())
+            {
+                if (!t.isActiveAndEnabled || string.IsNullOrEmpty(t.text) || t.canvas == null || !t.canvas.enabled || t.alpha <= 0) continue;
+                t.ForceMeshUpdate(); var r = t.rectTransform.rect; bool latin = false;
+                foreach (char c in t.text) if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) latin = true;
+                uint[] miss = null; bool missing = t.font != null && !t.font.HasCharacters(t.text, out miss, true, true) && miss != null && miss.Length > 0;
+                string mc = ""; if (missing) foreach (var u in miss) mc += char.ConvertFromUtf32((int)u);
+                bool wide = !t.enableWordWrapping && t.preferredWidth > r.width + 1, tall = t.preferredHeight > r.height + 1;
+                string path = t.name; for (var p = t.transform.parent; p != null && p.GetComponent<Canvas>() == null; p = p.parent) path = p.name + "/" + path;
+                sb.Append("  ").Append(path).Append(" '").Append(t.text.Replace("\n", "\\n")).Append("' font=").Append(t.fontSize.ToString("0.#"))
+                  .Append(t.enableAutoSizing ? " (auto " + t.fontSizeMin.ToString("0") + "-" + t.fontSizeMax.ToString("0") + ")" : "").Append(" lines=").Append(t.textInfo.lineCount)
+                  .Append(" rect=").Append(r.width.ToString("0")).Append("x").Append(r.height.ToString("0")).Append(" pref=").Append(t.preferredWidth.ToString("0")).Append("x").Append(t.preferredHeight.ToString("0"))
+                  .Append(wide ? " WIDER-THAN-RECT" : "").Append(tall ? " TALLER-THAN-RECT" : "").Append(t.isTextOverflowing ? " OVERFLOW" : "").Append(latin ? " LATIN" : "").Append(missing ? " MISSING[" + mc + "]" : "").Append('\n');
+            }
+            return sb.ToString();
+        }
+        // CN font dynamic atlas after adding every UI string (Loc.All + all reward titles/descriptions): pages, glyphs, missing chars.
+        string CnAtlas()
+        {
+            TMPro.TMP_FontAsset cn = null; foreach (var f in TMPro.TMP_Settings.fallbackFontAssets) if (f != null && f.name.Contains("RoundedCN")) cn = f;
+            if (cn == null) return "CN font: not in TMP Settings fallbacks\n";
+            var all = new System.Text.StringBuilder(); foreach (var str in StoneSignal.UI.Loc.All()) all.Append(str);
+            foreach (var r in s.config.rewards) if (r != null) all.Append(StoneSignal.UI.Loc.RewardTitle(r)).Append(StoneSignal.UI.Loc.RewardDesc(r));
+            var set = new HashSet<char>(); foreach (char c in all.ToString()) if (c > 0x2E7F) set.Add(c);
+            var uniq = new string(new List<char>(set).ToArray()); cn.TryAddCharacters(uniq, out string missing);
+            int pages = 0; if (cn.atlasTextures != null) foreach (var tx in cn.atlasTextures) if (tx != null) pages++;
+            return "CN font " + cn.name + ": unique CJK/fullwidth chars in UI strings=" + uniq.Length + " glyphs in font now=" + cn.characterTable.Count +
+                   " atlas pages=" + pages + " (" + cn.atlasWidth + "x" + cn.atlasHeight + ", padding " + cn.atlasPadding + ", sampling " + cn.faceInfo.pointSize + ") multiAtlas=" + cn.isMultiAtlasTexturesEnabled +
+                   " missing=[" + missing + "]\n";
+        }
         bool captureNoUi;
         void Capture(string path)
         {
-            var cam = s.viewCamera; var rt = new RenderTexture(1920, 1080, 24) { antiAliasing = 4 };
+            var cam = s.viewCamera; int W = Screen.width, H = Screen.height; var rt = new RenderTexture(W, H, 24) { antiAliasing = 4 }; // screen size: overlay UI layout matches the real screen
             var hidden = new List<Canvas>(); // URP draws overlay UI into the camera target itself, so hide canvases synchronously around Render
             if (captureNoUi) foreach (var c in FindObjectsOfType<Canvas>()) if (c.enabled) { c.enabled = false; hidden.Add(c); }
             var canvases = captureNoUi ? new Canvas[0] : FindObjectsOfType<Canvas>();
             var modes = new RenderMode[canvases.Length];
             for (int i = 0; i < canvases.Length; i++) { modes[i] = canvases[i].renderMode; canvases[i].renderMode = RenderMode.ScreenSpaceCamera; canvases[i].worldCamera = cam; canvases[i].planeDistance = cam.nearClipPlane + .3f - Mathf.Clamp(canvases[i].sortingOrder, 0, 20) * .01f; } /* was -order*.05: order-20 reward canvas went behind the near plane */
             cam.targetTexture = rt; Canvas.ForceUpdateCanvases(); cam.Render(); Canvas.ForceUpdateCanvases(); cam.Render();
-            RenderTexture.active = rt; var tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false); tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); tex.Apply();
+            RenderTexture.active = rt; var tex = new Texture2D(W, H, TextureFormat.RGB24, false); tex.ReadPixels(new Rect(0, 0, W, H), 0, 0); tex.Apply();
             Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllBytes(path, tex.EncodeToPNG());
-            cam.targetTexture = null; RenderTexture.active = null;
+            cam.targetTexture = null; RenderTexture.active = null; rt.Release(); Destroy(rt); Destroy(tex);
             for (int i = 0; i < canvases.Length; i++) canvases[i].renderMode = modes[i];
             foreach (var c in hidden) c.enabled = true;
         }

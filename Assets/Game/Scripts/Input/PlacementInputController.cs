@@ -51,8 +51,18 @@ namespace StoneSignal
         /// Ghost is previewed this many reference pixels above the finger (scaled by the HUD canvas).
         public float DragOffset = 110f;
         public float CanvasScale = 1f;
-        /// Screen-space top of the hand band (set by GameUI on layout); releasing below it = "back over the hand".
-        public float HandTop;
+        /// Hand card rects (set by GameUI on every hand rebuild). Finger over one of them = "back over the hand" (hide / cancel).
+        /// Was a full-width band below the block row (y <= 434 px at 1080p), which also covered open board on the right and,
+        /// with the 110 px offset, made the lower board rows unreachable by drag; it also ignored the safe-area bottom inset.
+        public readonly List<RectTransform> HandRects = new List<RectTransform>();
+        float handTopFallback;
+        static readonly Vector3[] corners = new Vector3[4];
+        /// Screen-space top of the hand (highest hand card edge, safe area included).
+        public float HandTop
+        {
+            get { float top = 0; bool any = false; foreach (var r in HandRects) if (r != null && r.gameObject.activeInHierarchy) { r.GetWorldCorners(corners); foreach (var c in corners) top = Mathf.Max(top, c.y); any = true; } return any ? top : handTopFallback; }
+            set => handTopFallback = value;
+        }
         TowerManager towers; BlockPlacementManager blocks; GridManager grid; DirectionIndicator indicator;
 
         public void Initialize(TowerManager t, BlockPlacementManager b, GridManager g, ArtCatalog art = null)
@@ -75,14 +85,27 @@ namespace StoneSignal
             Machine.CardDown(tower, index, tower ? towers.SelectedNeedsDirection : true, pos, Time.unscaledTime);
             Drive();
         }
-        bool OverHand(Vector2 pos) => pos.y <= HandTop;
+        bool OverHand(Vector2 pos)
+        {
+            bool any = false;
+            foreach (var r in HandRects) if (r != null && r.gameObject.activeInHierarchy) { any = true; if (RectTransformUtility.RectangleContainsScreenPoint(r, pos, null)) return true; }
+            return !any && pos.y <= handTopFallback;
+        }
+        /// Diagnostics (drag report): the controller's own hand test and a hard cancel of any gesture in progress.
+        public bool IsOverHand(Vector2 pos) => OverHand(pos);
+        public void CancelPlacement() { Machine.Reset(); if (towers != null) Cancel(); Drive(); }
+        /// Anchor under a screen point: the visible cell (wall top / tile top, GridManager.RaycastCell). Symmetric multi-cell towers
+        /// (2x2) return the footprint origin centred on the aim point and kept on the board, as the desktop hover does.
         Vector2Int? CellAt(Vector2 screen)
         {
             var cam = Camera.main; if (cam == null || grid == null) return null;
-            var plane = new Plane(Vector3.up, grid.transform.position);
-            var ray = cam.ScreenPointToRay(screen);
-            if (!plane.Raycast(ray, out float d)) return null;
-            var c = grid.ToCell(ray.GetPoint(d)); return grid.InBounds(c) ? c : (Vector2Int?)null;
+            if (!grid.RaycastCell(cam.ScreenPointToRay(screen), out var c, out var hit) || !grid.InBounds(c)) return null;
+            if (Machine.Tower && towers.SelectedIndex >= 0 && !towers.SelectedNeedsDirection)
+            {
+                var size = TowerManager.SizeOf(towers.Data[towers.SelectedIndex], 0);
+                if (size != Vector2Int.one) return grid.ClampOrigin(grid.FootprintOrigin(hit, size), size);
+            }
+            return c;
         }
         string Reason(Vector2Int anchor, int dir)
         {
@@ -105,7 +128,9 @@ namespace StoneSignal
         void Hide() { towers.HidePreview(); blocks.HidePreview(); indicator.Hide(); }
         bool Place()
         {
-            var a = Machine.Cell; int dir = Machine.Tower ? towers.Rotation : blocks.Rotation;
+            var a = Machine.Cell;
+            if (NeedsDirection && Machine.Dir >= 0) { if (Machine.Tower) towers.SetRotation(Machine.Dir); else blocks.SetRotation(Machine.Dir); } // a tapped arrow commits its own direction (was: the previewed one)
+            int dir = Machine.Tower ? towers.Rotation : blocks.Rotation;
             bool ok = Machine.Tower ? towers.TryBuild(towers.OriginFor(a, dir), towers.SelectedIndex, dir) : blocks.CommitPlacement(a);
             bool showedDir = indicator.gameObject.activeSelf; Vector2 at = Machine.Centre;
             Hide(); towers.Select(-1);
@@ -113,7 +138,7 @@ namespace StoneSignal
             return ok;
         }
         void Cancel() { Hide(); towers.Select(-1); }
-        Vector2 CellScreen(Vector2Int c) { var cam = Camera.main; return cam != null ? (Vector2)cam.WorldToScreenPoint(grid.ToWorld(c)) : Vector2.zero; }
+        Vector2 CellScreen(Vector2Int c) { var cam = Camera.main; return cam != null ? (Vector2)cam.WorldToScreenPoint(grid.ToWorld(c) + Vector3.up * (Machine.Tower ? grid.wallTop : grid.tileTop)) : Vector2.zero; } // ghost height
 
         void Drive()
         {
@@ -141,6 +166,12 @@ namespace StoneSignal
             }
         }
 
+        static readonly System.Collections.Generic.List<RaycastResult> uiHits = new System.Collections.Generic.List<RaycastResult>();
+        static bool OverUi(Vector2 pos)
+        {
+            var es = EventSystem.current; if (es == null) return false;
+            uiHits.Clear(); es.RaycastAll(new PointerEventData(es) { position = pos }, uiHits); return uiHits.Count > 0;
+        }
         void Update()
         {
             if (towers == null) return;
@@ -167,8 +198,7 @@ namespace StoneSignal
             bool armedOrDir = st == PlacementState.Armed || st == PlacementState.Direction;
             if (armedOrDir && (touch || st == PlacementState.Direction))
             {
-                bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(Input.touchCount > 0 ? Input.GetTouch(0).fingerId : -1);
-                if (p.Down && !overUi)
+                if (p.Down && ((st == PlacementState.Direction && indicator.HitArrow(p.Position)) || !OverUi(p.Position))) // arrows draw above the HUD (sortingOrder 50), so a tap on an arrow wins even over a hand card (v18 drag report: 2048x1536 notch corner BL); UI hit test at the pointer itself (was IsPointerOverGameObject(fingerId/-1): with injected/forced touch that tested the mouse cursor, so arrow taps were dropped at random)
                 {
                     var c = CellAt(p.Position); // tap-tap: the tapped cell itself
                     Handle(Machine.BoardDown(p.Position, c, c.HasValue && AnchorValid(c.Value)), p.Position);
@@ -204,7 +234,7 @@ namespace StoneSignal
             root = new GameObject("Root", typeof(RectTransform)).GetComponent<RectTransform>(); root.SetParent(transform, false);
             root.anchorMin = root.anchorMax = Vector2.zero; root.pivot = new Vector2(.5f, .5f);
             var r = Img("Ring", RingSprite, 1); ring = r.rectTransform; r.color = new Color(1, 1, 1, RingSprite ? .9f : .18f);
-            for (int i = 0; i < 4; i++) arrows[i] = Img("Arrow" + i, ArrowSprite, 1);
+            for (int i = 0; i < 4; i++) { arrows[i] = Img("Arrow" + i, ArrowSprite, 1); arrows[i].raycastTarget = true; } // arrows (drawn on top) swallow the tap so a hand card underneath is not also pressed
             pulse = Img("Pulse", PulseSprite, 128); pulse.gameObject.SetActive(false);
         }
         public void Show(Vector2 centre, float outer, float dead, int dir, bool valid, bool pressed = false)
@@ -224,6 +254,7 @@ namespace StoneSignal
                 a.color = i == dir ? (valid ? Valid : Invalid) : Idle;
             }
         }
+        public bool HitArrow(Vector2 screen) { if (!isActiveAndEnabled) return false; foreach (var a in arrows) if (a != null && a.gameObject.activeInHierarchy && RectTransformUtility.RectangleContainsScreenPoint(a.rectTransform, screen, null)) return true; return false; }
         public void Hide() { if (pulseT < 0) gameObject.SetActive(false); else { ring.gameObject.SetActive(false); foreach (var a in arrows) a.gameObject.SetActive(false); } }
         /// Commit feedback: ui_dir_pulse expands and fades (0.3 s, unscaled) at the indicator centre.
         public void Pulse(Vector2 centre)

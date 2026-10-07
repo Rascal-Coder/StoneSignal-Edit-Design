@@ -209,9 +209,10 @@ namespace StoneSignal
             session.Economy.AddGold(session.Towers.Cost(session.config.towers[0]));
             int towersBefore=session.Towers.Towers.Count, goldBefore=session.Economy.Gold;
             bool force=PointerInput.ForceTouch; PointerInput.ForceTouch=true;
-            Vector2 target=Camera.main.WorldToScreenPoint(grid.FootprintCenter(best,size));
+            Vector2 target=Camera.main.WorldToScreenPoint(grid.FootprintCenter(best,size)+Vector3.up*grid.wallTop); // aim at the visible wall top
             Vector2 finger=target-Vector2.up*pic.DragOffset*pic.CanvasScale; // ghost sits above the finger
             Vector2 start=new Vector2(target.x,10);
+            foreach(var rt in FindObjectsOfType<RectTransform>()) if(rt.name=="Tower card "+session.config.towers[0].displayName){ var k=new Vector3[4]; rt.GetWorldCorners(k); start=(k[0]+k[2])*.5f; break; } // finger starts on the card
             PointerInput.Inject(start,true,true,false); pic.CardDown(true,0,start); yield return null;
             for(int i=1;i<=6;i++){ PointerInput.Inject(Vector2.Lerp(start,finger,i/6f),false,true,false); yield return null; }
             bool dragging=pic.Machine.State==PlacementState.Dragging;
@@ -223,8 +224,8 @@ namespace StoneSignal
             towersBefore=session.Towers.Towers.Count; PointerInput.ForceTouch=true;
             PointerInput.Inject(start,true,true,false); pic.CardDown(true,0,start); yield return null;
             PointerInput.Inject(finger,false,true,false); yield return null;
-            PointerInput.Inject(new Vector2(start.x,5),false,true,false); yield return null;
-            PointerInput.Inject(new Vector2(start.x,5),false,false,true); yield return null; yield return null;
+            PointerInput.Inject(start,false,true,false); yield return null; // back onto the card
+            PointerInput.Inject(start,false,false,true); yield return null; yield return null;
             PointerInput.ClearInjection(); PointerInput.ForceTouch=force;
             Require(session.Towers.Towers.Count==towersBefore && session.Towers.SelectedIndex<0,"Touch drag released over the hand cancels");
         }

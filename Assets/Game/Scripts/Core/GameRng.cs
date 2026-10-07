@@ -19,9 +19,35 @@ namespace StoneSignal
     {
         public static int Seed { get; private set; } = 37;
         public static readonly RngStream Gameplay = new RngStream(37), Draw = new RngStream(37 * 31 + 1), Rewards = new RngStream(37 * 31 + 2), Vfx = new RngStream(37 * 31 + 3);
-        public static void SetSeed(int seed)
+        public static bool Explicit { get; private set; }
+        /// Explicit seed (smoke test / EditMode tests / repro). Sticks: BeginRun will not replace it.
+        public static void SetSeed(int seed) { Explicit = true; Apply(seed); UnityEngine.Debug.Log("RUN SEED: " + seed + " (explicit SetSeed: smoke/test) - replay with -seed " + seed); }
+        private static void Apply(int seed)
         {
             Seed = seed; Gameplay.Reseed(seed); Draw.Reseed(seed * 31 + 1); Rewards.Reseed(seed * 31 + 2); Vfx.Reseed(seed * 31 + 3);
+        }
+        /// v18 (P0): called once at run start (GameBootstrap.Awake) before the deck/hand/rewards roll anything. Real player runs get a fresh
+        /// seed every run; "-seed N" on the command line replays a logged run; batch mode (tests) and diagnostic captures
+        /// (-stonesignal-*) stay on 37 so screenshots/probes are reproducible (the smoke test re-seeds itself from -seed afterwards).
+        public static int BeginRun()
+        {
+            string src;
+            if (Explicit) src = "explicit";
+            else
+            {
+                string[] args = System.Environment.GetCommandLineArgs(); int seed = 0;
+                bool diag = UnityEngine.Application.isBatchMode; foreach (var a in args) if (a.StartsWith("-stonesignal-")) diag = true;
+                if (diag) { seed = 37; src = "diagnostic/test default"; }
+                else
+                {
+                    int i = System.Array.IndexOf(args, "-seed");
+                    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out seed)) src = "command line";
+                    else { seed = System.Guid.NewGuid().GetHashCode() ^ System.Environment.TickCount; src = "fresh"; }
+                }
+                Apply(seed);
+            }
+            UnityEngine.Debug.Log("RUN SEED: " + Seed + " (" + src + ") - replay with -seed " + Seed);
+            return Seed;
         }
         public static int ToPermille(float probability) => UnityEngine.Mathf.Clamp(UnityEngine.Mathf.RoundToInt(probability * 1000f), 0, 1000);
     }

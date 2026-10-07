@@ -64,6 +64,26 @@ namespace StoneSignal
         }
         /// Open water under the middle of an entry's bridge (board edge at .5 cell, 4x4 island edge at islandDistance - 2 cells).
         public Vector3 BridgeWaterPoint(Vector2Int entry) { float mid = (.5f + Mathf.Max(.5f, islandDistance - 2f)) * .5f; return ToWorld(entry) + OutwardOf(entry, width, height) * mid * cellSize; }
+        /// Visible surface heights above the grid plane (art tile top / wall top), set by GameBootstrap from the ArtCatalog.
+        public float tileTop, wallTop;
+        bool Raised(Vector2Int c) { var s = Get(c); return InBounds(c) && (s == CellState.Blocked || s == CellState.TowerSlot); }
+        /// The cell the player sees under a screen ray: walking down from the wall top to the tile top, the first raised (wall / tower)
+        /// cell the ray enters (its top or its camera-facing side), otherwise the tile cell. Picking on the y = 0 grid plane instead
+        /// put the snapped cell up to wallTop / tan(pitch) away from the wall top the finger aims at. False if the ray never goes down.
+        public bool RaycastCell(Ray ray, out Vector2Int cell, out Vector3 point)
+        {
+            cell = default; point = default; float y0 = transform.position.y;
+            if (ray.direction.y > -1e-5f) return false;
+            Vector3 At(float h) => ray.origin + ray.direction * ((y0 + h - ray.origin.y) / ray.direction.y);
+            if (wallTop > tileTop)
+            {
+                const int Steps = 16;
+                for (int i = 0; i <= Steps; i++) { var p = At(Mathf.Lerp(wallTop, tileTop, i / (float)Steps)); var c = ToCell(p); if (Raised(c)) { cell = c; point = p; return true; } }
+            }
+            point = At(tileTop); cell = ToCell(point); return true;
+        }
+        /// Keeps a footprint on the board (aiming at an edge cell with a 2x2 shifts it inward instead of hanging off the edge).
+        public Vector2Int ClampOrigin(Vector2Int origin, Vector2Int size) => new Vector2Int(Mathf.Clamp(origin.x, 0, Mathf.Max(0, width - Mathf.Max(1, size.x))), Mathf.Clamp(origin.y, 0, Mathf.Max(0, height - Mathf.Max(1, size.y))));
         public Vector3 ToWorld(Vector2Int p) => transform.position + new Vector3((p.x + .5f) * cellSize, 0, (p.y + .5f) * cellSize);
         public Vector3 CoreCenter
         {

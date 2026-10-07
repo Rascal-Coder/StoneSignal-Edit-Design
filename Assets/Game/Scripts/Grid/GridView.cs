@@ -67,17 +67,7 @@ namespace StoneSignal
                     }
                     else Debug.LogError("CORE: PF_Core_Enclosure has no CoreDamageFx - run BatchImport (StylizedCoreV173)");
                 }
-                else if (ArtSteps.On(4) && coreGo != null && art.coreEnclosureIntact != null)
-                {
-                    // v16.2 core enclosure (no generator): one MeshFilter swapped by CoreDamageFx at 0.70 / 0.40 / 0.15
-                    var enc = new GameObject("Core enclosure", typeof(MeshFilter), typeof(MeshRenderer)); enc.transform.SetParent(coreGo.transform, false);
-                    enc.GetComponent<MeshFilter>().sharedMesh = art.coreEnclosureIntact;
-                    var mr = enc.GetComponent<MeshRenderer>(); mr.sharedMaterial = art.coreEnclosureMaterial; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    var cores = new System.Collections.Generic.List<Renderer>(); foreach (var r in coreGo.GetComponentsInChildren<Renderer>()) if (r != mr) cores.Add(r);
-                    CoreFx = coreGo.AddComponent<StoneSignal.VFX.CoreDamageFx>();
-                    CoreFx.enclosure = enc.GetComponent<MeshFilter>(); CoreFx.intactMesh = art.coreEnclosureIntact; CoreFx.crackedMesh = art.coreEnclosureCracked; CoreFx.brokenMesh = art.coreEnclosureBroken;
-                    CoreFx.coreRenderers = cores.ToArray(); // smoke/sparks: none delivered yet (null-safe)
-                }
+                else if (ArtSteps.On(4) && coreGo != null) Debug.LogError("CORE: ArtCatalog.coreEnclosureFx (PF_Core_Enclosure) is MISSING - run BatchImport (StylizedCoreV173). v16.2 runtime-built enclosure removed (v18).");
                 if (art.boardCliff != null || (grid.layout != null && grid.layout.levelDressing != null)) BuildIsland();
                 else
                 {

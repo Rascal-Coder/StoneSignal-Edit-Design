@@ -64,11 +64,15 @@ namespace StoneSignal
         public void SetRotation(int r) { r &= 3; if (r == rotation) return; rotation = r; if (artGhost != null) RebuildGhost(); Changed?.Invoke(); }
         public string ValidatePlacement(Vector2Int anchor, int rot) { int keep = rotation; rotation = rot & 3; try { return ValidatePlacement(anchor); } finally { rotation = keep; } }
         public void Rotate() { rotation = (rotation + 1) % 4; if (artGhost != null) RebuildGhost(); Changed?.Invoke(); }
+        /// Cells for an explicit rotation (no state change).
+        public List<Vector2Int> CellsAt(Vector2Int anchor, int rot) { int keep = rotation; rotation = rot & 3; try { return CellsAt(anchor); } finally { rotation = keep; } }
+        /// True while the placement ghost is visible (diagnostics / drag report).
+        public bool PreviewShown { get; private set; }
         public List<Vector2Int> CellsAt(Vector2Int anchor)
         {
             var result = new List<Vector2Int>();
             if (CurrentShape == null) return result;
-            foreach (Vector2Int p in CurrentShape.Rotated(rotation)) result.Add(anchor + p);
+            foreach (Vector2Int p in CurrentShape.TurnedAround(rotation)) result.Add(anchor + p); // anchor cell always covered; rotation = direction
             return result;
         }
         public string ValidatePlacement(Vector2Int anchor)
@@ -131,7 +135,7 @@ namespace StoneSignal
         }
         public void Preview(Vector2Int anchor)
         {
-            PreviewAnchor = anchor;
+            PreviewAnchor = anchor; PreviewShown = CurrentShape != null;
             string reason = ValidatePlacement(anchor);
             PreviewValid = reason == null;
             Status = PreviewValid ? "Route clear - left click to place" : reason;
@@ -168,10 +172,7 @@ namespace StoneSignal
         {
             cell = default;
             if (!CanPlaceNow) { SetGhostVisible(false); return false; }
-            var plane = new Plane(Vector3.up, grid.transform.position);
-            var ray = viewCamera.ScreenPointToRay(screen);
-            if (!plane.Raycast(ray, out float distance)) { SetGhostVisible(false); return false; }
-            cell = grid.ToCell(ray.GetPoint(distance));
+            if (!grid.RaycastCell(viewCamera.ScreenPointToRay(screen), out cell, out _)) { SetGhostVisible(false); return false; } // visible surface, not y = 0
             if (!grid.InBounds(cell)) { SetGhostVisible(false); return false; }
             Preview(cell);
             return true;
@@ -190,7 +191,7 @@ namespace StoneSignal
                 }
                 if (artGhost != null)
                 {
-                    var shape = new List<Vector2Int>(CurrentShape.Rotated(rotation));
+                    var shape = new List<Vector2Int>(CurrentShape.TurnedAround(rotation));
                     artGhost.cellSize = grid.cellSize; artGhost.SetCells(shape.ToArray());
                     SetGhostVisible(false); return;
                 }
@@ -199,7 +200,7 @@ namespace StoneSignal
                 ghost.Add(PrimitiveVisual.Create("Block ghost", PrimitiveType.Cube, transform, Vector3.zero, new Vector3(.89f, .64f, .89f) * grid.cellSize, palette.valid));
             SetGhostVisible(false);
         }
-        private void SetGhostVisible(bool visible) { foreach (GameObject obj in ghost) if (obj != null) obj.SetActive(visible); if (artGhost != null && !visible) ShowArtCells(false); }
+        private void SetGhostVisible(bool visible) { if (!visible) PreviewShown = false; foreach (GameObject obj in ghost) if (obj != null) obj.SetActive(visible); if (artGhost != null && !visible) ShowArtCells(false); }
         // Keep the ghost object active so PlayDrop's coroutine survives; only its cell renderers hide.
         private void ShowArtCells(bool on) { var c = artGhost.transform.Find("Cells"); if (c != null) c.gameObject.SetActive(on); }
         private StoneSignal.VFX.PlacementGhost artGhost;
