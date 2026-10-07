@@ -34,6 +34,7 @@ namespace StoneSignal.EditorTools
             layout.spawns = new[] { new Vector2Int(15, 3), new Vector2Int(0, 8), new Vector2Int(7, 0) };
             layout.coreOrigin = new Vector2Int(7, 5); layout.coreSize = new Vector2Int(2, 2);
             layout.notes = "From ArtSource/Stylized/level_layout.json (Blender W/E/N bridges, Ember core at centre).";
+            WireSurroundings(layout);
             EditorUtility.SetDirty(layout);
             var config = Load<GameConfig>("Assets/Game/Settings/GameConfig.asset");
             config.layout = layout; EditorUtility.SetDirty(config);
@@ -51,6 +52,44 @@ namespace StoneSignal.EditorTools
             var cam = UnityEngine.Object.FindObjectOfType<GameBootstrap>()?.viewCamera;
             if (cam != null && cam.orthographic) { cam.orthographicSize = GameCamOrthoV7; EditorUtility.SetDirty(cam); }
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
+        }
+
+        [Serializable] class LayoutItem { public string asset; public float[] pos; public float rotZ; public float rotX; public float rotY; public float[] scale; }
+        [Serializable] class LayoutFile { public LayoutItem[] items; }
+        // Visual-only categories outside the playable board (bridges reach the shore islands with the authored segment counts).
+        static readonly string[] SurroundKinds = { "Bridge_Plank", "Dock_Post" }; // islands/trees/water come from the art-authored level dressing prefab
+        // Demo diorama: Unity = (-x, z, -y); tile top at 0.80 there vs 0.25 in game -> y offset -0.55 (cliff top 0.55 = tile top - 0.25).
+        public const float DemoToGameY = GroundTop - .80f;
+        static void WireSurroundings(BoardLayoutData layout)
+        {
+            var file = JsonUtility.FromJson<LayoutFile>(System.IO.File.ReadAllText("ArtSource/Stylized/level_layout.json"));
+            var tints = new[] { null, "M_Foliage_Warm", "M_Foliage_Gold", "M_Foliage_Deep" }
+                .Select(n => n == null ? null : AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/" + n + ".mat")).ToArray();
+            var list = new System.Collections.Generic.List<BoardSurroundItem>();
+            foreach (var it in file.items)
+            {
+                if (!SurroundKinds.Any(k => it.asset.Contains(k))) continue;
+                string name = "PF_" + it.asset.Substring(3); if (name.EndsWith("_01")) name = name.Substring(0, name.Length - 3);
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(P + name + ".prefab");
+                if (prefab == null) { Debug.LogWarning("Surroundings: no prefab for " + it.asset); continue; }
+                Material tint = null;
+                if (name.Contains("Tree")) tint = tints[Mathf.Abs((int)(it.pos[0] * 73 + it.pos[1] * 131)) % 4]; // same hash as the demo builder
+                list.Add(new BoardSurroundItem
+                {
+                    prefab = prefab,
+                    position = new Vector3(-it.pos[0], it.pos[2] + DemoToGameY, -it.pos[1]),
+                    euler = new Vector3(-it.rotX, -it.rotZ, -it.rotY),
+                    scale = it.scale != null && it.scale.Length == 3 ? new Vector3(it.scale[0], it.scale[2], it.scale[1]) : Vector3.one,
+                    material = tint,
+                });
+            }
+            layout.surroundings = list.ToArray();
+            // Data-driven dressing slot: art agent ships PF_Env_LevelDressing_16x12; until then keep cliff + water + bridges.
+            layout.levelDressing = AssetDatabase.LoadAssetAtPath<GameObject>(P + "PF_Env_LevelDressing_16x12.prefab");
+            layout.levelDressingOffset = new Vector3(0, DemoToGameY, 0); layout.levelDressingReplacesCliff = true;
+            if (layout.levelDressing == null) Debug.Log("Level dressing: PF_Env_LevelDressing_16x12 not found, using cliff fallback");
+            layout.waterMaterial = layout.levelDressing != null ? null : AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/M_Env_Water_Flat.mat");
+            layout.waterY = DemoToGameY; layout.waterSize = 120;
         }
 
         static string CheckLayout()
@@ -71,6 +110,12 @@ namespace StoneSignal.EditorTools
                 if (validator.ValidatePlacement(ring) == null) problems++;          // sealing the core must fail
                 if (validator.ValidatePlacement(new[] { grid.Spawns[1] }) == null) problems++; // spawns protected
                 string lens = string.Join("/", paths.CurrentPaths.Select(p => p.Count));
+                var planks = layout.surroundings == null ? new BoardSurroundItem[0] : layout.surroundings.Where(s => s.prefab && s.prefab.name.Contains("Bridge")).ToArray();
+                // Segments per bridge by side of the board (Unity x/z relative to the board centre).
+                int w = planks.Count(s => s.position.x > layout.width * .5f), e = planks.Count(s => s.position.x < -layout.width * .5f), n = planks.Count(s => s.position.z < -layout.height * .5f);
+                if (w != 4 || e != 4 || n != 3) problems++;
+                if (layout.levelDressing == null && layout.waterMaterial == null) problems++;
+                lens += " surroundings=" + (layout.surroundings?.Length ?? 0) + " bridgeSegments=W" + w + "/E" + e + "/N" + n + " dressing=" + (layout.levelDressing ? layout.levelDressing.name : "none(cliff)");
                 return "layout " + layout.width + "x" + layout.height + " spawns=" + grid.Spawns.Count + " core=" + grid.CoreCells.Count + " routes=" + lens + " layoutProblems=" + problems;
             }
             finally { UnityEngine.Object.DestroyImmediate(go); }
@@ -93,7 +138,7 @@ namespace StoneSignal.EditorTools
             Tower("Pulse", "PF_Tower_Tesla_1x1", DamageKind.Lightning, "FX_Muzzle_Tesla", "FX_Proj_Tesla_Arc", "FX_Hit_Lightning", "FX_Explosion_Lightning", t =>
             { t.explosionOnKill = true; t.muzzleHeight = .9f; t.muzzleForward = 0; });
             Tower("Seismic", "PF_Tower_Mortar_2x2", DamageKind.Explosive, "FX_Muzzle_Mortar", "FX_Proj_MortarShell", null, "FX_Explosion_HE", t =>
-            { t.explosionOnEveryHit = true; t.lobbedShot = true; t.lobHeight = 1.5f; t.impactShake = FeedbackShake.Light; });
+            { t.footprint = new Vector2Int(2, 2); t.explosionOnEveryHit = true; t.lobbedShot = true; t.lobHeight = 1.5f; t.impactShake = FeedbackShake.Light; });
             Tower("Chill", "PF_Tower_Frost_1x1", DamageKind.Ice, "FX_Muzzle_Frost", "FX_Proj_FrostShard", "FX_Hit_Ice", "FX_Explosion_Ice", t =>
             { t.explosionOnKill = true; });
 
@@ -114,7 +159,8 @@ namespace StoneSignal.EditorTools
             art.tileTop = GroundTop; art.blockTop = WallTop;
             art.spawnPortal = null; // entries are marked by plank bridges on the island edge
             art.boardCliff = Pf("PF_Env_Board_Cliff_16x12"); art.boardCliffSize = new Vector2(16, 12);
-            art.boardCliffOffsetY = -CliffTop; art.entryBridge = Pf("PF_Env_Bridge_Plank");
+            art.boardCliffOffsetY = DemoToGameY; // cliff pivot -0.55; its top (0.55 demo / 0 game) is the ground plane under tile pivots
+            art.entryBridge = Pf("PF_Env_Bridge_Plank");
             art.entryBridgePlanks = 4; art.entryBridgeOffsetY = -CliffTop;
             EditorUtility.SetDirty(art);
             WireLayout();
@@ -130,6 +176,7 @@ namespace StoneSignal.EditorTools
             t.explosionOnEveryHit = t.explosionOnCrit = t.explosionOnKill = t.lobbedShot = false;
             t.critChance = 0; t.critMultiplier = 1.5f; t.muzzleHeight = .65f; t.muzzleForward = .45f; t.lobHeight = 1.5f;
             t.impactShake = FeedbackShake.None; t.impactHitStop = 0;
+            t.footprint = Vector2Int.one; t.footprintRotates = false; // Gatling/Tesla/Frost/Cannon 1x1, Flamer 1x2 (rotates), Mortar 2x2
             extra?.Invoke(t);
             EditorUtility.SetDirty(t);
         }

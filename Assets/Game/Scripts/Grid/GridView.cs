@@ -33,7 +33,7 @@ namespace StoneSignal
                 }
                 foreach (var s in grid.Spawns) ArtVisual.Create(art.spawnPortal, transform, grid.ToWorld(s));
                 ArtVisual.Create(art.signalCore, transform, grid.CoreCenter);
-                if (art.boardCliff != null) BuildIsland();
+                if (art.boardCliff != null || (grid.layout != null && grid.layout.levelDressing != null)) BuildIsland();
                 else
                 {
                     var environment = new GameObject("Board decoration");
@@ -140,10 +140,44 @@ namespace StoneSignal
         // Stylized board: cliff island under the grid plus plank bridges leading out of each edge spawn.
         private void BuildIsland()
         {
-            var cliff = ArtVisual.Create(art.boardCliff, transform, grid.BoardCenter + Vector3.up * art.boardCliffOffsetY);
-            var native = art.boardCliffSize;
-            if (native.x > 0 && native.y > 0)
-                cliff.transform.localScale = new Vector3(grid.width * grid.cellSize / native.x, 1, grid.height * grid.cellSize / native.y);
+            var layout = grid.layout;
+            bool dressed = layout != null && layout.levelDressing != null;
+            if (dressed)
+            {
+                var dressing = ArtVisual.Create(layout.levelDressing, transform, grid.BoardCenter + layout.levelDressingOffset);
+                dressing.transform.localRotation = Quaternion.identity; // prefab authored in game space
+            }
+            if (!dressed || !layout.levelDressingReplacesCliff)
+            {
+                var cliff = ArtVisual.Create(art.boardCliff, transform, grid.BoardCenter + Vector3.up * art.boardCliffOffsetY);
+                var native = art.boardCliffSize;
+                if (native.x > 0 && native.y > 0)
+                    cliff.transform.localScale = new Vector3(grid.width * grid.cellSize / native.x, 1, grid.height * grid.cellSize / native.y);
+            }
+            if (!dressed && layout != null && layout.waterMaterial != null)
+            {
+                float s = layout.waterSize / 10f;
+                var water = PrimitiveVisual.Create("Water", PrimitiveType.Plane, transform, grid.BoardCenter + Vector3.up * layout.waterY, new Vector3(s, 1, s), layout.waterMaterial);
+                water.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            if (layout != null && layout.surroundings != null && layout.surroundings.Length > 0)
+            {
+                // Authored bridges/docks (segment counts W4/E4/N3) come straight from level_layout.json.
+                var root = new GameObject("Board surroundings").transform; root.SetParent(transform, false);
+                foreach (var it in layout.surroundings)
+                {
+                    if (it.prefab == null) continue;
+                    var go = ArtVisual.Create(it.prefab, root, grid.BoardCenter + it.position);
+                    go.transform.rotation = Quaternion.Euler(it.euler);
+                    go.transform.localScale = it.scale == Vector3.zero ? Vector3.one : it.scale;
+                    if (it.material != null)
+                        foreach (var r in go.GetComponentsInChildren<Renderer>())
+                        {
+                            var mats = r.sharedMaterials; for (int i = 0; i < mats.Length; i++) mats[i] = it.material; r.sharedMaterials = mats;
+                        }
+                }
+                return;
+            }
             if (art.entryBridge == null) return;
             foreach (var s in grid.Spawns)
             {

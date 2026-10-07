@@ -17,6 +17,8 @@ namespace StoneSignal
         public EnemyData splitChild;
         [Min(0)] public int splitCount;
         [Header("Presentation (visual only)")]
+        [Tooltip("Yaw turn rate (deg/s) of the model's +Z toward the movement direction.")]
+        [Min(1)] public float turnSpeed = 540;
         [Tooltip("Scale applied to split children; 1 when the child has its own sized prefab.")]
         [Min(.05f)] public float splitChildScale = .65f;
         public GameObject deathVfx;

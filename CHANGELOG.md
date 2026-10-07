@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-07 — 敌人朝向、塔占地、关卡装饰槽、游戏截图钩子
+
+- 敌人朝向：根节点 +Z 以 `Quaternion.RotateTowards` 平滑转向水平移动方向（仅绕 Y），转速 `EnemyData.turnSpeed`（默认 540°/s）；出生/分裂子体从出生点直接朝向首段路径。无任何按模型的 yaw/180° 偏移（美术统一 +Z、根旋转为零）。
+- 塔占地：`TowerData.footprint`（默认 1x1，Seismic/Mortar 2x2）+ `footprintRotates`（1x2 类塔按 R 旋转 90°）。放置要求所有覆盖格在界内、均为墙块顶面且无塔；占用/拆除（`TowerManager.Remove`）作用于所有格；幽灵与射程圈吸附占地中心，模型居中于占地中心，射程从中心计算。烟测改为先砌墙再建塔。编辑器测试 `StoneSignal/Tests/Tower footprints`（`TowerFootprintTests.RunBatch`：边界、部分重叠、紧邻核心等 10 例）。
+- 关卡装饰槽：`BoardLayoutData.levelDressing`（+ offset −0.55、`levelDressingReplacesCliff`），接线工具在 `PF_Env_LevelDressing_16x12` 存在时自动赋值，否则保留悬崖 + 水面。不再手工拼岛/树；仅从 level_layout.json 取桥板与码头桩（W4/E4/N3 段，Check 校验）。修复 `entryBridge` 赋值被注释吞掉的问题。悬崖偏移核对：演示中悬崖顶 0.55、格顶 0.80 → 游戏 −0.55。
+- `StoneSignal.EditorTools.GameScreenshot.Capture`：渲染 `Verification/Screenshots/game.png`，并写 `game.txt`（渲染器数、总/可见三角形、估算 DrawCall、预算 <150 DC / <150k tris）。
+
+
 ## 2026-10-07 — 第三方 CC0 美术全量替换 + 敌人骨骼动画
 
 用户选定**全量替换**（放弃第一轮 Blender 原创环境）并**引入骨骼动画**。素材为两个 CC0 包：Kenney Tower Defense Kit（`kenney.nl` 直链，5.4 MB）与 Quaternius Animated Monster Pack（OpenGameArt 镜像，1.4 MB）。下载直链、授权依据与实际使用的模型清单写入 `ArtSource/REFERENCES.md`，原始压缩包保留在 `ArtSource/ThirdParty/`。

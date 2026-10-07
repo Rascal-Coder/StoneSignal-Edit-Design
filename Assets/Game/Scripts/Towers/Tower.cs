@@ -15,6 +15,15 @@ namespace StoneSignal
         private float cooldown, visualElevation;
         private Vector3 aimDirection = Vector3.forward;
         public TowerData Data { get; private set; }
+        public Vector2Int Origin { get; private set; }
+        public Vector2Int Size { get; private set; } = Vector2Int.one;
+        public int Rotation { get; private set; }
+        public System.Collections.Generic.IReadOnlyList<Vector2Int> Cells { get; private set; } = new Vector2Int[0];
+        public void SetFootprint(Vector2Int origin, Vector2Int size, int rotation, System.Collections.Generic.IReadOnlyList<Vector2Int> cells)
+        {
+            Origin = origin; Size = size; Rotation = rotation & 3; Cells = cells;
+            transform.rotation = Quaternion.Euler(0, 90 * Rotation, 0); // model stays centred on the footprint centre (transform.position)
+        }
         public float Range => modifiers.Range(Data);
         public float Damage => Data.damage * modifiers.Damage;
         public float AttackRate => Data.attacksPerSecond * modifiers.AttackSpeed;

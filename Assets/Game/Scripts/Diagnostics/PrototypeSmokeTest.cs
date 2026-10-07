@@ -100,6 +100,7 @@ namespace StoneSignal
             Require(TryTower(1,false),"Pulse built");
             Require(session.Economy.Gold==80,"Tower costs deducted exactly once");
             Require(!session.Towers.TryBuild(grid.spawn,0) && !session.Towers.TryBuild(grid.goal,0) && session.Economy.Gold==80,"Protected tower placement does not spend gold");
+            Require(session.Towers.Towers.Count==2 && session.Towers.Towers[0].Cells.Count==1,"1x1 tower occupies one wall cell");
             yield return Capture("02-build");
             int[] spawnCounts=new int[3], childCounts=new int[3]; int killed=0;
             session.Enemies.ChildrenAdded+=n=>{if(session.Waves.WaveIndex<3) childCounts[session.Waves.WaveIndex]+=n;};
@@ -161,17 +162,21 @@ namespace StoneSignal
         private int TotalRoute() { int n=0; foreach(var p in session.Paths.CurrentPaths) n+=p.Count; return n; }
         private bool OnAnyRoute(Vector2Int cell) => session.Paths.CurrentPaths.Exists(p=>p.Contains(cell));
         // Towers go near a route (within range) on a cell that keeps every spawn connected.
+        // Towers stand on walls: pick a footprint of empty cells that keeps every route open, wall it, then build.
         private bool TryTower(int index,bool onRoute)
         {
-            var grid=session.grid; var core=grid.CoreCenter; Vector2Int best=new Vector2Int(-1,-1); float bestScore=float.MaxValue;
+            var grid=session.grid; var core=grid.CoreCenter; var size=TowerManager.SizeOf(session.config.towers[index],0);
+            Vector2Int best=new Vector2Int(-1,-1); float bestScore=float.MaxValue;
             for(int x=0;x<grid.width;x++) for(int y=0;y<grid.height;y++)
             {
-                var c=new Vector2Int(x,y);
-                if(!grid.CanPlace(c) || OnAnyRoute(c)!=onRoute || session.Validator.ValidateTower(c)!=null) continue;
-                float score=(grid.ToWorld(c)-core).sqrMagnitude;
-                if(score<bestScore && score>1.5f) { bestScore=score; best=c; }
+                var o=new Vector2Int(x,y); var cells=grid.Footprint(o,size);
+                if(!cells.TrueForAll(grid.CanPlace) || cells.Exists(OnAnyRoute)!=onRoute || session.Validator.ValidatePlacement(cells)!=null) continue;
+                float score=(grid.FootprintCenter(o,size)-core).sqrMagnitude;
+                if(score<bestScore && score>1.5f) { bestScore=score; best=o; }
             }
-            return best.x>=0 && session.Towers.TryBuild(best,index);
+            if(best.x<0) return false;
+            grid.Commit(grid.Footprint(best,size),CellState.Blocked);
+            return session.Towers.TryBuild(best,index,0);
         }
         private void Finish()
         {

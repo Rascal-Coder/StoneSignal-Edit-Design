@@ -42,18 +42,45 @@ namespace StoneSignal
             if (index < -1 || index >= Data.Length) return;
             SelectedIndex = index; blocks.SetToolActive(index < 0); HideGhost(); Changed?.Invoke();
         }
-        public bool TryBuild(Vector2Int cell, int index)
+        public int Rotation { get; private set; }
+        public static Vector2Int SizeOf(TowerData data, int rotation)
+        {
+            var s = new Vector2Int(Mathf.Max(1, data.footprint.x), Mathf.Max(1, data.footprint.y));
+            return data.footprintRotates ? GridManager.RotatedSize(s, rotation) : s;
+        }
+        public void RotateFootprint() { Rotation = (Rotation + 1) & 3; Changed?.Invoke(); }
+        public string Validate(Vector2Int origin, int index, int rotation) => validator.ValidateTower(origin, SizeOf(Data[index], rotation));
+        // origin = lower-left cell of the (rotated) footprint.
+        public bool TryBuild(Vector2Int origin, int index) => TryBuild(origin, index, Rotation);
+        public bool TryBuild(Vector2Int origin, int index, int rotation)
         {
             if (!canBuild() || index < 0 || index >= Data.Length) return false;
-            string reason = validator.ValidateTower(cell);
+            var data = Data[index]; if (!data.footprintRotates) rotation = 0;
+            var size = SizeOf(data, rotation);
+            string reason = validator.ValidateTower(origin, size);
             if (reason != null) { Notice?.Invoke(reason); return false; }
-            if (!spend(Cost(Data[index]))) { Notice?.Invoke("Not enough gold"); return false; }
-            // Tower prefabs pivot at their base: stand on the wall block top face or on the ground tile top.
-            float elevation=palette.art==null ? 0 : grid.Get(cell)==CellState.Blocked ? palette.art.blockTop : palette.art.tileTop;
-            grid.CommitTower(cell);
-            var obj = new GameObject(Data[index].displayName); obj.transform.SetParent(transform); obj.transform.position = grid.ToWorld(cell);
-            var tower = obj.AddComponent<Tower>(); tower.Initialize(Data[index],enemies,palette,modifiers,canAttack,missiles,elevation); towers.Add(tower);
+            if (!spend(Cost(data))) { Notice?.Invoke("Not enough gold"); return false; }
+            // Tower prefabs pivot at their base and stand on the wall block top face.
+            float elevation=palette.art==null ? 0 : palette.art.blockTop;
+            var cells = grid.Footprint(origin, size);
+            grid.CommitTower(cells);
+            var obj = new GameObject(data.displayName); obj.transform.SetParent(transform); obj.transform.position = grid.FootprintCenter(origin, size);
+            var tower = obj.AddComponent<Tower>(); tower.SetFootprint(origin, size, rotation, cells);
+            tower.Initialize(data,enemies,palette,modifiers,canAttack,missiles,elevation); towers.Add(tower);
             Changed?.Invoke(); Notice?.Invoke("Tower ready"); return true;
+        }
+        // Removal / selling frees every covered cell (walls remain).
+        public bool Remove(Tower tower)
+        {
+            if (tower == null || !towers.Remove(tower)) return false;
+            grid.ReleaseTower(tower.Cells);
+            PrimitiveVisual.DestroyObject(tower.gameObject);
+            Changed?.Invoke(); return true;
+        }
+        public Tower TowerAt(Vector2Int cell)
+        {
+            foreach (var t in towers) foreach (var c in t.Cells) if (c == cell) return t;
+            return null;
         }
         private void Update()
         {
@@ -68,19 +95,24 @@ namespace StoneSignal
             var plane = new Plane(Vector3.up,grid.transform.position);
             Ray ray = camera.ScreenPointToRay(Input.mousePosition);
             if (!plane.Raycast(ray,out float distance)) { HideGhost(); return; }
-            Vector2Int cell = grid.ToCell(ray.GetPoint(distance));
-            if (!grid.InBounds(cell)) { HideGhost(); return; }
-            string reason = validator.ValidateTower(cell);
+            var data = Data[SelectedIndex];
+            if (data.footprintRotates && Input.GetKeyDown(KeyCode.R)) RotateFootprint();
+            var size = SizeOf(data, Rotation);
+            Vector2Int cell = grid.FootprintOrigin(ray.GetPoint(distance), size);
+            if (!grid.InBounds(grid.ToCell(ray.GetPoint(distance)))) { HideGhost(); return; }
+            string reason = validator.ValidateTower(cell, size);
+            Vector3 centre = grid.FootprintCenter(cell, size);
             if (reason == null && balance() < Cost(Data[SelectedIndex])) reason = "Not enough gold";
             Status = reason ?? "Left click to build";
             ghost.SetActive(true); rangeView.gameObject.SetActive(true);
-            ghost.transform.position = grid.ToWorld(cell) + Vector3.up * .45f;
+            ghost.transform.position = centre + Vector3.up * .45f;
+            ghost.transform.localScale = new Vector3(.85f * size.x * grid.cellSize, .45f, .85f * size.y * grid.cellSize);
             ghost.GetComponent<Renderer>().sharedMaterial = reason == null ? palette.valid : palette.invalid;
             float range = modifiers.Range(Data[SelectedIndex]);
             for (int i = 0; i < 48; i++)
             {
                 float angle = i * Mathf.PI * 2 / 48;
-                rangeView.SetPosition(i,grid.ToWorld(cell) + new Vector3(Mathf.Cos(angle)*range,.05f,Mathf.Sin(angle)*range));
+                rangeView.SetPosition(i,centre + new Vector3(Mathf.Cos(angle)*range,.05f,Mathf.Sin(angle)*range));
             }
             if (Input.GetMouseButtonDown(0)) TryBuild(cell,SelectedIndex);
         }

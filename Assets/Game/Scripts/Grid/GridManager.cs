@@ -80,11 +80,35 @@ namespace StoneSignal
             Changed?.Invoke();
         }
 
-        public void CommitTower(Vector2Int cell)
+        // ---- Tower footprints: origin = lower-left cell, size already rotated. ----
+        public static Vector2Int RotatedSize(Vector2Int size, int rotation) => (rotation & 1) == 1 ? new Vector2Int(size.y, size.x) : size;
+        public List<Vector2Int> Footprint(Vector2Int origin, Vector2Int size)
         {
-            if (!InBounds(cell) || (Get(cell) != CellState.Empty && Get(cell) != CellState.Blocked))
-                throw new InvalidOperationException("Tower requires a validated empty cell or wall.");
-            cells[cell.x, cell.y] = CellState.TowerSlot;
+            var list = new List<Vector2Int>(Mathf.Max(1, size.x * size.y));
+            for (int y = 0; y < Mathf.Max(1, size.y); y++) for (int x = 0; x < Mathf.Max(1, size.x); x++) list.Add(origin + new Vector2Int(x, y));
+            return list;
+        }
+        public Vector3 FootprintCenter(Vector2Int origin, Vector2Int size) =>
+            transform.position + new Vector3((origin.x + Mathf.Max(1, size.x) * .5f) * cellSize, 0, (origin.y + Mathf.Max(1, size.y) * .5f) * cellSize);
+        // Origin whose footprint centre is nearest the world point (ghost snaps to the footprint centre).
+        public Vector2Int FootprintOrigin(Vector3 world, Vector2Int size)
+        {
+            Vector3 p = world - transform.position;
+            return new Vector2Int(Mathf.RoundToInt(p.x / cellSize - Mathf.Max(1, size.x) * .5f), Mathf.RoundToInt(p.z / cellSize - Mathf.Max(1, size.y) * .5f));
+        }
+        // Towers stand on wall blocks: every covered cell must be a wall top (validated by PlacementValidator.ValidateTower).
+        public void CommitTower(IReadOnlyList<Vector2Int> footprint)
+        {
+            for (int i = 0; i < footprint.Count; i++)
+                if (Get(footprint[i]) != CellState.Blocked || !InBounds(footprint[i])) throw new InvalidOperationException("Tower requires validated wall cells.");
+            for (int i = 0; i < footprint.Count; i++) cells[footprint[i].x, footprint[i].y] = CellState.TowerSlot;
+            Changed?.Invoke();
+        }
+        public void CommitTower(Vector2Int cell) => CommitTower(new[] { cell });
+        // Selling/removal: the walls stay, the tower occupancy is freed on every covered cell.
+        public void ReleaseTower(IReadOnlyList<Vector2Int> footprint)
+        {
+            for (int i = 0; i < footprint.Count; i++) if (Get(footprint[i]) == CellState.TowerSlot) cells[footprint[i].x, footprint[i].y] = CellState.Blocked;
             Changed?.Invoke();
         }
 

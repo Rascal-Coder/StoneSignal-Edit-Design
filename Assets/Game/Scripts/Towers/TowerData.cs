@@ -21,6 +21,11 @@ namespace StoneSignal
         [Min(.1f)] public float damage = 12;
         [Min(.1f)] public float projectileSpeed = 12;
         [Min(0)] public float splashRadius;
+        [Header("Footprint")]
+        [Tooltip("Cells covered (x by y) before rotation. All must be wall blocks.")]
+        public Vector2Int footprint = Vector2Int.one;
+        [Tooltip("Non-square footprints may be rotated in 90 degree steps (R).")]
+        public bool footprintRotates;
         [Header("Critical hits")]
         [Range(0,1)] public float critChance;
         [Min(1)] public float critMultiplier = 1.5f;

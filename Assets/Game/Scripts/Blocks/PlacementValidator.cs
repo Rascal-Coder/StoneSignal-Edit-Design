@@ -22,11 +22,21 @@ namespace StoneSignal
             if (!paths.AllSpawnsReachCore(simulation)) return "Blocked: the core needs an open route";
             return ValidateActors?.Invoke(simulation);
         }
-        public string ValidateTower(Vector2Int cell)
+        public string ValidateTower(Vector2Int cell) => ValidateTower(cell, Vector2Int.one);
+        // Every covered cell must be in bounds, a wall block top, and not already carrying a tower.
+        // Walls are already impassable, so the route check only guards against stale state.
+        public string ValidateTower(Vector2Int origin, Vector2Int size)
         {
-            // A wall can become a tower foundation; both remain impassable.
-            if (grid.InBounds(cell) && grid.Get(cell) == CellState.Blocked) return null;
-            return ValidatePlacement(new[] { cell });
+            var cells = grid.Footprint(origin, size);
+            foreach (var c in cells)
+            {
+                if (!grid.InBounds(c)) return "Outside the board";
+                var s = grid.Get(c);
+                if (s == CellState.TowerSlot) return "Occupied by a tower";
+                if (s != CellState.Blocked) return size.x * size.y > 1 ? "Tower needs wall blocks under all " + size.x + "x" + size.y + " cells" : "Towers must be built on a wall block";
+            }
+            if (paths != null && !paths.AllSpawnsReachCore()) return "Blocked: the core needs an open route";
+            return null;
         }
     }
 }

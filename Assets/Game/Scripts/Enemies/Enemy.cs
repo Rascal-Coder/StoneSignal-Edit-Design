@@ -56,6 +56,7 @@ namespace StoneSignal
             healthFill.localScale = Vector3.one;
             hpBar = back.transform;
             path = owner.Paths.FindPath(start, grid.goal); node = 0;
+            FaceNextNode();
             BindAnimator();
         }
         private void BindAnimator()
@@ -75,6 +76,17 @@ namespace StoneSignal
         public void ResumeFrom(Vector3 position,Vector2Int anchor) {
             transform.position=position; path=owner.Paths.FindPath(anchor,grid.goal); node=0;
             if(hpBar!=null) hpBar.position=position+Vector3.up*.75f;
+            FaceNextNode(); // split children face their own route from the spawn point
+        }
+        // Models are authored facing +Z with identity root rotation: no per-model yaw offsets anywhere.
+        private void FaceNextNode()
+        {
+            if (path == null) return;
+            for (int i = node; i < path.Count; i++)
+            {
+                Vector3 d = World(path[i]) - transform.position; d.y = 0;
+                if (d.sqrMagnitude > .0001f) { transform.rotation = Quaternion.LookRotation(d); return; }
+            }
         }
         public void ApplySlow(float fraction,float duration) {
             if(!Alive || duration<=0) return;
@@ -116,7 +128,9 @@ namespace StoneSignal
                 else { transform.position = Vector3.MoveTowards(transform.position, target, distance); distance = 0; }
             }
             Vector3 heading=transform.position-previousPosition; heading.y=0;
-            if(heading.sqrMagnitude>.00001f) transform.rotation=Quaternion.LookRotation(heading);
+            // Yaw-only, smooth turn toward the travel direction (EnemyData.turnSpeed deg/s); no snapping at corners.
+            if(heading.sqrMagnitude>.00001f)
+                transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(heading),Data.turnSpeed*deltaTime);
             if (hpBar != null) hpBar.position = transform.position + Vector3.up * .75f;
             if (node >= path.Count) Resolve(EnemyResolution.Escaped);
         }
