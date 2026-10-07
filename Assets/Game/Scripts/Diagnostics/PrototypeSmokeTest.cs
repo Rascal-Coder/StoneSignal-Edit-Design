@@ -161,6 +161,8 @@ namespace StoneSignal
                 Require(!session.Draw(),"No 3rd DRAW");
             }
             Require(killed>0 && session.Economy.HP>0,"Three waves survived with automatic tower combat");
+            Require(session.Enemies.StuckEvents==0,"No ENEMY STUCK events (guard is only a fallback)");
+            yield return TouchDragCheck();
             yield return Capture("05-next-build");
             int hp=session.Economy.HP;
             EnemyData leak=session.config.waves[0].groups[0].enemy;
@@ -188,6 +190,41 @@ namespace StoneSignal
             if(best.x<0) return false;
             grid.Commit(grid.Footprint(best,size),CellState.Blocked);
             return session.Towers.TryBuild(best,index,0);
+        }
+        // Scripted touch drag: finger down on tower card 0, drag above a prepared wall, release -> one tower, gold spent once.
+        private IEnumerator TouchDragCheck()
+        {
+            var pic=PlacementInputController.Instance; var grid=session.grid;
+            if(pic==null){ Require(false,"Touch drag: placement input controller present"); yield break; }
+            var size=TowerManager.SizeOf(session.config.towers[0],0); Vector2Int best=new Vector2Int(-1,-1);
+            for(int x=0;x<grid.width && best.x<0;x++) for(int y=0;y<grid.height && best.x<0;y++)
+            {
+                var o=new Vector2Int(x,y); var cells=grid.Footprint(o,size);
+                if(cells.TrueForAll(grid.CanPlace) && !cells.Exists(OnAnyRoute) && session.Validator.ValidatePlacement(cells)==null && Camera.main.WorldToScreenPoint(grid.FootprintCenter(o,size)).y>pic.HandTop+pic.DragOffset*pic.CanvasScale+30) best=o;
+            }
+            if(best.x<0){ Require(false,"Touch drag: found a wall spot"); yield break; }
+            grid.Commit(grid.Footprint(best,size),CellState.Blocked);
+            session.Economy.AddGold(session.Towers.Cost(session.config.towers[0]));
+            int towersBefore=session.Towers.Towers.Count, goldBefore=session.Economy.Gold;
+            bool force=PointerInput.ForceTouch; PointerInput.ForceTouch=true;
+            Vector2 target=Camera.main.WorldToScreenPoint(grid.FootprintCenter(best,size));
+            Vector2 finger=target-Vector2.up*pic.DragOffset*pic.CanvasScale; // ghost sits above the finger
+            Vector2 start=new Vector2(target.x,10);
+            PointerInput.Inject(start,true,true,false); pic.CardDown(true,0,start); yield return null;
+            for(int i=1;i<=6;i++){ PointerInput.Inject(Vector2.Lerp(start,finger,i/6f),false,true,false); yield return null; }
+            bool dragging=pic.Machine.State==PlacementState.Dragging;
+            string dbg="best="+best+" target="+target+" finger="+finger+" handTop="+pic.HandTop+" scale="+pic.CanvasScale+" state="+pic.Machine.State+" sel="+session.Towers.SelectedIndex+" reason="+session.Towers.ReasonFor(best,0)+" gameState="+session.Game.State;
+            PointerInput.Inject(finger,false,false,true); yield return null; yield return null;
+            PointerInput.ClearInjection(); PointerInput.ForceTouch=force;
+            Require(dragging && session.Towers.Towers.Count==towersBefore+1 && session.Economy.Gold==goldBefore-session.Towers.Cost(session.config.towers[0]) && pic.Machine.State==PlacementState.Idle,"Scripted touch drag places a tower on a wall (ghost offset above finger)"+(dragging && session.Towers.Towers.Count==towersBefore+1?"":" ["+dbg+" after="+pic.Machine.State+" towers="+session.Towers.Towers.Count+"/"+towersBefore+"]"));
+            // drag back over the hand cancels
+            towersBefore=session.Towers.Towers.Count; PointerInput.ForceTouch=true;
+            PointerInput.Inject(start,true,true,false); pic.CardDown(true,0,start); yield return null;
+            PointerInput.Inject(finger,false,true,false); yield return null;
+            PointerInput.Inject(new Vector2(start.x,5),false,true,false); yield return null;
+            PointerInput.Inject(new Vector2(start.x,5),false,false,true); yield return null; yield return null;
+            PointerInput.ClearInjection(); PointerInput.ForceTouch=force;
+            Require(session.Towers.Towers.Count==towersBefore && session.Towers.SelectedIndex<0,"Touch drag released over the hand cancels");
         }
         private void Finish()
         {

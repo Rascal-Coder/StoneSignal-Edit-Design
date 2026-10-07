@@ -139,6 +139,21 @@ namespace StoneSignal
             return data.footprintRotates ? GridManager.RotatedSize(s, rotation) : s;
         }
         public void RotateFootprint() { Rotation = (Rotation + 1) & 3; Changed?.Invoke(); }
+        public void SetRotation(int r) { r &= 3; if (r == Rotation) return; Rotation = r; Changed?.Invoke(); }
+        /// Footprint origin (lower-left) for a footprint that starts at anchor and extends in direction dir (0 up,1 right,2 down,3 left).
+        public Vector2Int OriginFor(Vector2Int anchor, int dir)
+        {
+            if (SelectedIndex < 0) return anchor; var size = SizeOf(Data[SelectedIndex], dir);
+            return dir == 2 ? anchor - new Vector2Int(0, size.y - 1) : dir == 3 ? anchor - new Vector2Int(size.x - 1, 0) : anchor;
+        }
+        public string ReasonFor(Vector2Int anchor, int dir)
+        {
+            if (SelectedIndex < 0) return "No tower selected"; var data = Data[SelectedIndex]; if (!data.footprintRotates) dir = 0;
+            string r = validator.ValidateTower(OriginFor(anchor, dir), SizeOf(data, dir));
+            return r ?? (balance() < Cost(data) ? "Not enough gold" : null);
+        }
+        /// 1x1 and 2x2 (and any non-rotating footprint) skip direction select on touch.
+        public bool SelectedNeedsDirection { get { if (SelectedIndex < 0) return false; var d = Data[SelectedIndex]; var s = SizeOf(d, 0); return d.footprintRotates && s.x != s.y; } }
         public string Validate(Vector2Int origin, int index, int rotation) => validator.ValidateTower(origin, SizeOf(Data[index], rotation));
         // origin = lower-left cell of the (rotated) footprint.
         public bool TryBuild(Vector2Int origin, int index) => TryBuild(origin, index, Rotation);
@@ -185,6 +200,8 @@ namespace StoneSignal
             UpdateHighlight(true, foot, footOk);
             return reason;
         }
+        /// Touch/drag input (PlacementInputController) drives the preview itself; desktop hover/click is skipped.
+        public bool ExternalDrive { get; set; }
         private void Update()
         {
             if (Pinned) return;
@@ -195,28 +212,47 @@ namespace StoneSignal
             if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
             if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)) Select(-1);
             RefreshSlots(SelectedIndex >= 0 && canBuild());
-            if (SelectedIndex < 0 || !canBuild() || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { HideGhost(); UpdateHighlight(SelectedIndex >= 0 && canBuild(), null, null); return; }
+            if (ExternalDrive) return;
+            if (SelectedIndex < 0 || !canBuild() || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { HidePreview(); return; }
+            if (Data[SelectedIndex].footprintRotates && Input.GetKeyDown(KeyCode.R)) RotateFootprint();
+            PreviewScreen(Input.mousePosition, out var cell, out bool onBoard);
+            if (onBoard && Input.GetMouseButtonDown(0)) TryBuild(cell, SelectedIndex);
+        }
+        public bool CanRotateSelected => SelectedIndex >= 0 && SelectedIndex < Data.Length && Data[SelectedIndex].footprintRotates;
+        public void HidePreview() { HideGhost(); UpdateHighlight(SelectedIndex >= 0 && canBuild(), null, null); }
+        /// Shows the ghost for the footprint under a screen point. Returns the rejection reason (null = valid).
+        public string PreviewScreen(Vector2 screen, out Vector2Int cell, out bool onBoard)
+        {
+            cell = default; onBoard = false;
+            if (SelectedIndex < 0 || !canBuild()) { HidePreview(); return "No tower selected"; }
             Camera camera = Camera.main;
             var plane = new Plane(Vector3.up,grid.transform.position);
-            Ray ray = camera.ScreenPointToRay(Input.mousePosition);
-            if (!plane.Raycast(ray,out float distance)) { HideGhost(); return; }
+            Ray ray = camera.ScreenPointToRay(screen);
+            if (!plane.Raycast(ray,out float distance)) { HideGhost(); return "Off board"; }
             var data = Data[SelectedIndex];
-            if (data.footprintRotates && Input.GetKeyDown(KeyCode.R)) RotateFootprint();
             var size = SizeOf(data, Rotation);
-            Vector2Int cell = grid.FootprintOrigin(ray.GetPoint(distance), size);
-            if (!grid.InBounds(grid.ToCell(ray.GetPoint(distance)))) { HideGhost(); return; }
+            cell = grid.FootprintOrigin(ray.GetPoint(distance), size);
+            if (!grid.InBounds(grid.ToCell(ray.GetPoint(distance)))) { HideGhost(); return "Off board"; }
+            onBoard = true;
+            return PreviewOrigin(cell);
+        }
+        /// Ghost + highlight for the selected tower at a footprint origin with the current Rotation. Returns reason (null = valid).
+        public string PreviewOrigin(Vector2Int cell)
+        {
+            if (SelectedIndex < 0 || !canBuild()) { HidePreview(); return "No tower selected"; }
+            var data = Data[SelectedIndex];
+            var size = SizeOf(data, Rotation);
             string reason = validator.ValidateTower(cell, size);
             Vector3 centre = grid.FootprintCenter(cell, size);
             if (reason == null && balance() < Cost(Data[SelectedIndex])) reason = "Not enough gold";
-            Status = reason ?? "Left click to build";
+            Status = reason ?? "Build";
             float range = modifiers.Range(Data[SelectedIndex]);
             var foot = grid.Footprint(cell, size); var footOk = CellValidity(foot, reason == null);
             UpdateHighlight(true, foot, footOk);
             if (ShowArtGhost(data, centre, data.footprintRotates ? Rotation : 0, reason == null, range, foot, footOk))
             {
                 ghost.SetActive(false); rangeView.gameObject.SetActive(false);
-                if (Input.GetMouseButtonDown(0)) TryBuild(cell,SelectedIndex);
-                return;
+                return reason;
             }
             ghost.SetActive(true); rangeView.gameObject.SetActive(true);
             ghost.transform.position = centre + Vector3.up * .45f;
@@ -227,8 +263,10 @@ namespace StoneSignal
                 float angle = i * Mathf.PI * 2 / 48;
                 rangeView.SetPosition(i,centre + new Vector3(Mathf.Cos(angle)*range,.05f,Mathf.Sin(angle)*range));
             }
-            if (Input.GetMouseButtonDown(0)) TryBuild(cell,SelectedIndex);
+            return reason;
         }
+        /// Footprint cells of the selected tower at origin (for "tap on the ghost" hit tests).
+        public List<Vector2Int> SelectedFootprint(Vector2Int origin) => SelectedIndex < 0 ? new List<Vector2Int>() : new List<Vector2Int>(grid.Footprint(origin, SizeOf(Data[SelectedIndex], Rotation)));
         private void HideGhost() { if (ghost != null) ghost.SetActive(false); if (rangeView != null) rangeView.gameObject.SetActive(false); if (artGhost != null) artGhost.gameObject.SetActive(false); }
     }
 }

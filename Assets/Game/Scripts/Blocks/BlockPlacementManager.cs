@@ -60,6 +60,9 @@ namespace StoneSignal
         }
         public void SelectCard(int index) { if (Hand.Select(index)) { rotation=0; RebuildGhost(); Changed?.Invoke(); } }
         public void SetToolActive(bool active) { toolActive = active; SetGhostVisible(false); Changed?.Invoke(); }
+        public int Rotation => rotation;
+        public void SetRotation(int r) { r &= 3; if (r == rotation) return; rotation = r; if (artGhost != null) RebuildGhost(); Changed?.Invoke(); }
+        public string ValidatePlacement(Vector2Int anchor, int rot) { int keep = rotation; rotation = rot & 3; try { return ValidatePlacement(anchor); } finally { rotation = keep; } }
         public void Rotate() { rotation = (rotation + 1) % 4; if (artGhost != null) RebuildGhost(); Changed?.Invoke(); }
         public List<Vector2Int> CellsAt(Vector2Int anchor)
         {
@@ -149,18 +152,29 @@ namespace StoneSignal
         }
         public bool Pinned { get; set; } // scripted presentation keeps the current Preview()
         public Transform PlacedRoot => placedRoot;
+        public bool ExternalDrive { get; set; }
+        public bool CanPlaceNow => toolActive && canBuild != null && canBuild() && Remaining > 0;
         private void Update()
         {
             if (Pinned) return;
-            if (!toolActive || canBuild == null || !canBuild() || Remaining <= 0 || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { SetGhostVisible(false); return; }
+            if (ExternalDrive) return;
+            if (!CanPlaceNow || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { SetGhostVisible(false); return; }
             if (Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(1)) Rotate();
+            if (PreviewScreen(Input.mousePosition, out var cell) && Input.GetMouseButtonDown(0)) CommitPlacement(cell);
+        }
+        public void HidePreview() => SetGhostVisible(false);
+        /// Shows the ghost under a screen point; false when off board. Validity is PreviewValid.
+        public bool PreviewScreen(Vector2 screen, out Vector2Int cell)
+        {
+            cell = default;
+            if (!CanPlaceNow) { SetGhostVisible(false); return false; }
             var plane = new Plane(Vector3.up, grid.transform.position);
-            if (!plane.Raycast(viewCamera.ScreenPointToRay(Input.mousePosition), out float distance)) { SetGhostVisible(false); return; }
-            Vector3 point = viewCamera.ScreenPointToRay(Input.mousePosition).GetPoint(distance);
-            Vector2Int cell = grid.ToCell(point);
-            if (!grid.InBounds(cell)) { SetGhostVisible(false); return; }
+            var ray = viewCamera.ScreenPointToRay(screen);
+            if (!plane.Raycast(ray, out float distance)) { SetGhostVisible(false); return false; }
+            cell = grid.ToCell(ray.GetPoint(distance));
+            if (!grid.InBounds(cell)) { SetGhostVisible(false); return false; }
             Preview(cell);
-            if (Input.GetMouseButtonDown(0)) CommitPlacement(cell);
+            return true;
         }
         private void RebuildGhost()
         {

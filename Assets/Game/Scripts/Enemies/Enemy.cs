@@ -37,7 +37,8 @@ namespace StoneSignal
                 return Vector3.Distance(transform.position, World(path[node])) + (path.Count - node - 1) * grid.cellSize;
             }
         }
-        public string DebugState => $"{(Data != null ? Data.name : "?")} alive={Alive} active={gameObject.activeInHierarchy} pos={transform.position} cell={(grid != null ? CurrentCell : default)} anchor={(grid != null ? NavigationAnchor : default)} node={node}/{(path != null ? path.Count : -1)} hp={HP:0.#}";
+        public string DebugState => $"{(Data != null ? Data.name : "?")} alive={Alive} active={gameObject.activeInHierarchy} pos={transform.position} cell={(grid != null ? CurrentCell : default)} anchor={(grid != null ? NavigationAnchor : default)} node={node}/{(path != null ? path.Count : -1)} hp={HP:0.#} enabled={enabled} speed={speed:0.##} slow={slowMultiplier:0.##}/{slowRemaining:0.##} mult={(owner!=null?owner.SpeedMultiplier():-1):0.##} target={(path!=null&&node<path.Count?World(path[node]):Vector3.zero)} ts={Time.timeScale} lastAdv={lastAdvance:0.##} now={Time.time:0.##} step={lastStep:0.###} ext={extWrites} lastExt={lastExt} dt={Time.deltaTime:0.###}";
+        float lastAdvance, lastStep; Vector3 lastEnd, lastExt; bool hasEnd; int extWrites;
         // Stuck guard: re-route from the current cell; false when no route exists (caller removes the enemy).
         public bool RecoverRoute()
         {
@@ -57,7 +58,7 @@ namespace StoneSignal
 
         public void Initialize(EnemyManager manager, GridManager map, EnemyData data, VisualPalette palette, float hpScale, float speedScale, Vector2Int? from = null)
         {
-            LastAttacker = null;
+            LastAttacker = null; hasEnd = false; extWrites = 0;
             owner = manager; grid = map; Data = data; HPScale=hpScale; SpeedScale=speedScale;
             HP = maxHP = data.hp * hpScale; speed = data.moveSpeed * speedScale; Alive = true;
             Vector2Int start = from ?? grid.spawn;
@@ -95,7 +96,7 @@ namespace StoneSignal
                     if (clip != null && clip.name == EnemyVisualContract.DeathClip) deathHold = clip.length;
         }
         public void ResumeFrom(Vector3 position,Vector2Int anchor) {
-            transform.position=position; path=owner.Paths.FindPath(anchor,grid.goal); node=0;
+            transform.position=position; hasEnd=false; path=owner.Paths.FindPath(anchor,grid.goal); node=0;
             if(hpBar!=null) hpBar.position=position+Vector3.up*.75f;
             FaceNextNode(); // split children face their own route from the spawn point
         }
@@ -135,7 +136,8 @@ namespace StoneSignal
         public void Advance(float deltaTime)
         {
             if (!Alive || path == null || path.Count == 0) return;
-            Vector3 previousPosition=transform.position;
+            Vector3 previousPosition=transform.position; lastAdvance=Time.time;
+            if (hasEnd && (previousPosition - lastEnd).sqrMagnitude > 1e-6f) { extWrites++; lastExt = previousPosition - lastEnd; }
             float distance = speed * owner.SpeedMultiplier() * slowMultiplier * deltaTime;
             slowRemaining-=deltaTime; if(slowRemaining<=0) slowMultiplier=1;
             while (distance > 0 && node < path.Count)
@@ -153,6 +155,7 @@ namespace StoneSignal
             if(heading.sqrMagnitude>.00001f)
                 transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(heading),Data.turnSpeed*deltaTime);
             if (hpBar != null) { hpBar.position = transform.position + Vector3.up * .75f; FaceBar(); }
+            lastStep = speed * owner.SpeedMultiplier() * slowMultiplier * deltaTime; lastEnd = transform.position; hasEnd = true;
             if (node >= path.Count) Resolve(EnemyResolution.Escaped);
         }
         // HP fill is anchored at the bar's left edge and shrinks from the right (scale + offset in the background's local space);
@@ -184,12 +187,19 @@ namespace StoneSignal
             Damaged?.Invoke(this, damage);
             if (HP <= 0) Resolve(EnemyResolution.Killed);
         }
+        static StoneSignal.VFX.EnemyDeathFx deathFx; static int deathFxFrame = -1000;
+        public static bool DeathFxAvailable
+        {
+            get { if (deathFx == null && Time.frameCount - deathFxFrame > 60) { deathFxFrame = Time.frameCount; deathFx = FindObjectOfType<StoneSignal.VFX.EnemyDeathFx>(); } return deathFx != null; }
+        }
         private void Resolve(EnemyResolution reason)
         {
             if (!Alive) return;
             Alive = false;
             owner.Resolve(this, reason);
             if (hpBar != null) { if (Application.isPlaying) hpBar.gameObject.SetActive(false); else { PrimitiveVisual.DestroyObject(hpBar.gameObject); hpBar = null; } }
+            // v16.2: EnemyDeathFx (PF_VFX_EnemyDeath in scene) covers the vanish; CombatFeedback plays it and the enemy is hidden this frame.
+            if (Application.isPlaying && reason == EnemyResolution.Killed && DeathFxAvailable) { owner.Recycle(this); return; }
             if (Application.isPlaying && reason == EnemyResolution.Killed && Feedback != null)
             {
                 if (animator != null) animator.speed = 1;

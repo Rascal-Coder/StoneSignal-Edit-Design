@@ -76,6 +76,7 @@ namespace StoneSignal
             Towers = Service<TowerManager>("Tower placement");
             Towers.Initialize(grid,Validator,Enemies,config.palette,Modifiers,config.towers,Blocks,() => Game.State == GameState.Build,() => Game.State == GameState.Combat,Economy.Spend,() => Economy.Gold);
             Towers.RuneRulesConfig = Runes;
+            { var pic = Service<PlacementInputController>("Placement input"); pic.Initialize(Towers, Blocks, grid, config.palette != null ? config.palette.art : null); }
             var spawner = Service<EnemySpawner>("Enemy spawner"); spawner.Initialize(Enemies);
             Waves = Service<WaveManager>("Waves"); Waves.Initialize(Game,config,Enemies,spawner,Modifiers);
             Game.StateChanged += state => { if(state==GameState.Combat) Economy.AddGold(Modifiers.WaveGold); if(state==GameState.Build) { Draws.BeginIntermission(Modifiers.ExtraDraw > 0); Modifiers.ExtraDraw = 0; DrawsChanged?.Invoke(); } }; // ExtraDraw reward: this wave's 2nd draw needs no ad

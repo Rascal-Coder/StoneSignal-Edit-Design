@@ -27,8 +27,17 @@ namespace StoneSignal
             if(reason==EnemyResolution.Killed)
             {
                 bool styled=data.deathVfx!=null || data.coinVfx!=null;
-                if(data.deathVfx!=null) StylizedVfx.Play(data.deathVfx,at);
-                if(data.coinVfx!=null) StylizedVfx.Play(data.coinVfx,at+Vector3.up*.3f);
+                if(Enemy.DeathFxAvailable)
+                {
+                    // v16.2: poof + skull (enemy hidden this frame by Enemy.Resolve); coin drop follows in onDone
+                    var coin=data.coinVfx; styled=true;
+                    StoneSignal.VFX.EnemyDeathFx.Play(at,Mathf.Max(.5f,enemy.transform.lossyScale.x),()=>{ if(coin!=null) StylizedVfx.Play(coin,at+Vector3.up*.3f); });
+                }
+                else
+                {
+                    if(data.deathVfx!=null) StylizedVfx.Play(data.deathVfx,at);
+                    if(data.coinVfx!=null) StylizedVfx.Play(data.coinVfx,at+Vector3.up*.3f);
+                }
                 if(data.splitChild!=null && data.splitCount>0 && data.splitVfx!=null) StylizedVfx.Play(data.splitVfx,at);
                 if(!styled) Burst(at,new Color(1,.65f,.25f),16);
             }

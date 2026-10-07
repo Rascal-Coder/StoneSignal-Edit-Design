@@ -49,12 +49,14 @@ namespace StoneSignal
             } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(from), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
             if (enemy == null) enemy = obj.AddComponent<Enemy>();
             enemy.Initialize(this, grid, data, palette, hpScale, speedScale, from);
+            progress.Remove(enemy); // pooled reuse: never inherit the previous life's best distance (false ENEMY STUCK)
             active.Add(enemy); Spawned?.Invoke(enemy);
             return enemy;
         }
         public void Resolve(Enemy enemy, EnemyResolution reason)
         {
             if (!active.Remove(enemy)) return;
+            progress.Remove(enemy);
             if(reason==EnemyResolution.Killed && enemy.Data.splitChild!=null && enemy.Data.splitCount>0) {
                 // Reserve child count before parent resolution can complete a wave.
                 ChildrenAdded?.Invoke(enemy.Data.splitCount);

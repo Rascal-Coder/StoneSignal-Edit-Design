@@ -74,8 +74,7 @@ namespace StoneSignal
             {
                 int idx = i; var b = Btn(root, speeds[i], 34, "ui9_button_navy_normal", Slate, () => SetSpeed(idx)); TR((RectTransform)b.transform, -(24 + (3 - i) * 108), 24, 96, 88); speedButtons[i] = b;
             }
-            var target = Btn(root, "", 28, "ui9_button_navy_normal", Slate, CycleTarget); TR((RectTransform)target.transform, -24, 124, 420, 88);
-            targetLabel = target.GetComponentInChildren<TextMeshProUGUI>();
+            // TARGET button removed from the HUD (user); towers keep the default First targeting internally.
             // ---- bottom: hint pill, battle, draw deck
             // no hint pill / instruction text this version (user decision; tutorial later). R / RMB input unchanged.
             // DRAW pile v16 (art StoneSignal.VFX.DrawPileUI): 200x268 bottom-right at (-312,+24), 32 px left of BATTLE (256x104 at (-24,+24)).
@@ -90,8 +89,8 @@ namespace StoneSignal
             // hand counter "5/7" (navy pill above the block row, left-aligned)
             handCount = Panel(root, "Hand count", "ui9_panel_navy", Navy); BL(handCount, 24, 0, 108, 52);
             var hc = Txt(handCount, "", 28, Ink); Full(hc.rectTransform); hc.fontStyle = FontStyles.Bold; drawPile.handCountLabel = hc;
-            battle = Btn(root, "BATTLE  ►", 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 24, 256, 104);
-            battle.name = "BATTLE"; { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
+            battle = Btn(root, "BATTLE", 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave()); BR((RectTransform)battle.transform, -24, 24, 256, 104);
+            battle.name = "BATTLE"; { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableWordWrapping = false; bl.overflowMode = TextOverflowModes.Overflow; bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
             var handCanvas = Canvas("Hand", 1);
             towerHand = Group(handCanvas, "Tower hand"); Full(towerHand);
             blockHand = Group(handCanvas, "Block hand"); Full(blockHand);
@@ -118,7 +117,6 @@ namespace StoneSignal
             if (session.Game.State != GameState.Build && drawPile.button.interactable) drawPile.button.interactable = false;
             drawPile.SetHandCount(session.Blocks.Hand.Cards.Count, BlockHandManager.MaxCards);
             goldCounter.SetValue(session.Economy.Gold - session.GoldInFlight);
-            targetLabel.text = "TARGET: " + session.Enemies.Targeting.ToString().ToUpper() + "  ►";
             battle.interactable = session.Game.State == GameState.Build;
             if (handDirty) RebuildHands();
             if (session.Game.State != GameState.Reward) rewardPanel.SetActive(false);
@@ -149,13 +147,13 @@ namespace StoneSignal
                 face.GetComponent<Image>().raycastTarget = true;
                 var button = face.gameObject.AddComponent<Button>(); button.targetGraphic = face.GetComponent<Image>(); button.interactable = build;
                 button.transition = Selectable.Transition.None; // keep the red card art during combat (no grey disabled tint)
-                button.onClick.AddListener(() => session.Towers.Select(session.Towers.SelectedIndex == idx ? -1 : idx));
+                { var cp = face.gameObject.AddComponent<CardPointer>(); cp.Tower = true; cp.Index = idx; cp.Enabled = () => session.Game.State == GameState.Build; } // tap / drag (PlacementInputController)
                 face.gameObject.AddComponent<CardHover>().Init(card, selected);
                 if (data.icon != null) { var icon = Img(face, "Icon", data.icon, Color.white); TL(icon, 35, 15, 130, 130); icon.GetComponent<Image>().preserveAspect = true; }
                 var price = Txt(face, session.Towers.Cost(data).ToString(), 36, Ink); TL(price.rectTransform, 20, 162, 130, 44);
                 price.fontStyle = FontStyles.Bold; price.outlineWidth = .25f; price.outlineColor = new Color32(0x1E, 0x1A, 0x3A, 255); price.alignment = TextAlignmentOptions.Center;
-                var hot = Img(face, "Hotkey", art ? art.uiBadgeHotkey : null, Color.white); TL(hot, 152, 170, 32, 32);
-                var num = Txt(hot, (i + 1).ToString(), 22, new Color32(0x1E, 0x1A, 0x3A, 255)); Full(num.rectTransform);
+                if (!PointerInput.TouchMode) { var hot = Img(face, "Hotkey", art ? art.uiBadgeHotkey : null, Color.white); TL(hot, 152, 170, 32, 32);
+                var num = Txt(hot, (i + 1).ToString(), 22, new Color32(0x1E, 0x1A, 0x3A, 255)); Full(num.rectTransform); } // 1-4 badges: desktop only
                 var size = TowerManager.SizeOf(data, 0);
                 if (size != Vector2Int.one)
                 {
@@ -176,6 +174,7 @@ namespace StoneSignal
             float cardW = Mathf.Max(88, Mathf.Min(150, (safeW - 24 - 512 - 24) / 7f - 12));
             float sc = cardW / 128f, step = (cardW + 12) / sc * (anyStack ? 150f / 140f : 1f), left = 24, rowY = 24 + CH + 32;
             handCount.anchoredPosition = new Vector2(24, rowY + cardW + 8);
+            if (PlacementInputController.Instance != null) { var cv = blockHand.GetComponentInParent<Canvas>(); float k = cv ? cv.scaleFactor : 1; PlacementInputController.Instance.CanvasScale = k; PlacementInputController.Instance.HandTop = (rowY + cardW + 8) * k; }
             int selectedIndex = session.Blocks.Hand.Selected;
             for (int gi = 0; gi < groups.Count; gi++)
             {
@@ -189,7 +188,7 @@ namespace StoneSignal
                 card.GetComponent<Image>().type = Image.Type.Sliced; card.GetComponent<Image>().raycastTarget = true;
                 var b = card.gameObject.AddComponent<Button>(); b.targetGraphic = card.GetComponent<Image>(); b.transition = Selectable.Transition.None;
                 b.interactable = build || (session.config.allowCombatBlocks && session.Game.State == GameState.Combat);
-                b.onClick.AddListener(() => { session.Towers.Select(-1); session.Blocks.SelectCard(idx); });
+                { var cp = card.gameObject.AddComponent<CardPointer>(); cp.Tower = false; cp.Index = idx; cp.Enabled = () => b.interactable; }
                 card.gameObject.AddComponent<CardHover>().Init(holder, selected);
                 var iconSprite = BlockIcon(shape);
                 if (iconSprite != null) { var ic = Img(card, "Shape", iconSprite, Color.white); Full(ic); }

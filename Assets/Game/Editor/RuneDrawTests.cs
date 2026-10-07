@@ -100,6 +100,67 @@ namespace StoneSignal.EditorTools
                 h.Add(deck, 3); h.Add(deck, 3); int six = h.Cards.Count; h.Add(deck, 3); bool ok = six == 6 && h.Cards.Count == 7 && h.IsFull; h.Add(deck, 3);
                 ok &= h.Cards.Count == 7; UnityEngine.Object.DestroyImmediate(t); return ok;
             });
+            Case("input: symmetric (1x1/2x2) drag places on valid release, cancels on invalid / over hand", () =>
+            {
+                var m = new PlacementInput(); var cell = new Vector2Int(3, 4);
+                m.CardDown(true, 0, false, new Vector2(100, 50));
+                bool notYet = m.Move(new Vector2(105, 55), false, cell, true) == PlacementAction.None && m.State == PlacementState.Pressed;
+                bool drag = m.Move(new Vector2(300, 400), false, cell, true) == PlacementAction.Preview && m.State == PlacementState.Dragging;
+                bool noDir = m.Move(new Vector2(300, 400), false, cell, true, 1f) == PlacementAction.Preview; // holding never enters direction
+                bool place = m.Up(new Vector2(300, 400), false) == PlacementAction.Place && m.State == PlacementState.Idle && m.Cell == cell;
+                m.CardDown(true, 0, false, Vector2.zero); m.Move(new Vector2(0, 300), false, cell, false);
+                bool invalid = m.Up(new Vector2(0, 300), false) == PlacementAction.Cancel;
+                m.CardDown(true, 1, false, Vector2.zero); m.Move(new Vector2(0, 300), false, cell, true);
+                bool hide = m.Move(new Vector2(0, 40), true, null, false) == PlacementAction.HidePreview;
+                bool hand = m.Up(new Vector2(0, 40), true) == PlacementAction.Cancel && m.State == PlacementState.Idle;
+                return notYet && drag && noDir && place && invalid && hide && hand;
+            });
+            Case("input: directional drag -> release -> direction; swipe picks 0/90/180/270; invalid keeps direction; valid commits", () =>
+            {
+                var m = new PlacementInput(); var cell = new Vector2Int(5, 5); bool[] ok = { false, true, false, false }; m.ValidFor = d => ok[d];
+                m.CardDown(false, 0, true, Vector2.zero, 0); m.Move(new Vector2(0, 300), false, cell, true, .01f);
+                bool enter = m.Up(new Vector2(0, 300), false) == PlacementAction.EnterDirection && m.State == PlacementState.Direction && !m.Held && m.Cell == cell;
+                var c = new Vector2(500, 500); m.SetCentre(c);
+                bool centre = m.BoardDown(c, cell, true) == PlacementAction.None && m.Held;
+                bool up = m.Move(c + new Vector2(0, 60), false, null, false) == PlacementAction.SetDirection && m.Dir == 0;
+                bool stay = m.Up(c + new Vector2(0, 60), false) == PlacementAction.None && m.State == PlacementState.Direction; // invalid direction
+                bool dirs = PlacementInput.DirOf(new Vector2(0, 1)) == 0 && PlacementInput.DirOf(new Vector2(1, 0)) == 1 && PlacementInput.DirOf(new Vector2(0, -1)) == 2 && PlacementInput.DirOf(new Vector2(-1, 0)) == 3;
+                m.BoardDown(c, cell, true); m.Move(c + new Vector2(60, 5), false, null, false);
+                bool commit = m.Dir == 1 && m.Up(c + new Vector2(60, 5), false) == PlacementAction.Place && m.State == PlacementState.Idle;
+                return enter && centre && up && stay && dirs && commit;
+            });
+            Case("input: hold-still after snap enters direction in-gesture; centre release / outside radius / hand cancel", () =>
+            {
+                var m = new PlacementInput(); var cell = new Vector2Int(2, 2);
+                m.CardDown(false, 0, true, Vector2.zero, 0);
+                m.Move(new Vector2(0, 300), false, cell, true, .01f);
+                bool early = m.Move(new Vector2(2, 301), false, cell, true, .1f) == PlacementAction.Preview;
+                bool held = m.Move(new Vector2(2, 301), false, cell, true, .2f) == PlacementAction.EnterDirection && m.Held && m.Centre == new Vector2(2, 301);
+                bool dead = m.Up(new Vector2(5, 305), false) == PlacementAction.Cancel; // released in the deadzone
+                m.CardDown(false, 0, true, Vector2.zero, 0); m.Move(new Vector2(0, 300), false, cell, true, .01f); m.Move(new Vector2(0, 300), false, cell, true, .3f);
+                bool outer = m.Move(new Vector2(0, 300 + 200), false, null, false) == PlacementAction.Cancel && m.State == PlacementState.Idle;
+                m.CardDown(false, 0, true, Vector2.zero, 0); m.Move(new Vector2(0, 300), false, cell, true, .01f); m.Move(new Vector2(0, 300), false, cell, true, .3f);
+                bool hand = m.Move(new Vector2(0, 250), true, null, false) == PlacementAction.Cancel;
+                m.Scale = 2; m.CardDown(false, 0, true, Vector2.zero, 0); m.Move(new Vector2(0, 300), false, cell, true, .01f); m.Move(new Vector2(0, 300), false, cell, true, .3f);
+                bool scaled = m.Move(new Vector2(60, 300), false, null, false) == PlacementAction.None && m.Dir == -1; // 60 < 40*2
+                return early && held && dead && outer && hand && scaled;
+            });
+            Case("input: tap-tap -> tap cell enters direction, tap arrow commits, tap elsewhere cancels; re-tap card deselects", () =>
+            {
+                var m = new PlacementInput(); var cell = new Vector2Int(4, 1); m.ValidFor = d => d == 2;
+                m.CardDown(false, 0, true, Vector2.zero); m.Up(Vector2.zero, true);
+                bool armed = m.State == PlacementState.Armed;
+                bool enter = m.BoardDown(new Vector2(400, 400), cell, true) == PlacementAction.EnterDirection && !m.Held;
+                bool badArrow = m.BoardDown(new Vector2(400, 400) + new Vector2(0, 90), cell, true) == PlacementAction.SetDirection && m.State == PlacementState.Direction;
+                bool commit = m.BoardDown(new Vector2(400, 400) + new Vector2(0, -90), cell, true) == PlacementAction.Place;
+                m.CardDown(false, 0, true, Vector2.zero); m.Up(Vector2.zero, true); m.BoardDown(new Vector2(400, 400), cell, true);
+                bool cancel = m.BoardDown(new Vector2(1200, 400), null, false) == PlacementAction.Cancel && m.State == PlacementState.Idle;
+                m.CardDown(true, 0, false, Vector2.zero); m.Up(Vector2.zero, true);
+                bool sym = m.BoardDown(new Vector2(10, 10), cell, true) == PlacementAction.Place && m.Cell == cell;
+                m.CardDown(true, 2, false, Vector2.zero); m.Up(Vector2.zero, true);
+                m.CardDown(true, 2, false, Vector2.zero); bool desel = m.Up(Vector2.zero, true) == PlacementAction.Deselect;
+                return armed && enter && badArrow && commit && cancel && sym && desel;
+            });
             Case("hand stacks identical cards as one xN group", () =>
             {
                 var t = ScriptableObject.CreateInstance<BlockShapeData>(); var o = ScriptableObject.CreateInstance<BlockShapeData>();
