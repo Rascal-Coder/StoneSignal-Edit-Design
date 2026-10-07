@@ -16,6 +16,7 @@ namespace StoneSignal
     ///          moving beyond OuterRadius, or over the hand = Cancel.
     ///          Released Direction: tap an arrow = pick + Place if valid; touch the centre = new swipe; tap elsewhere = Cancel.
     ///  Tap-tap: tap card -> Armed; tap a cell -> Direction (directional) or Place (symmetric, if valid); tap off board = Cancel.
+    /// "overHand" = the controller's cancel zone (finger on the lower half of a hand card; the upper half lifts the ghost instead).
     /// Distances are reference pixels; Scale multiplies them (canvas scale factor).
     public sealed class PlacementInput
     {

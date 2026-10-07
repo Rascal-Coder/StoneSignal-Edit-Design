@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 747a84e12974395408204830c726ae1c, type: 3}
   m_Name: NextDraw
   m_EditorClassIdentifier: 
-  displayName: Full Hand
-  description: Next Build draws one extra card
-  effectText: 'NEXT DRAW +1'
+  displayName: Rune Guarantee
+  description: Next draw contains at least one rune card
+  effectText: 'RUNE GUARANTEE'
   effect: 8
   amount: 1
   blockShape: {fileID: 0}

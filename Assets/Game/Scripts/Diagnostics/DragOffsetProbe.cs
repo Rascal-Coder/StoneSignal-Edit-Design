@@ -13,7 +13,9 @@ namespace StoneSignal
     /// {Build x1, Build x2, Build x3, Combat x2 (walls only), Combat x3 (walls only)}.
     /// Targets: 4 board corners, centre, 4 edge midpoints (nearest free cell). Pieces per target: L wall (rotated, drag-hold-swipe
     /// or drag-release + tap arrow), 1x1 tower, 2x2 tower, synthetic rotating 1x2 tower (Needle clone, test only).
-    /// The finger is placed DragOffset (x canvas scale) below the aim point = the visible top-face centre of the target cell.
+    /// Finger: searched below the visible top-face centre of the target cell (columns x = aim, +-.2 / +-.35 cell) for the
+    /// longest run of finger positions whose controller aim (PlacementInputController.AimFor: adaptive offset, lifted over
+    /// the hand cards) raycasts onto the target and is not in the cancel zone; the run middle is used ("NA-unreachable" if none).
     /// Pass: snapped cell == visible cell under the aim point (and covered by the ghost), and highlighted cells == placed cells
     /// (or nothing placed when the highlight is invalid). Rows: drag_<W>x<H>.tsv, layout: drag_<W>x<H>_layout.txt.
     public sealed class DragOffsetProbe : MonoBehaviour
@@ -45,7 +47,7 @@ namespace StoneSignal
             pic = PlacementInputController.Instance; cam = Camera.main; art = s.config.palette != null ? s.config.palette.art : null; g = s.grid;
             if (cfgIndex == 0)
             {
-                File.WriteAllText(Tsv, "res\tconfig\tstate\ttarget\tcell\tpiece\tflow\tdir\taim\tfinger\tfingerOnScreen\tfingerInSafe\tfingerOverHand\tsnapAnchor\texpectAnchor\tsnapOk\tshown\tvalid\tshownCells\tplacedCells\texpectCells\tghostFingerDy\tresult\tnote\n");
+                File.WriteAllText(Tsv, "res\tconfig\tstate\ttarget\tcell\tpiece\tflow\tdir\taim\tfinger\tfingerOnScreen\tfingerInSafe\tfingerOverHand\tsnapAnchor\texpectAnchor\tsnapOk\tshown\tvalid\tshownCells\tplacedCells\texpectCells\tghostFingerDy\toffsetPx\twindowPx\tresult\tnote\n");
                 File.WriteAllText(LayoutFile, "");
             }
             s.Economy.AddGold(50000);
@@ -53,7 +55,7 @@ namespace StoneSignal
             s.Blocks.NotifyChanged(); // hand rebuilt in touch mode (no 1-4 badges), with the simulated safe area and the 1x2 test card
             for (int f = 0; f < 6; f++) yield return null;
             s.Blocks.NotifyChanged(); yield return null; yield return null;
-            if (!cfg.combat && cfg.ts == 1) { LogLayout(); Capture(Path.Combine(dir, "drag_bg_" + Res + (cfg.notch ? "_notch" : "") + ".png")); }
+            if (!cfg.combat && cfg.ts == 1) { LogLayout(); Capture(Path.Combine(dir, "drag_bg_" + Res + (cfg.notch ? "_notch" : "") + ".png")); yield return CornerShot(); }
             if (!cfg.combat && cfg.ts == 1 && cfg.notch && Screen.width == 2400) yield return MobileShots();
             TimeController.SetSpeed(cfg.ts);
             if (cfg.combat) { s.Waves.StartWave(); float w0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - w0 < 1.5f) yield return null; }
@@ -113,6 +115,30 @@ namespace StoneSignal
             foreach (var rt in FindObjectsOfType<RectTransform>())
                 if (rt.name.StartsWith(prefix) && rt.gameObject.activeInHierarchy) { var k = new Vector3[4]; rt.GetWorldCorners(k); return (k[0] + k[2]) * .5f; }
             return fallback;
+        }
+
+        // ---------- finger search (adaptive offset) ----------
+        struct Reach { public bool ok; public Vector2 finger, aim; public float window; }
+        float CellPx(Vector2Int c) => Mathf.Abs(cam.WorldToScreenPoint(g.ToWorld(c) + Vector3.right * g.cellSize).x - cam.WorldToScreenPoint(g.ToWorld(c)).x);
+        System.Func<Vector2, bool> HitsCell(Vector2Int target) => a => g.RaycastCell(cam.ScreenPointToRay(a), out var c, out _) && c == target;
+        Reach FindFinger(Vector2 aim0, float cellPx, System.Func<Vector2, bool> hits, float step = 1f)
+        {
+            float k1 = pic.CanvasScale, span = (pic.DragOffset + 420f) * k1; float[] fx = { 0f, .2f, -.2f, .35f, -.35f };
+            Reach best = default, centre = default;
+            foreach (var f in fx)
+            {
+                float x = aim0.x + f * cellPx, runStart = -1, runLen = 0, bestStart = -1, bestLen = 0;
+                for (float y = Mathf.Min(aim0.y, Screen.height - 1); y >= aim0.y - span && y >= 0; y -= step)
+                {
+                    var fp = new Vector2(x, y);
+                    bool ok = x >= 0 && x < Screen.width && !pic.InCancelZone(fp) && hits(pic.AimFor(fp));
+                    if (ok) { if (runStart < 0) { runStart = y; runLen = 0; } runLen += step; if (runLen > bestLen) { bestLen = runLen; bestStart = runStart; } } else runStart = -1;
+                }
+                if (bestLen <= 0) continue;
+                var fp2 = new Vector2(x, bestStart - (bestLen - step) * .5f); var r = new Reach { ok = true, finger = fp2, aim = pic.AimFor(fp2), window = bestLen };
+                if (f == 0f) centre = r; if (bestLen > best.window) best = r;
+            }
+            return centre.ok && centre.window >= Mathf.Min(6f * k1, best.window * .5f) ? centre : best; // prefer the finger straight below the cell
         }
 
         // ---------- snapshot of what the player sees ----------
@@ -185,12 +211,25 @@ namespace StoneSignal
                 cardIndex = ti;
             }
             s.Blocks.NotifyChanged(); yield return null;
+            if (tower) { s.Towers.Select(ti); yield return null; yield return null; } // selected card sits 12 px higher: search with the layout the drag will see
             // ---- aim / finger
             Vector2 aim = cam.WorldToScreenPoint(VisualTop(target) + aimOffset);
-            float k1 = pic.CanvasScale; Vector2 finger = aim - Vector2.up * pic.DragOffset * k1;
+            float k1 = pic.CanvasScale;
+            var hitTest = HitsCell(target);
+            if (piece == Piece.T2x2) { var sz2 = new Vector2Int(2, 2); var ea = expectAnchor; hitTest = a => g.RaycastCell(cam.ScreenPointToRay(a), out var c, out var hp) && c == target && g.ClampOrigin(g.FootprintOrigin(hp, sz2), sz2) == ea; }
+            var reach = FindFinger(aim, CellPx(target), hitTest);
+            Vector2 finger = reach.ok ? reach.finger : aim - Vector2.up * pic.DragOffset * k1;
+            if (reach.ok) aim = reach.aim;
             bool onScreen = finger.x >= 0 && finger.y >= 0 && finger.x < Screen.width && finger.y < Screen.height;
             var safe = HudScaler.SafeArea; bool inSafe = safe.Contains(finger);
             bool overHand = pic.IsOverHand(finger);
+            if (!reach.ok)
+            {
+                pic.CancelPlacement();
+                File.AppendAllText(Tsv, Res + "\t" + cfg.Name + "\t" + s.Game.State + "\t" + label + "\t" + C(target) + "\t" + piece + "\t-\t" + (directional ? d.ToString() : "-") + "\t" + V(aim) + "\t" + V(finger) + "\t" + onScreen + "\t" + inSafe + "\t" + overHand +
+                    "\t-\t" + C(expectAnchor) + "\tFalse\tFalse\tFalse\t-\t-\t-\tNaN\tNaN\t0\tNA-unreachable\t" + note + "no finger position reaches the cell\n");
+                yield break;
+            }
             Vector2 start = tower ? CardCentre("Tower card " + s.config.towers[ti].displayName, new Vector2(finger.x, 10)) : CardCentre("Block card " + L.displayName, new Vector2(finger.x, 10));
             var before = Grab(); int towersBefore = s.Towers.Towers.Count;
             // ---- gesture
@@ -268,7 +307,7 @@ namespace StoneSignal
             else result = "FAIL-mismatch";
             float dy = drag.shown ? drag.ghost.y - finger.y : float.NaN;
             string row = Res + "\t" + cfg.Name + "\t" + s.Game.State + "\t" + label + "\t" + C(target) + "\t" + piece + "\t" + flow + "\t" + (directional ? d.ToString() : "-") + "\t" + V(aim) + "\t" + V(finger) + "\t" + onScreen + "\t" + inSafe + "\t" + overHand +
-                         "\t" + C(snapAnchor) + "\t" + C(expectAnchor) + "\t" + snapOk + "\t" + (snap.shown || drag.shown) + "\t" + expectValid + "\t" + Cells(snap.cells) + "\t" + Cells(placed) + "\t" + Cells(expect) + "\t" + dy.ToString("0.0") + "\t" + result + "\t" + note + "\n";
+                         "\t" + C(snapAnchor) + "\t" + C(expectAnchor) + "\t" + snapOk + "\t" + (snap.shown || drag.shown) + "\t" + expectValid + "\t" + Cells(snap.cells) + "\t" + Cells(placed) + "\t" + Cells(expect) + "\t" + dy.ToString("0.0") + "\t" + (aim.y - finger.y).ToString("0.0") + "\t" + reach.window.ToString("0") + "\t" + result + "\t" + note + "\n";
             File.AppendAllText(Tsv, row);
         }
 
@@ -285,7 +324,15 @@ namespace StoneSignal
             }
             int hot = 0; foreach (var rt in FindObjectsOfType<RectTransform>()) if (rt.name == "Hotkey" && rt.gameObject.activeInHierarchy) hot++;
             sb.Append("hotkeyBadges\t" + hot + "\n");
+            { var bl = Targets()[0].Item2; float bx = cam.WorldToScreenPoint(VisualTop(bl)).x; for (float y = 0; y <= Screen.height * .6f; y += 4) { var fp = new Vector2(bx, y); sb.Append("profile\t" + bx.ToString("0") + "\t" + y.ToString("0") + "\t" + pic.OffsetFor(fp).ToString("0.0") + "\t" + (pic.InCancelZone(fp) ? 1 : 0) + "\n"); } }
+            sb.Append("liftMargin\t" + pic.LiftMargin + "\tliftFeather\t" + pic.LiftFeather + "\n");
             for (int y = 0; y < g.height; y++) for (int x = 0; x < g.width; x++) { var c = new Vector2Int(x, y); Vector2 sp = cam.WorldToScreenPoint(VisualTop(c)); sb.Append("cell\t" + x + "\t" + y + "\t" + sp.x.ToString("0") + "\t" + sp.y.ToString("0") + "\t" + g.Get(c) + "\n"); }
+            // per-cell drag reachability with the adaptive offset (finger search as in Case, 2 px steps)
+            for (int y = 0; y < g.height; y++) for (int x = 0; x < g.width; x++)
+            {
+                var c = new Vector2Int(x, y); Vector2 sp = cam.WorldToScreenPoint(VisualTop(c)); var r = FindFinger(sp, CellPx(c), HitsCell(c), 2f);
+                sb.Append("reach\t" + x + "\t" + y + "\t" + (r.ok ? 1 : 0) + "\t" + V(r.finger) + "\t" + V(r.aim) + "\t" + r.window.ToString("0") + "\t" + (r.ok ? (r.aim.y - r.finger.y).ToString("0") : "-") + "\t" + pic.IsOverHand(r.finger) + "\n");
+            }
             File.AppendAllText(LayoutFile, sb.ToString());
         }
         IEnumerator MobileShots()
@@ -296,28 +343,57 @@ namespace StoneSignal
             float k1 = pic.CanvasScale;
             Vector2Int Near(float fx, float fy) { var m = new Vector2Int(Mathf.RoundToInt(g.width * fx), Mathf.RoundToInt(g.height * fy)); for (int r = 0; r < 6; r++) for (int dy = -r; dy <= r; dy++) for (int dx = -r; dx <= r; dx++) { var q = m + new Vector2Int(dx, dy); if (g.InBounds(q) && g.Get(q) == CellState.Empty && CanPrep(q)) return q; } return m; }
             // 1) tower drag: ghost DragOffset px above the finger
-            var t1 = Near(.35f, .6f); PrepWall(t1); s.Blocks.NotifyChanged(); yield return null;
+            var t1 = Near(.35f, .6f); PrepWall(t1); s.Blocks.NotifyChanged(); s.Towers.Select(0); yield return null; yield return null;
             Vector2 aim = cam.WorldToScreenPoint(VisualTop(t1)), finger = aim - Vector2.up * pic.DragOffset * k1;
+            { var r = FindFinger(aim, CellPx(t1), HitsCell(t1)); if (r.ok) { finger = r.finger; aim = r.aim; } }
             Vector2 start = CardCentre("Tower card " + s.config.towers[0].displayName, new Vector2(finger.x, 10));
             PointerInput.Inject(start, true, true, false); pic.CardDown(true, 0, start); yield return null;
             for (int k = 1; k <= 8; k++) { PointerInput.Inject(Vector2.Lerp(start, finger, k / 8f), false, true, false); yield return null; }
             for (int k = 0; k < 20; k++) { PointerInput.Inject(finger, false, true, false); yield return null; }
             var sn = Take(true, 0); yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "mobile_drag_tower.png"));
-            info.Append("tower drag: cell " + C(t1) + " finger " + V(finger) + " aim " + V(aim) + " ghost centre " + V(sn.ghost) + " ghost-finger dy " + (sn.ghost.y - finger.y).ToString("0") + " px (DragOffset " + pic.DragOffset + " x scale " + k1 + ") shown=" + sn.shown + " valid=" + sn.valid + "\n");
+            info.Append("tower drag: cell " + C(t1) + " finger " + V(finger) + " aim " + V(aim) + " ghost centre " + V(sn.ghost) + " ghost-finger dy " + (sn.ghost.y - finger.y).ToString("0") + " px (offset " + pic.OffsetFor(finger).ToString("0") + " px; base DragOffset " + pic.DragOffset + " x scale " + k1 + ") shown=" + sn.shown + " valid=" + sn.valid + "\n");
             info.Append("FINGER\tmobile_drag_tower\t" + V(finger) + "\t" + V(aim) + "\n");
             pic.CancelPlacement(); PointerInput.ClearInjection(); yield return Frames(3);
             // 2) wall: drag, hold -> direction diamond, swipe right (rotated L previewed)
             var L = Shape("L"); var hand = s.Blocks.Hand; if (hand.IsFull) { hand.Select(0); hand.Consume(); } hand.AddCard(L, RuneRules.NoRune); s.Blocks.NotifyChanged(); yield return null;
             int li = -1; for (int i = hand.Cards.Count - 1; i >= 0; i--) if (hand.Cards[i] == L) { li = i; break; }
+            s.Towers.Select(-1); s.Blocks.SelectCard(li); yield return null; yield return null;
             var t2 = Near(.55f, .45f); aim = cam.WorldToScreenPoint(VisualTop(t2)); finger = aim - Vector2.up * pic.DragOffset * k1;
+            { var r = FindFinger(aim, CellPx(t2), HitsCell(t2)); if (r.ok) { finger = r.finger; aim = r.aim; } }
             start = CardCentre("Block card " + L.displayName, new Vector2(finger.x, 10));
             yield return DiamondShot(false, li, start, finger, 1, "mobile_wall_diamond", info, t2, aim);
             // 3) synthetic 1x2 tower: walls under it, hold -> diamond, swipe up
-            var t3 = Near(.7f, .6f); PrepWall(t3); PrepWall(t3 + Vector2Int.up); s.Blocks.NotifyChanged(); yield return null;
+            var t3 = Near(.7f, .6f); PrepWall(t3); PrepWall(t3 + Vector2Int.up); s.Blocks.NotifyChanged(); s.Towers.Select(1); yield return null; yield return null;
             aim = cam.WorldToScreenPoint(VisualTop(t3)); finger = aim - Vector2.up * pic.DragOffset * k1;
+            { var r = FindFinger(aim, CellPx(t3), HitsCell(t3)); if (r.ok) { finger = r.finger; aim = r.aim; } }
             start = CardCentre("Tower card " + s.config.towers[1].displayName, new Vector2(finger.x, 10));
             yield return DiamondShot(true, 1, start, finger, 0, "mobile_1x2_diamond", info, t3, aim);
             File.WriteAllText(Path.Combine(dir, "mobile_shots.txt"), info.ToString()); Debug.Log(info.ToString());
+        }
+        /// Acceptance shots: L wall dragged onto the bottom-left corner target (drag ghost, then released -> direction arrows).
+        IEnumerator CornerShot()
+        {
+            var bl = Targets()[0].Item2; var L = Shape("L"); if (L == null) yield break;
+            var hand = s.Blocks.Hand; if (hand.IsFull) { hand.Select(0); hand.Consume(); } hand.AddCard(L, RuneRules.NoRune); s.Blocks.NotifyChanged(); yield return null; yield return null;
+            int li = -1; for (int i = hand.Cards.Count - 1; i >= 0; i--) if (hand.Cards[i] == L && hand.Runes[i] == RuneRules.NoRune) { li = i; break; }
+            s.Towers.Select(-1); s.Blocks.SelectCard(li); yield return null; yield return null;
+            Vector2 aim0 = cam.WorldToScreenPoint(VisualTop(bl)); var r = FindFinger(aim0, CellPx(bl), HitsCell(bl));
+            string tag = Res + (cfg.notch ? "_notch" : "");
+            var info = new StringBuilder("CORNER\t" + tag + "\tcell " + C(bl) + "\tcellTop " + V(aim0) + "\treach " + r.ok + "\tfinger " + V(r.finger) + "\taim " + V(r.aim) + "\toffset " + (r.aim.y - r.finger.y).ToString("0") + "\twindow " + r.window.ToString("0") + "\tfingerOverHand " + pic.IsOverHand(r.finger));
+            if (r.ok && li >= 0)
+            {
+                Vector2 start = CardCentre("Block card " + L.displayName, new Vector2(r.finger.x, 10));
+                PointerInput.Inject(start, true, true, false); pic.CardDown(false, li, start); yield return null;
+                for (int k = 1; k <= 8; k++) { PointerInput.Inject(Vector2.Lerp(start, r.finger, k / 8f), false, true, false); yield return null; }
+                PointerInput.Inject(r.finger, false, true, false); yield return null;
+                var sn = Take(false, -1); yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "drag_corner_" + tag + "_drag.png"));
+                info.Append("\tdragGhost " + sn.shown + " anchor " + C(sn.anchor) + " valid " + sn.valid + " state " + pic.Machine.State);
+                PointerInput.Inject(r.finger, false, false, true); yield return Frames(3);
+                sn = Take(false, -1); yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "drag_corner_" + tag + "_released.png"));
+                info.Append("\treleased " + pic.Machine.State + " cell " + C(pic.Machine.Cell) + " centre " + V(pic.Machine.Centre) + " ghost " + Cells(sn.cells));
+            }
+            pic.CancelPlacement(); PointerInput.ClearInjection(); yield return Frames(3);
+            File.AppendAllText(Path.Combine(dir, "corner_shots.txt"), info + "\n");
         }
         IEnumerator DiamondShot(bool tower, int index, Vector2 start, Vector2 finger, int d, string name, StringBuilder info, Vector2Int cell, Vector2 aim)
         {

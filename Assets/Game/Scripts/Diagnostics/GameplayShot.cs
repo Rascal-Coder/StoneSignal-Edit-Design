@@ -34,6 +34,7 @@ namespace StoneSignal
         IEnumerator Run()
         {
             yield return new WaitForSecondsRealtime(1f);
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
             var grid = s.grid; s.Economy.AddGold(900);
             // wall clusters (deterministic pattern) that leave every route open
             for (int y = 1; y < grid.height - 1; y++) for (int x = 1; x < grid.width - 1; x++)
@@ -181,6 +182,44 @@ namespace StoneSignal
         }
         void Capture() => Capture(path);
         // -rewardshot: forced reward cards (C,R,E then R,E,L), glow on/off draw-call + batch delta, mid-pick frame.
+        /// -cnshots (玩法策划 v18 text acceptance): fresh Build state -> draw pile 免费 / 再抽 (video badge) / 已用完 / 已满,
+        /// one placement notice, reward cards with 墙牌补给 + 符文保底 (+ 建塔折扣 / rune option), defeat screen; text audit + CN glyph check.
+        IEnumerator CnShots()
+        {
+            var ui = FindObjectOfType<GameUI>(); string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height;
+            var sb = new System.Text.StringBuilder("cn shots " + res + "\n" + CnAtlas());
+            IEnumerator Shot(string name) { for (int f = 0; f < 6; f++) yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, name + "_" + res + ".png")); }
+            string Pile() { var dp = FindObjectOfType<StoneSignal.VFX.DrawPileUI>(); return dp == null ? "no DrawPileUI" : "state=" + dp.State + " label='" + (dp.statusLabel ? dp.statusLabel.text : "-") + "' icon=" + (dp.statusIcon && dp.statusIcon.gameObject.activeSelf && dp.statusIcon.sprite ? dp.statusIcon.sprite.name : "hidden") + " interactable=" + (dp.button && dp.button.interactable); }
+            var hand = s.Blocks.Hand;
+            while (hand.Cards.Count > 1) { hand.Select(0); hand.Consume(); }
+            s.Blocks.NotifyChanged();
+            yield return Shot("drawpile_free"); sb.Append("draw pile FREE: " + Pile() + "\n");
+            bool d1 = s.Draw(); s.Blocks.NotifyChanged();
+            yield return Shot("drawpile_ad"); sb.Append("draw pile AD (after free draw ok=" + d1 + ", hand " + hand.Cards.Count + "): " + Pile() + "\n");
+            bool d2 = s.Draws.Consume(true); s.Blocks.NotifyChanged(); // the rewarded-video draw, without the ad placeholder
+            yield return Shot("drawpile_used"); sb.Append("draw pile USED (ad draw consumed ok=" + d2 + "): " + Pile() + "\n");
+            sb.Append(TextAudit("HUD build"));
+            // placement notice: a wall on the core cell -> "Cell occupied / protected" -> 这里不能放
+            s.Blocks.SelectCard(0); bool placed = s.Blocks.CommitPlacement(s.grid.goal);
+            yield return Shot("notice"); sb.Append("notice: commit on core cell placed=" + placed + "\n" + TextAudit("notice"));
+            var notices = new[] { "Cell occupied / protected", "Duplicate block cell", "No tower selected", "Not enough gold" };
+            foreach (var n in notices) sb.Append("  notice '" + n + "' -> '" + StoneSignal.UI.Loc.Notice(n) + "'\n");
+            { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < 2.6f) yield return null; } // notice toast expires before the reward / defeat shots
+            // reward cards
+            var C = StoneSignal.UI.RewardRarity.Common; var R = StoneSignal.UI.RewardRarity.Rare; var E = StoneSignal.UI.RewardRarity.Epic;
+            var setA = new[] { C, C, E }; var effA = new[] { RewardEffect.AddBlock, RewardEffect.NextDraw, RewardEffect.TowerDiscount };
+            if (ui != null && ui.DebugShowRewardPick(setA, effA)) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .9f) yield return null; sb.Append(TextAudit("reward cards A")); yield return Shot("reward_addblock_nextdraw"); }
+            else sb.Append("reward pick UI unavailable\n");
+            var setB = new[] { R, C, E }; var effB = new[] { RewardEffect.AllDamage, RewardEffect.NextDraw, RewardEffect.BaseHP };
+            if (ui != null && ui.DebugShowRewardPick(setB, effB)) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < .9f) yield return null; sb.Append(TextAudit("reward cards B")); yield return Shot("reward_rune_nextdraw"); }
+            if (ui != null && ui.PickUi != null) ui.PickUi.gameObject.SetActive(false);
+            foreach (var r in s.config.rewards) if (r != null) sb.Append("  reward " + r.effect + ": '" + StoneSignal.UI.Loc.RewardTitle(r) + "' / '" + StoneSignal.UI.Loc.RewardDesc(r).Replace("\n", "\\n") + "'\n");
+            // defeat
+            s.Game.SetState(GameState.GameOver);
+            yield return Shot("defeat"); sb.Append(TextAudit("defeat"));
+            sb.Append(CnAtlas());
+            File.WriteAllText(Path.Combine(dir, "cn_shots_" + res + ".txt"), sb.ToString());
+        }
         IEnumerator RewardShots()
         {
             var ui = FindObjectOfType<GameUI>(); if (ui == null) yield break;
@@ -278,7 +317,7 @@ namespace StoneSignal
             if (cam.orthographic) cam.orthographicSize = ortho * .38f; else cam.fieldOfView = fov * .42f;
             int bottom = -1, left = -1, right = -1;
             for (int i = 0; i < s.grid.Spawns.Count; i++) { var e = s.grid.Spawns[i]; if (e.y == 0) bottom = i; else if (e.x == 0) left = i; else if (e.x == s.grid.width - 1) right = i; }
-            info += "WalkSurface tiles=" + WalkSurface.TileCount + " profiles=" + WalkSurface.ProfileCount + "\n";
+            info += "WalkSurface tiles=" + WalkSurface.TileCount + " profiles=" + WalkSurface.ProfileCount + " plank samples=" + WalkSurface.PlankSamples + "\n";
             foreach (var run in new[] { ("drifter_bottom_bridge", drifter, bottom), ("skimmer_left_bridge", skimmer, left), ("drifter_right_bridge", drifter, right) })
             {
                 if (run.Item2 == null || run.Item3 < 0) { info += run.Item1 + ": data/spawn missing\n"; continue; }
@@ -290,12 +329,13 @@ namespace StoneSignal
                 while (Time.realtimeSinceStartup - t0 < 12f && k < 5 && en != null && en.Alive)
                 {
                     var p = en.transform.position; float along = Vector3.Dot(p - bridge, -GridManager.OutwardOf(entry, s.grid.width, s.grid.height));
-                    if (shotAt < 0 && !en.HeldBySpawn && along > -2.2f) shotAt = Time.realtimeSinceStartup; // v17.3: from the island end of the bridge onto the tiles
+                    if (shotAt < 0 && !en.HeldBySpawn && along > (run.Item1.Contains("right") ? -3.6f : -2.2f)) shotAt = Time.realtimeSinceStartup; // v17.3: from the island end of the bridge onto the tiles (v17.5 right bridge: from the sand)
                     if (shotAt >= 0 && Time.realtimeSinceStartup - shotAt >= k * .7f)
                     {
                         cam.transform.position = p - cam.transform.forward * 6f; yield return null; yield return Clean(); yield return new WaitForEndOfFrame();
                         long dc = draws.LastValue; Capture(Path.Combine(dir, run.Item1 + "_" + k + ".png"));
                         var cell = s.grid.ToCell(p); string where = s.grid.InBounds(cell) ? "tiles" : along > -.4f ? "bridge" : "island/bridge start";
+                        where += WalkSurface.TryGet(p, out var wy, out var wk) ? ", WalkSurface " + wk + " y=" + wy.ToString("F2") : ", WalkSurface -";
                         info += run.Item1 + "_" + k + " [" + where + "]: " + Describe(en) + " | frame drawCalls=" + dc + "\n" + Prints(en) + "\n";
                         k++;
                     }
@@ -327,7 +367,7 @@ namespace StoneSignal
             {
                 var wp = local ? sys.dust.transform.TransformPoint(ps[i].position) : ps[i].position;
                 if ((new Vector2(wp.x - en.transform.position.x, wp.z - en.transform.position.z)).magnitude > 2.5f) continue;
-                if (near++ < 6) sb.Append(" [" + wp.x.ToString("F2") + "," + wp.y.ToString("F2") + "," + wp.z.ToString("F2") + " surf=" + (WalkSurface.TryGet(wp, out var sy) ? sy.ToString("F2") : "-") + " rot=" + ps[i].rotation.ToString("F0") + " age=" + (ps[i].startLifetime - ps[i].remainingLifetime).ToString("F2") + "]");
+                if (near++ < 6) sb.Append(" [" + wp.x.ToString("F2") + "," + wp.y.ToString("F2") + "," + wp.z.ToString("F2") + " surf=" + (WalkSurface.TryGet(wp, out var sy, out var sk) ? sy.ToString("F2") + " " + sk : "-") + " colR=" + ps[i].startColor.r + (ps[i].startColor.r < 128 ? "(plank print)" : "") + " rot=" + ps[i].rotation.ToString("F0") + " age=" + (ps[i].startLifetime - ps[i].remainingLifetime).ToString("F2") + "]");
             }
             var r = sys.dust.GetComponent<ParticleSystemRenderer>();
             return "    footprints total=" + n + " near enemy=" + near + " align=" + (r ? r.alignment.ToString() + " renderMode=" + r.renderMode : "-") + " yawOffset=" + sys.footprintYawOffset + " yawSign=" + sys.footprintYawSign + sb;
@@ -562,7 +602,8 @@ namespace StoneSignal
         }
         // -corecheck (art core questions, values only, nothing changed): (a) enclosure material + core renderer materials, Bloom actually
         // active (volume + resolved stack) and camera HDR; (b) CoreDamageFx smoke/sparks state in Broken/Critical at NORMAL game speed;
-        // (c) Critical red flash: 3 captures across the flicker + per-renderer _HiAmount and whether its shader has _HiColor at all.
+        // (c) v17.5: 4 stage captures from the real hp, hit flash, Critical over 3 consecutive frames, _StatusTint/_StatusRim per renderer;
+        // (d) sparks re-entry investigation (Critical -> Intact -> Critical in one frame / consecutive frames).
         static string PathOf(Transform t) { string n = t.name; for (var p = t.parent; p != null && n.Length < 120; p = p.parent) n = p.name + "/" + n; return n; }
         IEnumerator CoreCheck()
         {
@@ -598,7 +639,7 @@ namespace StoneSignal
                 sb.Append("    mesh " + mm.name + ": verts=" + mm.vertexCount + " colours=" + nv + (nv > 0 ? " meanRGB=(" + (sr / nv).ToString("F2") + "," + (sg / nv).ToString("F2") + "," + (sbb / nv).ToString("F2") + ") R>0.5: " + (100f * r50 / nv).ToString("F0") + "% R>0.9: " + (100f * r90 / nv).ToString("F0") + "% -> emission = albedo x R x _VColorEmission" : " (no vertex colours -> shader default)") + "\n");
             }
             sb.Append("    core renderers (" + (fx.coreRenderers != null ? fx.coreRenderers.Length : 0) + "):\n");
-            if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) sb.Append("    - " + PathOf(r.transform) + " pos=" + r.transform.position.ToString("F2") + " bounds=" + r.bounds.size.ToString("F2") + " hasHiColor=" + (r.sharedMaterial && r.sharedMaterial.HasProperty("_HiColor")) + " hasHiAmount=" + (r.sharedMaterial && r.sharedMaterial.HasProperty("_HiAmount")) + " material=" + Props(r.sharedMaterial) + "\n");
+            if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) sb.Append("    - " + PathOf(r.transform) + " pos=" + r.transform.position.ToString("F2") + " bounds=" + r.bounds.size.ToString("F2") + " hasStatusTint=" + (r.sharedMaterial && r.sharedMaterial.HasProperty("_StatusTint")) + " hasStatusRim=" + (r.sharedMaterial && r.sharedMaterial.HasProperty("_StatusRim")) + " material=" + Props(r.sharedMaterial) + "\n");
             sb.Append("    " + Bloom());
             var cp = fx.transform.position; cam.transform.position = cp - cam.transform.forward * 6f; Zoom(.4f);
             for (int f = 0; f < 3; f++) yield return null;
@@ -620,34 +661,55 @@ namespace StoneSignal
                        " material=" + (pr && pr.sharedMaterial ? pr.sharedMaterial.name + " shader=" + pr.sharedMaterial.shader.name : "NONE") +
                        " | pos=" + p.transform.position.ToString("F2") + " localPos=" + p.transform.localPosition.ToString("F2") + " lossyScale=" + p.transform.lossyScale.ToString("F3") + " (core at " + cp.ToString("F2") + ")\n";
             }
-            // forced stages get reset by GameBootstrap (Economy.Changed -> SetHealth01(real HP) on every kill/gold change), so re-assert each frame
-            int resets = 0; float hold = 1;
-            IEnumerator Hold(float seconds) { float h0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - h0 < seconds) { if (fx.Current == StoneSignal.VFX.CoreDamageFx.Stage.Intact && hold < .7f) resets++; fx.SetHealth01(hold); yield return null; } }
-            foreach (var st in new[] { (.3f, "broken"), (.1f, "critical") })
+            // v17.5 status flash props (the v17.4 _HiAmount is always 0 now): core renderers + enclosure (MPB, null when idle)
+            var mpb = new MaterialPropertyBlock();
+            string Status()
             {
-                hold = st.Item1; fx.SetHealth01(st.Item1);
-                sb.Append("(b) " + st.Item2 + " h=" + st.Item1 + " stage=" + fx.Current + " fx.enabled=" + fx.enabled + "\n    right after SetHealth01:\n" + Ps("smoke", fx.smoke) + Ps("sparks", fx.sparks));
+                string o = "";
+                var rs = new List<Renderer>(); if (fx.coreRenderers != null) rs.AddRange(fx.coreRenderers); if (encR) rs.Add(encR);
+                foreach (var r in rs) if (r) { r.GetPropertyBlock(mpb); o += " " + r.name + " tint " + mpb.GetVector("_StatusTint").ToString("F2") + " rim " + mpb.GetVector("_StatusRim").ToString("F2") + (r.HasPropertyBlock() ? "" : " (no MPB)") + ";"; }
+                return o;
+            }
+            string Sp() => "sparks isPlaying=" + (fx.sparks && fx.sparks.isPlaying) + " isEmitting=" + (fx.sparks && fx.sparks.isEmitting) + " particles=" + (fx.sparks ? fx.sparks.particleCount : -1) + " | smoke isPlaying=" + (fx.smoke && fx.smoke.isPlaying) + " stage=" + fx.Current;
+            // (d) v17.5 sparks investigation: why were sparks off at Critical after a stage reset (v17.4 core_check)?
+            //     The v17.4 harness forced stages with SetHealth01 while Economy.Changed (kill gold) re-applied the REAL hp (Intact) in between.
+            //     Reproduce both orders: reset + re-assert in the SAME frame, and in consecutive frames.
+            fx.SetHealth01(.1f); for (int f = 0; f < 20; f++) yield return null;
+            sb.Append("(d) critical held 20 frames: " + Sp() + "\n");
+            fx.SetHealth01(1f); string afterStop = Sp(); fx.SetHealth01(.1f);
+            sb.Append("(d) same frame Critical -> Intact -> Critical: right after Intact: " + afterStop + "\n    right after Critical again: " + Sp() + "\n");
+            yield return null; sb.Append("    +1 frame: " + Sp() + "\n"); for (int f = 0; f < 10; f++) yield return null; sb.Append("    +11 frames: " + Sp() + "\n");
+            fx.SetHealth01(1f); yield return null; sb.Append("(d) consecutive frames: Intact (+1 frame): " + Sp() + "\n"); fx.SetHealth01(.1f); yield return null;
+            sb.Append("    Critical again +1 frame: " + Sp() + "\n"); for (int f = 0; f < 10; f++) yield return null; sb.Append("    +11 frames: " + Sp() + "\n");
+            // stages from the REAL hp now (diagnostic: set RunEconomy.HP through its private setter), so Economy.Changed agrees with the forced stage
+            var hpProp = typeof(RunEconomy).GetProperty("HP"); int hp0 = s.Economy.HP, maxHp = Mathf.Max(1, s.Economy.MaxHP);
+            void SetHp(float h01) { hpProp.SetValue(s.Economy, Mathf.Clamp(Mathf.RoundToInt(h01 * maxHp), 1, maxHp)); fx.SetHealth01(s.Economy.HP / (float)maxHp); }
+            int resets = 0; StoneSignal.VFX.CoreDamageFx.Stage want = fx.Current;
+            IEnumerator Hold(float seconds) { float h0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - h0 < seconds) { if (fx.Current != want) resets++; yield return null; } }
+            foreach (var st in new[] { (1f, "intact"), (.55f, "cracked"), (.3f, "broken"), (.1f, "critical") })
+            {
+                SetHp(st.Item1); want = fx.Current;
+                sb.Append("(b) " + st.Item2 + " hp " + s.Economy.HP + "/" + maxHp + " stage=" + fx.Current + "\n    right after: " + Sp() + "\n");
                 resets = 0; yield return Hold(1.5f);
-                sb.Append("    after 1.5 s at timeScale " + Time.timeScale + " (stage re-asserted each frame; Economy.Changed had reset it " + resets + "x):\n" + Ps("smoke", fx.smoke) + Ps("sparks", fx.sparks));
-                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_live_" + st.Item2 + ".png"));
+                sb.Append("    after 1.5 s at timeScale " + Time.timeScale + " (stage changed by game events " + resets + " frames): " + Sp() + "\n" + Ps("smoke", fx.smoke) + Ps("sparks", fx.sparks) + "    status:" + Status() + "\n");
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_state_" + st.Item2 + ".png"));
             }
-            // (c) critical flash: per-frame _HiAmount on each core renderer for 6 frames, then 3 captures 0.12 s apart
-            var mpb = new MaterialPropertyBlock(); Zoom(.25f); hold = .1f; yield return Hold(.2f);
-            for (int f = 0; f < 6; f++)
-            {
-                fx.SetHealth01(hold); yield return null; var line = "(c) frame " + f + " t=" + Time.time.ToString("F2") + ":";
-                if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) { r.GetPropertyBlock(mpb); line += " " + r.name + " HiAmount=" + mpb.GetFloat("_HiAmount").ToString("F2") + " HiColor=#" + ColorUtility.ToHtmlStringRGB(mpb.GetColor("_HiColor")) + (r.HasPropertyBlock() ? "" : " (no MPB)") + ";"; }
-                sb.Append(line + "\n");
-            }
+            // hit flash from Intact (0.12 s): capture the frame after PlayHit
+            Zoom(.25f); SetHp(1f); for (int f = 0; f < 10; f++) yield return null;
+            fx.PlayHit(); yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_hit.png"));
+            sb.Append("(c) hit +1 frame t=" + Time.time.ToString("F2") + ":" + Status() + "\n");
+            for (int f = 0; f < 3; f++) yield return null; sb.Append("    hit +4 frames:" + Status() + "\n");
+            float th = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - th < .3f) yield return null; sb.Append("    hit +0.3 s:" + Status() + "\n");
+            // Critical: 3 consecutive frames
+            SetHp(.1f); yield return Hold(.5f);
             for (int k = 0; k < 3; k++)
             {
-                yield return Hold(.12f);
-                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_critical_flash_" + k + ".png"));
-                var line = "(c) capture " + k + " t=" + Time.time.ToString("F2") + ":";
-                if (fx.coreRenderers != null) foreach (var r in fx.coreRenderers) if (r) { r.GetPropertyBlock(mpb); line += " " + r.name + " HiAmount=" + mpb.GetFloat("_HiAmount").ToString("F2") + ";"; }
-                sb.Append(line + "\n");
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_critical_frame" + k + ".png"));
+                sb.Append("(c) critical frame " + Time.frameCount + " t=" + Time.time.ToString("F3") + ":" + Status() + " " + Sp() + "\n");
+                yield return null;
             }
-            fx.SetHealth01(1); yield return null;
+            hpProp.SetValue(s.Economy, hp0);
+            fx.SetHealth01(s.Economy.HP / (float)maxHp); yield return null;
             cam.transform.position = home; cam.orthographicSize = ortho; cam.fieldOfView = fov; captureNoUi = false;
             File.WriteAllText(Path.Combine(dir, "core_check.txt"), sb.ToString()); Debug.Log("CORE CHECK\n" + sb);
         }
@@ -708,7 +770,10 @@ namespace StoneSignal
             var all = new System.Text.StringBuilder(); foreach (var str in StoneSignal.UI.Loc.All()) all.Append(str);
             foreach (var r in s.config.rewards) if (r != null) all.Append(StoneSignal.UI.Loc.RewardTitle(r)).Append(StoneSignal.UI.Loc.RewardDesc(r));
             var set = new HashSet<char>(); foreach (char c in all.ToString()) if (c > 0x2E7F) set.Add(c);
-            var uniq = new string(new List<char>(set).ToArray()); cn.TryAddCharacters(uniq, out string missing);
+            var uniq = new string(new List<char>(set).ToArray()); cn.TryAddCharacters(uniq, out string notAdded);
+            // TryAddCharacters also lists characters that were ALREADY in the font (2nd call in one run listed every char), so the real
+            // missing set is what the font still cannot render afterwards (dynamic: tries the TTF).
+            string missing = ""; foreach (char c in uniq) if (!cn.HasCharacter(c, false, true)) missing += c;
             int pages = 0; if (cn.atlasTextures != null) foreach (var tx in cn.atlasTextures) if (tx != null) pages++;
             return "CN font " + cn.name + ": unique CJK/fullwidth chars in UI strings=" + uniq.Length + " glyphs in font now=" + cn.characterTable.Count +
                    " atlas pages=" + pages + " (" + cn.atlasWidth + "x" + cn.atlasHeight + ", padding " + cn.atlasPadding + ", sampling " + cn.faceInfo.pointSize + ") multiAtlas=" + cn.isMultiAtlasTexturesEnabled +

@@ -48,10 +48,15 @@ namespace StoneSignal
     {
         public static PlacementInputController Instance { get; private set; }
         public readonly PlacementInput Machine = new PlacementInput();
-        /// Ghost is previewed this many reference pixels above the finger (scaled by the HUD canvas).
+        /// Ghost is previewed this many reference pixels above the finger (scaled by the HUD canvas) away from the hand.
         public float DragOffset = 110f;
+        /// Adaptive offset (玩法策划 v18 drag spec (b)): with the finger on / near a hand card the aim point is lifted to
+        /// LiftMargin px above that card's top edge; LiftFeather px around the card blends the lift in and out (continuous,
+        /// no jump); beyond it the offset is DragOffset again. Reference pixels x CanvasScale.
+        public float LiftMargin = 28f, LiftFeather = 100f; // feather 100: smallest finger window for a covered corner cell 12 -> ~22 px (v18 drag report)
         public float CanvasScale = 1f;
-        /// Hand card rects (set by GameUI on every hand rebuild). Finger over one of them = "back over the hand" (hide / cancel).
+        /// Hand card rects (set by GameUI on every hand rebuild). Finger on one: ghost lifted above it (upper half) or
+        /// "back over the hand" = hide / cancel (lower half), see OffsetFor / InCancelZone.
         /// Was a full-width band below the block row (y <= 434 px at 1080p), which also covered open board on the right and,
         /// with the 110 px offset, made the lower board rows unreachable by drag; it also ignored the safe-area bottom inset.
         public readonly List<RectTransform> HandRects = new List<RectTransform>();
@@ -85,12 +90,44 @@ namespace StoneSignal
             Machine.CardDown(tower, index, tower ? towers.SelectedNeedsDirection : true, pos, Time.unscaledTime);
             Drive();
         }
-        bool OverHand(Vector2 pos)
+        static readonly List<Rect> handScreen = new List<Rect>();
+        /// Screen-space AABBs of the active hand cards (fallback: a full-width band up to HandTop when GameUI gave none).
+        List<Rect> HandScreenRects()
         {
-            bool any = false;
-            foreach (var r in HandRects) if (r != null && r.gameObject.activeInHierarchy) { any = true; if (RectTransformUtility.RectangleContainsScreenPoint(r, pos, null)) return true; }
-            return !any && pos.y <= handTopFallback;
+            handScreen.Clear();
+            foreach (var r in HandRects)
+                if (r != null && r.gameObject.activeInHierarchy)
+                {
+                    r.GetWorldCorners(corners); float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
+                    foreach (var c in corners) { x0 = Mathf.Min(x0, c.x); y0 = Mathf.Min(y0, c.y); x1 = Mathf.Max(x1, c.x); y1 = Mathf.Max(y1, c.y); }
+                    handScreen.Add(Rect.MinMaxRect(x0, y0, x1, y1));
+                }
+            if (handScreen.Count == 0 && handTopFallback > 0) handScreen.Add(Rect.MinMaxRect(-1e5f, -1e5f, 1e5f, handTopFallback));
+            return handScreen;
         }
+        bool OverHand(Vector2 pos) { foreach (var r in HandScreenRects()) if (r.Contains(pos)) return true; return false; }
+        /// Ghost offset (screen px) for a finger position. Per card: lifted = max(base, card top + margin), blended by
+        /// w = 1 - clamp01(distance outside the card / feather) (cards the finger is above are ignored). The result is
+        /// continuous in the finger position, so the ghost never jumps, and it only lifts relative to the card the finger
+        /// is on or next to (never to the top of the whole hand stack: cells covered by the block row, e.g. the bottom-left
+        /// corner at 1920x1080 / 2048x1536, must stay reachable).
+        public float OffsetFor(Vector2 finger)
+        {
+            float s = CanvasScale > 0 ? CanvasScale : 1f, b = DragOffset * s, m = Mathf.Min(LiftMargin * s, b), f = Mathf.Max(1f, LiftFeather * s);
+            float baseAim = finger.y + b, aim = baseAim;
+            foreach (var r in HandScreenRects())
+            {
+                if (finger.y > r.yMax) continue;
+                float dx = Mathf.Max(0f, Mathf.Max(r.xMin - finger.x, finger.x - r.xMax)), dy = Mathf.Max(0f, r.yMin - finger.y);
+                float w = 1f - Mathf.Clamp01(Mathf.Max(dx, dy) / f); if (w <= 0f) continue;
+                aim = Mathf.Max(aim, Mathf.Lerp(baseAim, Mathf.Max(baseAim, r.yMax + m), w));
+            }
+            return aim - finger.y;
+        }
+        public Vector2 AimFor(Vector2 finger) => finger + Vector2.up * OffsetFor(finger);
+        /// "Back over the hand" = finger on the LOWER half of a hand card: ghost hidden, release cancels. The upper half
+        /// lifts the ghost instead (adaptive offset), so a drag can still finish on cells just above / under the cards.
+        public bool InCancelZone(Vector2 finger) { foreach (var r in HandScreenRects()) if (r.Contains(finger) && finger.y < r.center.y) return true; return false; }
         /// Diagnostics (drag report): the controller's own hand test and a hard cancel of any gesture in progress.
         public bool IsOverHand(Vector2 pos) => OverHand(pos);
         public void CancelPlacement() { Machine.Reset(); if (towers != null) Cancel(); Drive(); }
@@ -151,7 +188,7 @@ namespace StoneSignal
             switch (a)
             {
                 case PlacementAction.Preview:
-                    if (Machine.State == PlacementState.Dragging || Machine.State == PlacementState.Armed) { var c = CellAt(finger + Vector2.up * DragOffset * CanvasScale); if (c.HasValue) ShowFixed(c.Value); else Hide(); }
+                    if (Machine.State == PlacementState.Dragging || Machine.State == PlacementState.Armed) { var c = CellAt(AimFor(finger)); if (c.HasValue) ShowFixed(c.Value); else Hide(); }
                     break;
                 case PlacementAction.HidePreview: Hide(); break;
                 case PlacementAction.EnterDirection:
@@ -180,8 +217,11 @@ namespace StoneSignal
             bool touch = PointerInput.TouchMode;
             if (p.Count > 1 && Machine.State != PlacementState.Idle) return; // ignore multi-touch during placement
             var st = Machine.State;
-            Vector2 aim = p.Position + Vector2.up * DragOffset * CanvasScale; // cell is picked above the finger (ghost raised)
-            bool overHand = OverHand(p.Position);
+            Vector2 aim = AimFor(p.Position); // cell is picked above the finger (ghost raised; lifted over the hand cards)
+            // machine "over the hand" = cancel zone (lower half of a card) while dragging. Not in Direction: there the swipe is
+            // relative to the locked centre, and a down-swipe from a cell just above the hand would otherwise land on a card
+            // and cancel; Direction cancels by releasing in the centre or leaving the OuterRadius ring.
+            bool overHand = st != PlacementState.Direction && InCancelZone(p.Position);
             bool fingerDriven = st == PlacementState.Pressed || st == PlacementState.Dragging || (st == PlacementState.Direction && Machine.Held);
             if (fingerDriven)
             {

@@ -32,9 +32,9 @@ namespace StoneSignal
         private readonly List<GameObject> built = new List<GameObject>();
         private GameObject rewardPanel, overPanel;
         private readonly TextMeshProUGUI[] rewardNames = new TextMeshProUGUI[3], rewardDescriptions = new TextMeshProUGUI[3], rewardEffects = new TextMeshProUGUI[3];
-        private float noticeUntil; private string notice; private bool handDirty = true;
+        private float noticeUntil; private string notice; private bool handDirty = true; private RectTransform noticePill;
         private int speedIndex = 1; private bool paused;
-        private const string DefaultHint = Loc.RotateHint;
+        private const string DefaultHint = ""; // placement hint removed (玩法策划 v18); the label only shows notices
 
         static readonly Color Ink = Color.white, Navy = Hex("1E2A4A"), Slate = Hex("3B4566"), Blue = Hex("2F5FD0"),
             Red = Hex("D9404A"), Gold = Hex("F7C948"), Orange = Hex("F59A3A"), Blueprint = Hex("2A5DB0"), Shadow = new Color(0, 0, 0, .35f);
@@ -90,6 +90,11 @@ namespace StoneSignal
             // hand counter "5/7" (navy pill above the block row, left-aligned)
             handCount = Panel(root, "Hand count", "ui9_panel_navy", Navy); BL(handCount, 24, 0, 108, 52);
             var hc = Txt(handCount, "", 28, Ink); Full(hc.rectTransform); hc.fontStyle = FontStyles.Bold; drawPile.handCountLabel = hc;
+            // placement / build notice toast (no standing hint text; v18 had no notice display at all once the hint pill went away):
+            // navy pill bottom-centre above the hand row, shown 2.4 s per notice, never takes input
+            noticePill = Panel(root, "Notice", "ui9_panel_navy", Navy); BC(noticePill, 0, 524, 560, 68);
+            hint = Txt(noticePill, "", 32, Ink); Full(hint.rectTransform); hint.rectTransform.offsetMin = new Vector2(16, 4); hint.rectTransform.offsetMax = new Vector2(-16, -4); UseCn(hint);
+            noticePill.gameObject.SetActive(false);
             battle = Btn(root, Loc.Battle, 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave(), CnFont); BR((RectTransform)battle.transform, -24, 24, 256, 104);
             battle.name = "BATTLE"; if (drawPile.statusLabel != null) UseCn(drawPile.statusLabel); { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableWordWrapping = false; bl.overflowMode = TextOverflowModes.Overflow; bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
             var handCanvas = Canvas("Hand", 1);
@@ -247,12 +252,18 @@ namespace StoneSignal
             }
         }
         private void CycleTarget() { session.Enemies.Targeting = (TargetMode)(((int)session.Enemies.Targeting + 1) % Enum.GetValues(typeof(TargetMode)).Length); Refresh(); }
-        private void OnState(GameState state) { handDirty = true; Refresh(); }
+        private void OnState(GameState state) { handDirty = true; noticeUntil = 0; Refresh(); } // a stale placement notice never carries into reward / game over
         private void ShowNotice(string message) { notice = Loc.Notice(message); noticeUntil = Time.unscaledTime + 2.4f; }
         private void Update()
         {
             if (session == null) return;
-            if (hint != null) hint.text = Time.unscaledTime < noticeUntil ? notice : DefaultHint;
+            if (hint != null)
+            {
+                bool on = Time.unscaledTime < noticeUntil && !string.IsNullOrEmpty(notice) && (session.Game.State == GameState.Build || session.Game.State == GameState.Combat);
+                if (on && hint.text != notice) { hint.text = notice; noticePill.sizeDelta = new Vector2(Mathf.Clamp(hint.GetPreferredValues(notice).x + 72, 240, 900), noticePill.sizeDelta.y); } // pill hugs the text
+                else if (!on) hint.text = DefaultHint;
+                if (noticePill != null && noticePill.gameObject.activeSelf != on) noticePill.gameObject.SetActive(on);
+            }
             if (Input.GetKeyDown(KeyCode.Space) && session.Game.State == GameState.Build) session.Waves.StartWave();
         }
 
@@ -271,7 +282,7 @@ namespace StoneSignal
             }
             rewardPanel.SetActive(false);
             var over = Img(root, "Game over", null, new Color(.05f, .06f, .12f, .92f)); Full(over); overPanel = over.gameObject;
-            var text = Txt(over, Loc.CoreDark, 64, Ink); Center(text.rectTransform, 0, -90, 1200, 90);
+            var text = Txt(over, Loc.CoreDark, 64, Ink); Center(text.rectTransform, 0, -90, 1200, 110);
             var restart = Btn(over, Loc.Restart, 40, Orange, () => { TimeController.ResetAll(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); });
             Center((RectTransform)restart.transform, 0, 60, 300, 84);
             overPanel.SetActive(false);
@@ -280,11 +291,11 @@ namespace StoneSignal
         public StoneSignal.UI.RewardPickUI PickUi => pickUi; public StoneSignal.UI.RewardGlow PickGlow => pickGlow;
         // v16.2 RewardPickUI (art): Show(options, rarity) -> OnPicked(i) -> PlayPick(i, target, onDone) -> Rewards.Choose(i).
         /// Diagnostics (gameplay shot): show the reward cards with forced rarities and placeholder content.
-        public bool DebugShowRewardPick(StoneSignal.UI.RewardRarity[] rar)
+        public bool DebugShowRewardPick(StoneSignal.UI.RewardRarity[] rar, RewardEffect[] effects = null)
         {
-            debugRarity = rar; try { return ShowRewardPick(); } finally { debugRarity = null; }
+            debugRarity = rar; debugEffects = effects; try { return ShowRewardPick(); } finally { debugRarity = null; debugEffects = null; }
         }
-        private StoneSignal.UI.RewardRarity[] debugRarity;
+        private StoneSignal.UI.RewardRarity[] debugRarity; private RewardEffect[] debugEffects;
         private bool ShowRewardPick()
         {
             if (!ArtSteps.On(5) || art == null || art.UiSprite("ui9_reward_frame_common") == null) return false;
@@ -320,7 +331,8 @@ namespace StoneSignal
                     int ri = (int)debugRarity[i];
                     if (debugRarity[i] == StoneSignal.UI.RewardRarity.Rare) { dopts[i] = RuneOption(i % RuneRules.Names.Length); continue; }
                     RewardData pick = null;
-                    foreach (var e in pref[ri]) foreach (var r in session.config.rewards) if (pick == null && r != null && r.effect == e && !used.Contains(r)) pick = r;
+                    if (debugEffects != null && i < debugEffects.Length) foreach (var r in session.config.rewards) if (pick == null && r != null && r.effect == debugEffects[i] && !used.Contains(r)) pick = r;
+                    if (pick == null) foreach (var e in pref[ri]) foreach (var r in session.config.rewards) if (pick == null && r != null && r.effect == e && !used.Contains(r)) pick = r;
                     if (pick == null) foreach (var r in session.config.rewards) if (pick == null && r != null && !used.Contains(r)) pick = r;
                     if (pick != null) { used.Add(pick); dopts[i] = RewardOption(pick); }
                 }
@@ -384,7 +396,7 @@ namespace StoneSignal
             for (int i = 0; i < 3 && i < session.Rewards.Choices.Count; i++)
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
-                if (rune != RuneRules.NoRune) { rewardNames[i].text = Loc.RuneTitle(rune); rewardDescriptions[i].text = "镶嵌此符文的墙块，其上的塔获得符文效果"; rewardEffects[i].text = Loc.RuneEffects[rune]; continue; }
+                if (rune != RuneRules.NoRune) { rewardNames[i].text = Loc.RuneTitle(rune); rewardDescriptions[i].text = Loc.RuneOptionNote; rewardEffects[i].text = Loc.RuneEffects[rune]; continue; }
                 var r = session.Rewards.Choices[i]; rewardNames[i].text = Loc.RewardTitle(r); rewardDescriptions[i].text = ""; rewardEffects[i].text = Loc.RewardDesc(r);
             }
             rewardPanel.SetActive(true); Refresh();

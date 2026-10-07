@@ -51,7 +51,7 @@ public static class Stage2Validation {
        return paths.FindPath(grid.spawn,grid.goal,simulated).Count==0 ? "No route" : null;
    };
    Load<RewardData>("Rewards","AddBlock").Apply(mods,economy,blocks);
-   PrototypeChecks.Require(blocks.Deck.Cards.Count==6 && mods.ExtraDraw==1,"AddBlock grows deck and build budget");
+   PrototypeChecks.Require(blocks.Deck.Cards.Count==6 && mods.ExtraDraw==0,"AddBlock adds one O wall card (no draw-size / free-draw side effect)");
    blocks.Refill(5);for(int i=0;i<blocks.Hand.Cards.Count;i++) if(blocks.Hand.Cards[i]==mods.BonusSlotShape) {blocks.SelectCard(i);break;}
    if(blocks.CurrentShape!=mods.BonusSlotShape) {blocks.Deck.Add(mods.BonusSlotShape);blocks.Refill(7);for(int i=0;i<blocks.Hand.Cards.Count;i++) if(blocks.Hand.Cards[i]==mods.BonusSlotShape){blocks.SelectCard(i);break;}}
    PrototypeChecks.Require(blocks.CommitPlacement(new Vector2Int(5,0)) && grid.Get(new Vector2Int(6,1))==CellState.Blocked,"L reward adds validated adjacent platform");

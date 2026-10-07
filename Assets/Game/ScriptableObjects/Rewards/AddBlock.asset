@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 747a84e12974395408204830c726ae1c, type: 3}
   m_Name: AddBlock
   m_EditorClassIdentifier: 
-  displayName: Stone Supply
-  description: Add an O card and +1 draw every Build
-  effectText: 'O CARD / DRAW +1'
+  displayName: Wall Supply
+  description: Add one O wall card to the deck
+  effectText: 'O WALL CARD +1'
   effect: 7
   amount: 1
   blockShape: {fileID: 11400000, guid: 3a8b1f7ce769787458c4bc0741ceb173, type: 2}

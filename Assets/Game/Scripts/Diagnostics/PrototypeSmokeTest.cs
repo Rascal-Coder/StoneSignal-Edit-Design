@@ -211,8 +211,8 @@ namespace StoneSignal
             bool force=PointerInput.ForceTouch; PointerInput.ForceTouch=true;
             Vector2 target=Camera.main.WorldToScreenPoint(grid.FootprintCenter(best,size)+Vector3.up*grid.wallTop); // aim at the visible wall top
             Vector2 finger=target-Vector2.up*pic.DragOffset*pic.CanvasScale; // ghost sits above the finger
-            Vector2 start=new Vector2(target.x,10);
-            foreach(var rt in FindObjectsOfType<RectTransform>()) if(rt.name=="Tower card "+session.config.towers[0].displayName){ var k=new Vector3[4]; rt.GetWorldCorners(k); start=(k[0]+k[2])*.5f; break; } // finger starts on the card
+            Vector2 start=new Vector2(target.x,10), cardLow=new Vector2(target.x,5), cardHigh=new Vector2(target.x,15);
+            foreach(var rt in FindObjectsOfType<RectTransform>()) if(rt.name=="Tower card "+session.config.towers[0].displayName){ var k=new Vector3[4]; rt.GetWorldCorners(k); start=(k[0]+k[2])*.5f; cardLow=new Vector2(start.x,Mathf.Lerp(k[0].y,k[1].y,.25f)); cardHigh=new Vector2(start.x,Mathf.Lerp(k[0].y,k[1].y,.55f)); break; } // finger starts on the card
             PointerInput.Inject(start,true,true,false); pic.CardDown(true,0,start); yield return null;
             for(int i=1;i<=6;i++){ PointerInput.Inject(Vector2.Lerp(start,finger,i/6f),false,true,false); yield return null; }
             bool dragging=pic.Machine.State==PlacementState.Dragging;
@@ -224,10 +224,13 @@ namespace StoneSignal
             towersBefore=session.Towers.Towers.Count; PointerInput.ForceTouch=true;
             PointerInput.Inject(start,true,true,false); pic.CardDown(true,0,start); yield return null;
             PointerInput.Inject(finger,false,true,false); yield return null;
-            PointerInput.Inject(start,false,true,false); yield return null; // back onto the card
-            PointerInput.Inject(start,false,false,true); yield return null; yield return null;
+            PointerInput.Inject(cardLow,false,true,false); yield return null; // back onto the lower half of the card (cancel zone)
+            PointerInput.Inject(cardLow,false,false,true); yield return null; yield return null;
             PointerInput.ClearInjection(); PointerInput.ForceTouch=force;
-            Require(session.Towers.Towers.Count==towersBefore && session.Towers.SelectedIndex<0,"Touch drag released over the hand cancels");
+            Require(session.Towers.Towers.Count==towersBefore && session.Towers.SelectedIndex<0,"Touch drag released on the lower half of a hand card cancels");
+            // adaptive offset: upper half of a card lifts the aim above the card (no cancel), far from the hand it is DragOffset again
+            float baseOff=pic.DragOffset*pic.CanvasScale;
+            Require(pic.InCancelZone(cardLow) && !pic.InCancelZone(cardHigh) && pic.OffsetFor(cardHigh)>baseOff+1 && Mathf.Abs(pic.OffsetFor(finger)-baseOff)<.5f && Mathf.Abs(pic.OffsetFor(cardHigh+Vector2.up*.5f)-pic.OffsetFor(cardHigh))<2f,"Adaptive drag offset: lift over the hand card, base offset away from it, continuous");
         }
         private void Finish()
         {

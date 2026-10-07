@@ -17,7 +17,7 @@ namespace StoneSignal
             switch (effect)
             {
                 case RewardEffect.AllRange: modifiers.AllRange *= 1+amount; break;
-                case RewardEffect.AddBlock: if(blocks!=null) blocks.Deck.Add(blockShape); modifiers.ExtraDraw += Mathf.RoundToInt(amount); break;
+                case RewardEffect.AddBlock: if(blocks!=null) blocks.Deck.Add(blockShape); break; // v18: card only (was also ExtraDraw += amount: hidden free 2nd draw; draw stays 3 cards)
                 case RewardEffect.NextDraw: modifiers.NextDraw += Mathf.RoundToInt(amount); break;
                 case RewardEffect.PathSlow: modifiers.EnemySpeed *= 1-amount; break;
                 case RewardEffect.BonusSlot: modifiers.BonusSlotShape = blockShape; break;
