@@ -53,6 +53,16 @@ namespace StoneSignal.VFX
             StartCoroutine(DeathRoutine(onComplete));
         }
 
+        /// Pool reuse: clear death/dissolve/flash/squash so a recycled enemy looks fresh.
+        public void ResetState()
+        {
+            if (_renderers == null) Awake();
+            StopAllCoroutines();
+            _dead = false; _dissolve = 0; _flashT = -1; _squashT = -1;
+            if (_rig) _rig.localScale = _rigScale;
+            Apply(0);
+        }
+
         /// Editor/showcase helper: sets flash and dissolve directly (0..1).
         public void SetVisualState(float flash, float dissolve)
         {

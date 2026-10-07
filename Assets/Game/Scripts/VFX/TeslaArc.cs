@@ -10,6 +10,7 @@ namespace StoneSignal.VFX
         public int segments = 12; public float jitter = 0.18f; public float rate = 30f; public float lifetime = 0.25f;
         LineRenderer _lr; float _next, _age;
         public void SetEndpoints(Vector3 a, Vector3 b) { from = a; to = b; Rebuild(); }
+        void OnEnable() { _age = 0; _next = 0; }
         void Awake() { _lr = GetComponent<LineRenderer>(); _lr.useWorldSpace = true; Rebuild(); }
         public void Rebuild()
         {
@@ -28,7 +29,7 @@ namespace StoneSignal.VFX
         {
             _age += Time.deltaTime;
             if (Time.time >= _next) { _next = Time.time + 1f / rate; Rebuild(); }
-            if (lifetime > 0 && _age > lifetime) Destroy(gameObject);
+            if (lifetime > 0 && _age > lifetime) { if (GetComponent<PooledVfx>()) _age = float.NegativeInfinity; else Destroy(gameObject); } // pooled: PooledVfx returns it
         }
     }
 }

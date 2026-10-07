@@ -17,6 +17,21 @@ namespace StoneSignal
         private float lobHeight, travelled;
         private Vector3 groundPosition;
         public static event Action<Vector3, float> Impact;
+        // Pool (play mode): projectiles are reused instead of Instantiate/Destroy per shot.
+        private static readonly System.Collections.Generic.Stack<Projectile> pool = new System.Collections.Generic.Stack<Projectile>();
+        private bool pooled;
+        private GameObject body;
+        public static Projectile Get(string name, Transform parent, Vector3 position)
+        {
+            Projectile p = null;
+            while (pool.Count > 0 && p == null) p = pool.Pop();
+            if (p == null) { p = new GameObject(name).AddComponent<Projectile>(); p.pooled = Application.isPlaying; }
+            p.transform.SetParent(parent, false); p.transform.position = position; p.transform.rotation = Quaternion.identity;
+            p.gameObject.SetActive(true);
+            p.resolved = false; p.lifetime = 0; p.travelled = 0; p.source = null; p.crit = false; p.lobHeight = 0; p.body = null;
+            return p;
+        }
+        public void AttachBody(GameObject vfx) { body = vfx; }
         public void Initialize(Enemy destination, EnemyManager registry, float moveSpeed, float hitDamage, float splash, Func<bool> allowed, float slow = 0, float duration = 0)
         {
             slowFraction=slow; slowDuration=duration; target = destination; enemies = registry; speed = moveSpeed; damage = hitDamage; radius = splash; canMove = allowed;
@@ -69,6 +84,12 @@ namespace StoneSignal
                 if (source.impactHitStop > 0) HitStop.Trigger(source.impactHitStop, .05f);
             }
         }
-        private void Dispose() { resolved = true; PrimitiveVisual.DestroyObject(gameObject); }
+        private void Dispose()
+        {
+            resolved = true;
+            if (body != null) { StylizedVfx.Release(body); body = null; }
+            if (!pooled) { PrimitiveVisual.DestroyObject(gameObject); return; }
+            target = null; gameObject.SetActive(false); pool.Push(this);
+        }
     }
 }

@@ -49,12 +49,17 @@ namespace StoneSignal
             HP = maxHP = data.hp * hpScale; speed = data.moveSpeed * speedScale; Alive = true;
             Vector2Int start = from ?? grid.spawn;
             transform.position = World(start);
-            bodies = GetComponentsInChildren<Renderer>();
-            tint = new MaterialPropertyBlock();
-            var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * .75f, new Vector3(.65f,.055f,.08f), palette.invalid);
-            healthFill = PrimitiveVisual.Create("HP", PrimitiveType.Cube, back.transform, back.transform.position + Vector3.up * .005f, new Vector3(.65f,.055f,.08f), palette.valid).transform;
+            Damaged = null; slowMultiplier = 1; slowRemaining = 0; flashUntil = 0; LastHitCrit = false;
+            if (hpBar == null)
+            {
+                bodies = GetComponentsInChildren<Renderer>();
+                tint = new MaterialPropertyBlock();
+                var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * .75f, new Vector3(.65f,.055f,.08f), palette.invalid);
+                healthFill = PrimitiveVisual.Create("HP", PrimitiveType.Cube, back.transform, back.transform.position + Vector3.up * .005f, new Vector3(.65f,.055f,.08f), palette.valid).transform;
+                hpBar = back.transform;
+            }
+            else { hpBar.gameObject.SetActive(true); hpBar.position = transform.position + Vector3.up * .75f; } // pooled reuse
             healthFill.localScale = Vector3.one;
-            hpBar = back.transform;
             path = owner.Paths.FindPath(start, grid.goal); node = 0;
             FaceNextNode();
             BindAnimator();
@@ -62,8 +67,10 @@ namespace StoneSignal
         private void BindAnimator()
         {
             Feedback = GetComponentInChildren<EnemyHitFeedback>();
+            if (Feedback != null) Feedback.ResetState();
             // Death VFX are data-driven via EnemyData; avoid a second copy from the prefab field.
             if (Feedback != null) Feedback.deathVfx = null;
+            if (animator != null) { animator.Rebind(); animator.Update(0); return; } // pooled reuse: back to locomotion
             animator = GetComponentInChildren<Animator>();
             if (animator == null) return;
             animator.applyRootMotion = false;
@@ -151,14 +158,15 @@ namespace StoneSignal
             if (!Alive) return;
             Alive = false;
             owner.Resolve(this, reason);
-            if (hpBar != null) PrimitiveVisual.DestroyObject(hpBar.gameObject);
+            if (hpBar != null) { if (Application.isPlaying) hpBar.gameObject.SetActive(false); else { PrimitiveVisual.DestroyObject(hpBar.gameObject); hpBar = null; } }
             if (Application.isPlaying && reason == EnemyResolution.Killed && Feedback != null)
             {
                 if (animator != null) animator.speed = 1;
                 // Registry already released this enemy; only the visual lingers until the dissolve finishes.
-                Feedback.PlayDeath(() => { if (this != null) Destroy(gameObject); });
+                Feedback.PlayDeath(() => { if (this != null && owner != null) owner.Recycle(this); });
             }
             else if (Application.isPlaying && reason == EnemyResolution.Killed) StartCoroutine(DeathRoutine());
+            else if (owner != null && Application.isPlaying) owner.Recycle(this);
             else PrimitiveVisual.DestroyObject(gameObject);
         }
         private System.Collections.IEnumerator DeathRoutine()
@@ -185,7 +193,8 @@ namespace StoneSignal
             Vector3 initial = transform.localScale;
             float elapsed = 0;
             while (elapsed < .22f) { elapsed += Time.deltaTime; transform.localScale = initial * Mathf.Max(0,1-elapsed/.22f); yield return null; }
-            Destroy(gameObject);
+            transform.localScale = initial;
+            if (owner != null) owner.Recycle(this); else Destroy(gameObject);
         }
         private void OnDestroy()
         {

@@ -14,6 +14,7 @@ namespace StoneSignal
         private Transform visual, head, barrel, muzzle;
         private float cooldown, visualElevation;
         private Vector3 aimDirection = Vector3.forward;
+        private GameObject arcSource; private bool isArc; // cached: no GetComponent per shot
         public TowerData Data { get; private set; }
         public Vector2Int Origin { get; private set; }
         public Vector2Int Size { get; private set; } = Vector2Int.one;
@@ -103,22 +104,23 @@ namespace StoneSignal
             bool crit = Data.critChance > 0 && UnityEngine.Random.value < Data.critChance;
             float damage = Damage * (crit ? Data.critMultiplier : 1);
             GameObject obj;
-            bool arc = Data.projectileVfx != null && Data.projectileVfx.GetComponent<TeslaArc>() != null;
+            if (arcSource != Data.projectileVfx) { arcSource = Data.projectileVfx; isArc = arcSource != null && arcSource.GetComponent<TeslaArc>() != null; }
+            bool arc = isArc;
             if (Data.projectileVfx != null && !arc)
             {
-                obj = new GameObject(Data.displayName + " shot"); obj.transform.SetParent(projectileRoot); obj.transform.position = muzzlePos;
+                var shot = Projectile.Get(Data.displayName + " shot", projectileRoot, muzzlePos); obj = shot.gameObject;
                 var body = StylizedVfx.Play(Data.projectileVfx, muzzlePos, muzzleRot, obj.transform);
-                if (body != null) body.transform.localPosition = Vector3.zero;
+                if (body != null) { body.transform.localPosition = Vector3.zero; shot.AttachBody(body); }
             }
             else if (arc)
             {
                 // Lightning is a short-lived arc; the gameplay projectile itself stays invisible so hit timing is unchanged.
                 var bolt = StylizedVfx.Play(Data.projectileVfx, muzzlePos);
                 if (bolt != null) bolt.GetComponent<TeslaArc>().SetEndpoints(muzzlePos, target.transform.position + Vector3.up * .15f);
-                obj = new GameObject(Data.displayName + " arc"); obj.transform.SetParent(projectileRoot); obj.transform.position = muzzlePos;
+                obj = Projectile.Get(Data.displayName + " arc", projectileRoot, muzzlePos).gameObject;
             }
             else obj = PrimitiveVisual.Create("Signal bolt", PrimitiveType.Sphere, projectileRoot, transform.position + Vector3.up * (.9f+visualElevation), Vector3.one * (Data.kind == TowerKind.Cannon ? .25f : .12f), Data.kind==TowerKind.Chill ? palette.path : Data.kind==TowerKind.Rapid ? palette.rapid : Data.kind==TowerKind.Cannon ? palette.cannon : palette.arrow);
-            Projectile projectile = obj.AddComponent<Projectile>();
+            Projectile projectile = obj.GetComponent<Projectile>(); if (projectile == null) projectile = obj.AddComponent<Projectile>();
             projectile.Initialize(target, enemies, Data.projectileSpeed, damage, SplashRadius, canAttack, Data.slowFraction, Data.slowDuration);
             projectile.SetPresentation(Data, crit, Data.lobbedShot ? Data.lobHeight : 0);
             return projectile;

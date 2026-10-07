@@ -29,13 +29,22 @@ namespace StoneSignal
             var entries = grid.Spawns;
             Vector2Int from = entries.Count == 0 ? grid.spawn : entries[(spawnIndex >= 0 ? spawnIndex : nextSpawn++) % entries.Count];
             GameObject obj;
-            if(data.visualPrefab!=null) {
+            Enemy enemy = null;
+            // Play mode: art enemies are pooled per EnemyData (no Instantiate/Destroy per spawn/death).
+            if (data.visualPrefab != null && Application.isPlaying && pools.TryGetValue(data, out var stack))
+                while (stack.Count > 0 && enemy == null) enemy = stack.Pop();
+            if (enemy != null) {
+                obj = enemy.gameObject;
+                obj.transform.SetParent(transform, false); obj.transform.localScale = Vector3.one; obj.transform.position = grid.ToWorld(from);
+                obj.SetActive(true);
+            }
+            else if(data.visualPrefab!=null) {
                 obj=new GameObject(data.displayName);obj.transform.SetParent(transform);obj.transform.position=grid.ToWorld(from);
                 // Logical enemy height is +0.45 over the grid plane; the visual stands on the ground tile top.
                 float ground = palette != null && palette.art != null ? palette.art.tileTop : 0;
                 ArtVisual.Create(data.visualPrefab,obj.transform,obj.transform.position+Vector3.up*(ground-.45f));
             } else obj=PrimitiveVisual.Create(data.displayName, data.kind == EnemyKind.Tank ? PrimitiveType.Cube : data.kind == EnemyKind.Splitter ? PrimitiveType.Sphere : PrimitiveType.Capsule, transform, grid.ToWorld(from), Vector3.one * (data.kind == EnemyKind.Tank ? .7f : .45f), data.fast ? palette.fastEnemy : palette.enemy);
-            Enemy enemy = obj.AddComponent<Enemy>();
+            if (enemy == null) enemy = obj.AddComponent<Enemy>();
             enemy.Initialize(this, grid, data, palette, hpScale, speedScale, from);
             active.Add(enemy); Spawned?.Invoke(enemy);
             return enemy;
@@ -53,6 +62,17 @@ namespace StoneSignal
                 }
             }
             Resolved?.Invoke(enemy, reason);
+        }
+        private readonly Dictionary<EnemyData, Stack<Enemy>> pools = new Dictionary<EnemyData, Stack<Enemy>>();
+        private readonly List<Enemy> scratch = new List<Enemy>();
+        // Called by Enemy once its death presentation has finished (or immediately on escape/removal).
+        public void Recycle(Enemy enemy)
+        {
+            if (enemy == null) return;
+            if (!Application.isPlaying || enemy.Data == null || enemy.Data.visualPrefab == null) { PrimitiveVisual.DestroyObject(enemy.gameObject); return; }
+            enemy.gameObject.SetActive(false);
+            if (!pools.TryGetValue(enemy.Data, out var stack)) pools[enemy.Data] = stack = new Stack<Enemy>();
+            stack.Push(enemy);
         }
         private void RepathAll()
         {
@@ -79,7 +99,8 @@ namespace StoneSignal
         public void DamageArea(Vector3 position, float radius, float damage, DamageKind kind, bool crit)
         {
             // Damage can remove entries immediately; iterate a small snapshot.
-            foreach (Enemy enemy in active.ToArray())
+            scratch.Clear(); scratch.AddRange(active); // no per-hit array allocation
+            foreach (Enemy enemy in scratch)
                 if (enemy.Alive && (enemy.transform.position - position).sqrMagnitude <= radius * radius) enemy.TakeDamage(damage, kind, crit);
         }
         private void OnDestroy() { if (Paths != null) Paths.PathChanged -= RepathAll; }
