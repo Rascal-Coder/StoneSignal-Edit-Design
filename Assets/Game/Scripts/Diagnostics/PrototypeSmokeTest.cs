@@ -234,9 +234,12 @@ namespace StoneSignal
             PointerInput.Inject(cardLow,false,false,true); yield return null; yield return null;
             PointerInput.ClearInjection(); PointerInput.ForceTouch=force;
             Require(session.Towers.Towers.Count==towersBefore && session.Towers.SelectedIndex<0,"Touch drag released on the lower half of a hand card cancels");
-            // adaptive offset: upper half of a card lifts the aim above the card (no cancel), far from the hand it is DragOffset again
-            float baseOff=pic.DragOffset*pic.CanvasScale;
-            Require(pic.InCancelZone(cardLow) && !pic.InCancelZone(cardHigh) && pic.OffsetFor(cardHigh)>baseOff+1 && Mathf.Abs(pic.OffsetFor(finger)-baseOff)<.5f && Mathf.Abs(pic.OffsetFor(cardHigh+Vector2.up*.5f)-pic.OffsetFor(cardHigh))<2f,"Adaptive drag offset: lift over the hand card, base offset away from it, continuous");
+            // v18.3 hand pass-through: plain DragOffset everywhere (no lift over the cards); cancel zone = lower half of the bottom (tower) row only,
+            // a block card's lower half is NOT a cancel zone (cells under the block row stay reachable)
+            float baseOff=pic.DragOffset*pic.CanvasScale; Vector2 blockLow=new Vector2(-1,-1);
+            foreach(var rt in FindObjectsOfType<RectTransform>()) if(rt.name.StartsWith("Block card")&&rt.gameObject.activeInHierarchy){ var k=new Vector3[4]; rt.GetWorldCorners(k); blockLow=new Vector2((k[0].x+k[2].x)*.5f,Mathf.Lerp(k[0].y,k[1].y,.25f)); break; }
+            Require(pic.HandPassThrough && pic.InCancelZone(cardLow) && !pic.InCancelZone(cardHigh) && (blockLow.x<0||!pic.InCancelZone(blockLow)) && Mathf.Abs(pic.OffsetFor(cardHigh)-baseOff)<.5f && Mathf.Abs(pic.OffsetFor(finger)-baseOff)<.5f,
+                "Hand pass-through: base drag offset over the hand (no lift); cancel = lower half of a tower card only, block card lower half not a cancel zone"+(blockLow.x<0?" (no block card on screen)":""));
         }
         sealed class NoAds : IAdService { public bool IsReady => false; public void ShowRewarded(string placement, System.Action<bool> completed) => completed?.Invoke(false); }
         // 玩法策划 v18: ads unavailable -> the 2nd draw exists only via ExtraDraw (免广告再抽); ExtraDraw while the 2nd draw is used carries over.

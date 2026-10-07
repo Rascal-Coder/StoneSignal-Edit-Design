@@ -17,4 +17,5 @@ MonoBehaviour:
   effectText: ALL FIRE RATE +12%
   effect: 1
   amount: 0.12
+  tier: 2
   blockShape: {fileID: 0}

@@ -18,7 +18,7 @@ namespace StoneSignal.UI
         public static string DrawStatus(StoneSignal.VFX.DrawPileState s) =>
             s == StoneSignal.VFX.DrawPileState.Free ? "免费" : s == StoneSignal.VFX.DrawPileState.Ad ? "再抽" : s == StoneSignal.VFX.DrawPileState.Full ? "已满" : "已用完"; // Ad: + video badge (DrawPileUI.adIcon)
         /// ExtraDraw reward 免广告再抽 (rarity 精良): free 2nd draw (RunModifiers.ExtraDraw pending charge -> DrawRules.FreeSecond).
-        public const string ExtraDrawTitle = "免广告再抽", ExtraDrawDesc = "本波第 2 次抽牌无需看广告";
+        public const string ExtraDrawTitle = "免广告再抽", ExtraDrawDesc = "本波第 2 次抽牌免看广告";   // v18.3 玩法策划 text fix (was 无需看广告)
         /// Old reward panel (no RewardPickUI): note under a rune option.
         public const string RuneOptionNote = "镶嵌后，放在该格上的塔获得效果";
 

@@ -17,4 +17,5 @@ MonoBehaviour:
   effectText: ALL DAMAGE +10%
   effect: 0
   amount: 0.1
+  tier: 2
   blockShape: {fileID: 0}

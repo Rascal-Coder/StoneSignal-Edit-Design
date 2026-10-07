@@ -122,10 +122,31 @@ public static class PrototypeBuild
         var extra=Asset<RewardData>(Root+"ScriptableObjects/Rewards/ExtraDraw.asset",r=>{r.displayName="Ad-free Draw";r.description="2nd draw of the wave needs no ad";r.effectText="FREE 2ND DRAW";r.effect=RewardEffect.ExtraDraw;r.amount=1;r.tier=RewardTier.Rare;});
         // v18.2: tier drives the weighted roll; ExtraDraw is 精良 (Rare). One-time migration of the v18.1 asset (created before the tier field).
         if(extra.tier==RewardTier.Common){ extra.tier=RewardTier.Rare; EditorUtility.SetDirty(extra); AssetDatabase.SaveAssets(); Debug.Log("REWARD POOL: ExtraDraw tier -> Rare"); }
-        if(Array.IndexOf(config.rewards,extra)>=0) return;
-        var list=new System.Collections.Generic.List<RewardData>(config.rewards){extra}; config.rewards=list.ToArray();
-        EditorUtility.SetDirty(config); AssetDatabase.SaveAssets(); Debug.Log("REWARD POOL: ExtraDraw added ("+config.rewards.Length+" rewards)");
+        if(Array.IndexOf(config.rewards,extra)<0)
+        {
+            var list=new System.Collections.Generic.List<RewardData>(config.rewards){extra}; config.rewards=list.ToArray();
+            EditorUtility.SetDirty(config); AssetDatabase.SaveAssets(); Debug.Log("REWARD POOL: ExtraDraw added ("+config.rewards.Length+" rewards)");
+        }
+        ApplyRewardTiers(config);
     }
+    /// v18.3 玩法策划 tier table (RewardTiers): 普通 WaveGold KillGold WaveHeal AddBlock NextDraw CannonRadius / 精良 AllRange PathSlow TowerDiscount
+    /// ExtraDraw / 稀有 AllDamage AllAttackSpeed BonusSlot; anything else in the pool -> 普通 (logged as unlisted). Idempotent.
+    public static void ApplyRewardTiers(GameConfig config)
+    {
+        if(config==null||config.rewards==null) return;
+        string[] cn={"普通","精良","稀有","传说"}; var log=new System.Text.StringBuilder(); var unlisted=new System.Collections.Generic.List<string>(); int changed=0;
+        foreach(var r in config.rewards)
+        {
+            if(r==null) continue; var t=RewardTiers.For(r.effect);
+            if(!RewardTiers.Listed(r.effect)) unlisted.Add(r.effect.ToString());
+            if(r.tier!=t){ r.tier=t; EditorUtility.SetDirty(r); changed++; }
+            log.Append(' ').Append(r.effect).Append('=').Append(cn[(int)t]);
+        }
+        if(changed>0) AssetDatabase.SaveAssets();
+        Debug.Log("REWARD TIERS v18.3: "+config.rewards.Length+" in pool, "+changed+" asset(s) changed |"+log+" | unlisted -> 普通: "+(unlisted.Count>0?string.Join(", ",unlisted):"none"));
+    }
+    /// Batch entry (job): applies the reward pool migration + tier table without a full build.
+    public static void EnsureRewardPoolBatch() { try { EnsureRewardPool(); EditorApplication.Exit(0); } catch(Exception e){ Debug.LogException(e); EditorApplication.Exit(1); } }
     private static void ValidateScene()
     {
         var bootstrap=UnityEngine.Object.FindObjectOfType<GameBootstrap>();

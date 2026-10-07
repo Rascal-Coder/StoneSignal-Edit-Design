@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Efficient Beacons
   description: Tower costs -10%
-  effectText: 'TOWER COST -10%'
+  effectText: TOWER COST -10%
   effect: 13
   amount: 0.1
+  tier: 1
   blockShape: {fileID: 0}

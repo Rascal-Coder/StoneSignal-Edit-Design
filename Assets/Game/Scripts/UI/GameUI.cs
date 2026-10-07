@@ -35,16 +35,16 @@ namespace StoneSignal
         private float noticeUntil; private string notice; private bool handDirty = true; private RectTransform noticePill;
         // notice toast (玩法策划 v18): 1.5 s, one at a time (a new text replaces the old one), the same text is not re-shown within 1 s of
         // its last show; re-placed per notice in the free top slot farthest from the core and the path arrows (routes change with walls).
-        private const float NoticeSeconds = 1.5f, NoticeRepeatGap = 1f, NoticeClearance = 48f; // v17.6: ToastFx pop 0.18 + hold 1.12 + fade 0.2 = the planner's 1.5 s total
+        private const float NoticeSeconds = 1.5f, NoticeRepeatGap = 1f; // v17.6: ToastFx pop 0.18 + hold 1.12 + fade 0.2 = the planner's 1.5 s total
         private StoneSignal.UI.ToastFx noticeFx;
         private float noticeShownAt = -10f; private bool noticeDirty; private string noticeInfo = "";
         // slot: anchor (0 = top-centre, 1 = top-right, 2 = top-left), x, y from the top edge (reference px, inside the safe area)
-        private static readonly Vector3[] NoticeSlots = { new Vector3(0, 0, 132), new Vector3(0, 0, 212), new Vector3(1, -24, 132), new Vector3(2, 24, 216) };
         public StoneSignal.UI.ToastFx NoticeFx => noticeFx; public string NoticeDebug => noticeInfo; public RectTransform NoticeRect => noticePill;
         public string NoticeShown => noticePill != null && noticePill.gameObject.activeSelf && hint != null ? hint.text : "";
         // drag hand fade (玩法策划 v18): CanvasGroup alpha per hand card (no extra draw calls), 1 -> .35 over .15 s while the drag finger or
         // the ghost is over the hand; the dragged card stays opaque; restores on leaving / release.
         private const float HandFadeAlpha = .35f, HandFadeSeconds = .15f;
+        private bool handPassApplied; public bool HandPassThroughActive => handPassApplied;
         private float handAlpha = 1f, handAlphaApplied = -1f; private int fadeKey = -1, fadeKeyApplied = -2; private bool lastAdAvailable = true;
         private RectTransform hudOrb, hudBanner; private float handCardW = 150, handRowY = 276;
         private readonly List<GameObject> hotkeyBadges = new List<GameObject>(); private bool badgesTouch;
@@ -284,37 +284,46 @@ namespace StoneSignal
         /// Diagnostics: route a raw notice through the toast rules (same path as BlockPlacementManager / TowerManager notices).
         public void DebugNotice(string message) => ShowNotice(message);
         /// Picks the toast slot with the most clearance from the core and the route arrows (first slot with >= 48 ref px wins).
+        // v18.3 toast anchor (art): inside SafeAreaRoot, top-centre, ToastBelowBanner ref px below the wave banner's bottom edge, every aspect.
+        // Safety guard (玩法策划): if the toast rect would cover an entry bridge landing cell (screen-projected top quad + ToastGuardMargin),
+        // it falls back to the old top-right slot. With the current layout the third entry is the SOUTH bridge (7,0) at the screen bottom,
+        // so the guard is expected never to trigger; it checks every landing so it stays valid if a north entry is added.
+        private const float ToastBelowBanner = 12f, ToastGuardMargin = 12f, ToastFallbackRight = 24f;
+        public bool ToastGuardTriggered { get; private set; }
         private void PlaceNotice()
         {
-            var cam = session.viewCamera != null ? session.viewCamera : Camera.main; var grid = session.grid;
             var cv = noticePill.GetComponentInParent<Canvas>(); float k = cv != null && cv.scaleFactor > 0 ? cv.scaleFactor : 1f;
-            var pts = new List<Vector3>(); // x, y = screen point, z = radius (px)
+            float w = noticePill.sizeDelta.x, h = noticePill.sizeDelta.y;
+            float y = (hudBanner != null ? -hudBanner.anchoredPosition.y + hudBanner.sizeDelta.y * hudBanner.pivot.y : 116f) + ToastBelowBanner;
+            var parent = (RectTransform)noticePill.parent; var pc = new Vector3[4]; parent.GetWorldCorners(pc); // the parent is active: its corners are current
+            Rect ToastRect(bool right) => right ? Rect.MinMaxRect(pc[2].x - (ToastFallbackRight + w) * k, pc[2].y - (y + h) * k, pc[2].x - ToastFallbackRight * k, pc[2].y - y * k)
+                                             : Rect.MinMaxRect((pc[0].x + pc[2].x) * .5f - w * k * .5f, pc[2].y - (y + h) * k, (pc[0].x + pc[2].x) * .5f + w * k * .5f, pc[2].y - y * k);
+            var r = ToastRect(false); float clear = float.MaxValue; string hit = "";
+            var cam = session.viewCamera != null ? session.viewCamera : Camera.main; var grid = session.grid;
             if (cam != null && grid != null)
-            {
-                float CellPx(Vector3 wp) => ((Vector2)cam.WorldToScreenPoint(wp + Vector3.right * grid.cellSize) - (Vector2)cam.WorldToScreenPoint(wp)).magnitude;
-                var core = grid.CoreCenter + Vector3.up * .8f; Vector2 cs = cam.WorldToScreenPoint(core); pts.Add(new Vector3(cs.x, cs.y, CellPx(core) * 1.3f));
-                if (session.Paths != null) foreach (var path in session.Paths.CurrentPaths)
+                foreach (var sp in grid.Spawns)
                 {
-                    if (path == null) continue;
-                    foreach (var c in path) { var w = grid.ToWorld(c) + Vector3.up * .9f; Vector2 sp = cam.WorldToScreenPoint(w); pts.Add(new Vector3(sp.x, sp.y, CellPx(w) * .5f)); }
-                    if (path.Count > 0 && grid.TryPortalPoint(path[0], out var portal)) for (int i = 0; i <= 4; i++) { var w = Vector3.Lerp(portal, grid.ToWorld(path[0]), i / 4f); w.y = .9f; Vector2 sp = cam.WorldToScreenPoint(w); pts.Add(new Vector3(sp.x, sp.y, CellPx(w) * .5f)); }
+                    var q = LandingRect(cam, grid, sp, ToastGuardMargin * k);
+                    float dx = Mathf.Max(0, Mathf.Max(q.xMin - r.xMax, r.xMin - q.xMax)), dy = Mathf.Max(0, Mathf.Max(q.yMin - r.yMax, r.yMin - q.yMax));
+                    float d = Mathf.Max(dx, dy); if (r.Overlaps(q)) { d = -1; hit += " " + sp; } clear = Mathf.Min(clear, d);
                 }
-            }
-            var corners = new Vector3[4]; int best = 0; float bestClear = float.MinValue; string log = "";
-            for (int si = 0; si < NoticeSlots.Length; si++)
+            ToastGuardTriggered = hit.Length > 0;
+            if (ToastGuardTriggered) { TR(noticePill, -ToastFallbackRight, y, w, h); r = ToastRect(true); }
+            else TC(noticePill, 0, y, w, h);
+            noticeInfo = "notice '" + notice + "' anchor=" + (ToastGuardTriggered ? "TOP-RIGHT fallback (guard: toast would cover landing" + hit + ")" : "banner+" + ToastBelowBanner + " top-centre") +
+                         " y=" + y + " ref px, rect=" + r + " (scale " + k.ToString("F2") + "), clearance to nearest landing cell (+" + ToastGuardMargin + " px margin) " + (clear == float.MaxValue ? "-" : clear.ToString("F0") + " px");
+        }
+        /// Screen rect of an entry's landing cell (top quad), grown by pad pixels.
+        public static Rect LandingRect(Camera cam, GridManager grid, Vector2Int cell, float pad)
+        {
+            float cs = grid.cellSize, top = grid.transform.position.y + (grid.tileTop > 0 ? grid.tileTop : .25f); var o = grid.transform.position;
+            float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
+            for (int i = 0; i < 4; i++)
             {
-                var sl = NoticeSlots[si]; float w = noticePill.sizeDelta.x, h = noticePill.sizeDelta.y;
-                if (sl.x == 0) TC(noticePill, sl.y, sl.z, w, h); else if (sl.x == 1) TR(noticePill, sl.y, sl.z, w, h); else TL(noticePill, sl.y, sl.z, w, h);
-                noticePill.GetWorldCorners(corners); var r = Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
-                float clear = float.MaxValue;
-                foreach (var q in pts) { float dx = Mathf.Max(0, Mathf.Max(r.xMin - q.x, q.x - r.xMax)), dy = Mathf.Max(0, Mathf.Max(r.yMin - q.y, q.y - r.yMax)); clear = Mathf.Min(clear, Mathf.Sqrt(dx * dx + dy * dy) - q.z); }
-                log += " slot" + si + "=" + clear.ToString("F0") + "px";
-                if (clear >= NoticeClearance * k && bestClear < NoticeClearance * k) { best = si; bestClear = clear; } // first slot with enough room
-                else if (bestClear < NoticeClearance * k && clear > bestClear) { best = si; bestClear = clear; }
+                var wp = new Vector3(o.x + (cell.x + (i & 1)) * cs, top, o.z + (cell.y + (i >> 1)) * cs); Vector2 s = cam.WorldToScreenPoint(wp);
+                x0 = Mathf.Min(x0, s.x); y0 = Mathf.Min(y0, s.y); x1 = Mathf.Max(x1, s.x); y1 = Mathf.Max(y1, s.y);
             }
-            var b = NoticeSlots[best]; if (b.x == 0) TC(noticePill, b.y, b.z, noticePill.sizeDelta.x, noticePill.sizeDelta.y); else if (b.x == 1) TR(noticePill, b.y, b.z, noticePill.sizeDelta.x, noticePill.sizeDelta.y); else TL(noticePill, b.y, b.z, noticePill.sizeDelta.x, noticePill.sizeDelta.y);
-            noticePill.GetWorldCorners(corners);
-            noticeInfo = "notice '" + notice + "' slot" + best + " clearance=" + bestClear.ToString("F0") + "px (scale " + k.ToString("F2") + ", need " + (NoticeClearance * k).ToString("F0") + ") rect=" + Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y) + " |" + log + " | obstacles=" + pts.Count;
+            return Rect.MinMaxRect(x0 - pad, y0 - pad, x1 + pad, y1 + pad);
         }
         // ---- v18.2 camera fit: HUD rects (screen px, y up) the board / entry bridges must stay clear of (CameraFit).
         /// True once the HUD and the hand have been laid out (rects are valid).
@@ -323,14 +332,23 @@ namespace StoneSignal
         /// and a block row of FitBlockCards cards - the draw size, so the camera never moves when cards are drawn or played),
         /// bottom-right draw pile + BATTLE. Padded by padPx (screen pixels).
         public const int FitBlockCards = GameBootstrap.CardsPerDraw;
-        public void HudObstacles(List<Rect> list, float padPx)
+        public void HudObstacles(List<Rect> list, float padPx) => HudObstacles(list, padPx, FitBlockCards, false);
+        /// blockCards: width of the reserved block row in cards (FitBlockCards for the accepted Screen fit, BlockHandManager.MaxCards = 7 for the
+        /// worst-case coverage check / HudFree). deep: each element's rect also covers its visible children (tower-card 2x2 badge, the draw
+        /// pile's 再抽 pill, rune shields on block cards) - used by the v18.3 coverage check and the HudFree fit, not by the accepted Screen fit.
+        public void HudObstacles(List<Rect> list, float padPx, int blockCards, bool deep)
         {
             list.Clear(); var c = new Vector3[4];
+            void Grow(ref float x0, ref float y0, ref float x1, ref float y1, RectTransform r)
+            {
+                r.GetWorldCorners(c);
+                for (int i = 0; i < 4; i++) { x0 = Mathf.Min(x0, c[i].x); y0 = Mathf.Min(y0, c[i].y); x1 = Mathf.Max(x1, c[i].x); y1 = Mathf.Max(y1, c[i].y); }
+            }
             void Add(RectTransform r)
             {
-                if (r == null || !r.gameObject.activeInHierarchy) return; r.GetWorldCorners(c);
-                float x0 = Mathf.Min(Mathf.Min(c[0].x, c[1].x), Mathf.Min(c[2].x, c[3].x)), x1 = Mathf.Max(Mathf.Max(c[0].x, c[1].x), Mathf.Max(c[2].x, c[3].x));
-                float y0 = Mathf.Min(Mathf.Min(c[0].y, c[1].y), Mathf.Min(c[2].y, c[3].y)), y1 = Mathf.Max(Mathf.Max(c[0].y, c[1].y), Mathf.Max(c[2].y, c[3].y));
+                if (r == null || !r.gameObject.activeInHierarchy) return;
+                float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue; Grow(ref x0, ref y0, ref x1, ref y1, r);
+                if (deep) foreach (var g in r.GetComponentsInChildren<UnityEngine.UI.Graphic>(false)) if (g.enabled && g.color.a > .05f) Grow(ref x0, ref y0, ref x1, ref y1, g.rectTransform);
                 list.Add(Rect.MinMaxRect(x0 - padPx, y0 - padPx, x1 + padPx, y1 + padPx));
             }
             Add(hudOrb); Add(hpSmall != null ? hpSmall.rectTransform : null); Add(goldPill); Add(hudBanner);
@@ -340,12 +358,33 @@ namespace StoneSignal
             Add(handCount);
             foreach (var h in handCards) if (h.tower && h.cg != null) Add((RectTransform)h.cg.transform);
             if (blockHand != null)
-            {   // block row at its draw size (left-aligned at x 24, rowY; +12 px selected lift)
+            {   // block row at a fixed card count (left-aligned at x 24, rowY; +12 px selected lift; deep: +20 px rune shield above the card)
                 blockHand.GetWorldCorners(c); var cv = blockHand.GetComponentInParent<Canvas>(); float k = cv ? cv.scaleFactor : 1f;
-                float x0 = c[0].x + 24 * k, y0 = c[0].y + handRowY * k, w = (FitBlockCards * (handCardW + 12) - 12) * k, h = (handCardW + 12) * k;
+                float x0 = c[0].x + 24 * k, y0 = c[0].y + handRowY * k, w = (blockCards * (handCardW + 12) - 12) * k, h = (handCardW + 12 + (deep ? 20 : 0)) * k;
                 list.Add(Rect.MinMaxRect(x0 - padPx, y0 - padPx, x0 + w + padPx, y0 + h + padPx));
             }
         }
+        /// v18.3 HudFree experiment (art): the HUD as blocks - top banner band (topBandPx x HUD scale, full width), the bottom-left hand group
+        /// (bounding rect of the 7-card block row + tower cards + hand counter) and the bottom-right group (draw pile + BATTLE), plus every
+        /// individual element (the core orb / HP reach below the band). Screen px, padded.
+        public void HudFreeObstacles(List<Rect> list, float padPx, float topBandPx)
+        {
+            HudObstacles(list, padPx, BlockHandManager.MaxCards, true);
+            var cv = blockHand != null ? blockHand.GetComponentInParent<Canvas>() : null; float k = cv ? cv.scaleFactor : 1f; var safe = HudScaler.SafeArea;
+            list.Add(Rect.MinMaxRect(safe.xMin - padPx, safe.yMax - topBandPx * k - padPx, safe.xMax + padPx, safe.yMax + padPx));
+            var tmp = new List<Rect>(); HudObstacles(tmp, padPx, BlockHandManager.MaxCards, true);
+            Rect? hand = null, right = null; float mid = (safe.xMin + safe.xMax) * .5f, low = safe.yMin + safe.height * .5f;
+            foreach (var r in tmp)
+            {
+                if (r.yMax > low) continue;                       // top bar elements
+                if (r.center.x < mid) hand = hand.HasValue ? Rect.MinMaxRect(Mathf.Min(hand.Value.xMin, r.xMin), Mathf.Min(hand.Value.yMin, r.yMin), Mathf.Max(hand.Value.xMax, r.xMax), Mathf.Max(hand.Value.yMax, r.yMax)) : r;
+                else right = right.HasValue ? Rect.MinMaxRect(Mathf.Min(right.Value.xMin, r.xMin), Mathf.Min(right.Value.yMin, r.yMin), Mathf.Max(right.Value.xMax, r.xMax), Mathf.Max(right.Value.yMax, r.yMax)) : r;
+            }
+            if (hand.HasValue) list.Add(hand.Value); if (right.HasValue) list.Add(right.Value);
+        }
+        public GameBootstrap Session => session;
+        /// Diagnostics: hand card rects with (tower, hand index).
+        public List<(RectTransform rt, bool tower, int index)> DebugHandCards() { var l = new List<(RectTransform, bool, int)>(); foreach (var h in handCards) if (h.cg != null) l.Add(((RectTransform)h.cg.transform, h.tower, h.index)); return l; }
         private void Update()
         {
             if (session == null) return;
@@ -365,6 +404,10 @@ namespace StoneSignal
                     handAlphaApplied = handAlpha; fadeKeyApplied = fadeKey;
                     foreach (var h in handCards) if (h.cg != null) h.cg.alpha = fadeKey >= 0 && h.tower == (fadeKey >= 1000) && h.index == fadeKey % 1000 ? 1f : handAlpha;
                 }
+                // v18.3 (玩法策划): faded hand cards do not block raycasts while a drag is on (and until they are opaque again), so a release
+                // over them is not taken by a card; the board cell under the card is targeted (PlacementInputController.HandPassThrough).
+                bool pass = fade || handAlpha < 1f;
+                if (pass != handPassApplied) { handPassApplied = pass; foreach (var h in handCards) if (h.cg != null) h.cg.blocksRaycasts = !pass; }
             }
             if (PointerInput.TouchMode != badgesTouch) { badgesTouch = PointerInput.TouchMode; foreach (var b in hotkeyBadges) if (b != null) b.SetActive(!badgesTouch); } // first real touch (sticky) hides the 1-4 hotkey badges
             if (session.Draws.Next == DrawRules.Offer.Ad && session.AdAvailable != lastAdAvailable) Refresh(); // ad readiness changed (SDK loaded / failed)
@@ -401,9 +444,15 @@ namespace StoneSignal
         }
         private StoneSignal.UI.RewardRarity[] debugRarity; private RewardEffect[] debugEffects;
         /// Reward card tier: 免广告再抽 (ExtraDraw) is 精良 (Rare, 玩法策划 v18); the other wave rewards stay Common for now.
-        public static StoneSignal.UI.RewardRarity RarityOf(RewardEffect e) => e == RewardEffect.ExtraDraw ? StoneSignal.UI.RewardRarity.Rare : StoneSignal.UI.RewardRarity.Common;
+        public static StoneSignal.UI.RewardRarity RarityOf(RewardEffect e) => (StoneSignal.UI.RewardRarity)(int)RewardTiers.For(e); // v18.3 planner tier table
+        public static StoneSignal.UI.RewardRarity RuneRarity(int rune) => (StoneSignal.UI.RewardRarity)(int)RewardTiers.RuneTier(rune); // v18.3: 共鸣·白 稀有, other runes 精良 (display only)
         public static StoneSignal.UI.RewardRarity RarityOf(RewardData r) => r != null ? (StoneSignal.UI.RewardRarity)(int)r.tier : StoneSignal.UI.RewardRarity.Common; // v18.2: data tier (RewardRoll) drives the card frame
         private bool ShowRewardPick()
+        {
+            if (!EnsurePickUi()) return false;
+            return ShowRewardPickContent();
+        }
+        private bool EnsurePickUi()
         {
             if (!ArtSteps.On(5) || art == null || art.UiSprite("ui9_reward_frame_common") == null) return false;
             if (pickUi == null)
@@ -428,6 +477,10 @@ namespace StoneSignal
                     pickUi.PlayPick(i, new Vector2(Screen.width * .5f, Screen.height * .12f), () => { picking = false; session.Rewards.Choose(i); pickUi.gameObject.SetActive(false); });
                 };
             }
+            return true;
+        }
+        private bool ShowRewardPickContent()
+        {
             if (debugRarity != null)
             {
                 // forced rarities, real content: Rare = a rune option (as in a real offer), other tiers = wave rewards from the actual pool
@@ -451,7 +504,7 @@ namespace StoneSignal
             for (int i = 0; i < n; i++)
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
-                if (rune != RuneRules.NoRune) { opts[i] = RuneOption(rune); rar[i] = StoneSignal.UI.RewardRarity.Rare; }
+                if (rune != RuneRules.NoRune) { opts[i] = RuneOption(rune); rar[i] = RuneRarity(rune); }
                 else { opts[i] = RewardOption(session.Rewards.Choices[i]); rar[i] = RarityOf(session.Rewards.Choices[i]); } // tier from the reward asset (ExtraDraw = 精良)
             }
             pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(opts, rar); FitRewardText(); if (pickGlow != null) pickGlow.Begin(rar); Refresh();
@@ -485,14 +538,97 @@ namespace StoneSignal
         // Card text fit (art RewardPickUI untouched): title one line, auto-size 44 -> 26; description wraps inside the band, 28 -> 18.
         private void FitRewardText()
         {
+            UnityEngine.Canvas.ForceUpdateCanvases();
             for (int i = 0; ; i++)
             {
                 var card = pickUi.transform.Find("RewardCard" + i); if (card == null) break;
                 var title = card.Find("Title")?.GetComponent<TMP_Text>();
-                if (title != null) { title.enableWordWrapping = false; title.overflowMode = TextOverflowModes.Overflow; title.enableAutoSizing = true; title.fontSizeMin = 26; title.fontSizeMax = 44; }
+                if (title != null) { title.enableWordWrapping = false; title.overflowMode = TextOverflowModes.Overflow; title.enableAutoSizing = true; title.fontSizeMin = 26; title.fontSizeMax = 44; AntiOrphan(title, card.name); }
                 foreach (var t in card.GetComponentsInChildren<TMP_Text>(true))
-                    if (t.name == "Desc") { t.enableWordWrapping = true; t.enableAutoSizing = true; t.fontSizeMin = 18; t.fontSizeMax = 28; t.overflowMode = TextOverflowModes.Overflow; }
+                    if (t.name == "Desc") { t.enableWordWrapping = true; t.enableAutoSizing = true; t.fontSizeMin = 18; t.fontSizeMax = 28; t.overflowMode = TextOverflowModes.Overflow; AntiOrphan(t, card.name); }
             }
+        }
+        // ---- v18.3 (玩法策划): no reward / rune card text may wrap leaving a single orphan character on a paragraph's last line.
+        // Text-layout fix only (no card / art size change): the last two characters of that paragraph are wrapped in <nobr> so they move to
+        // the last line together (TMP then re-wraps / auto-sizes). Punctuation, symbols and spaces do not count as characters.
+        private readonly List<string> orphanLog = new List<string>();
+        static char OrphanChar(TMP_Text t, int l) { var ti = t.textInfo; var li = ti.lineInfo[l]; for (int c = li.firstCharacterIndex; c <= li.lastCharacterIndex; c++) if (Counted(ti.characterInfo[c].character)) return ti.characterInfo[c].character; return '?'; }
+        static bool Counted(char ch) => !char.IsWhiteSpace(ch) && !char.IsPunctuation(ch) && !char.IsSymbol(ch);
+        /// Index of the first wrapped paragraph-last line that holds exactly one counted character, or -1.
+        public static int OrphanLine(TMP_Text t, out int lines)
+        {
+            t.ForceMeshUpdate(true, true); var ti = t.textInfo; lines = ti.lineCount;
+            for (int l = 1; l < ti.lineCount; l++)
+            {
+                var li = ti.lineInfo[l]; var prev = ti.lineInfo[l - 1];
+                if (prev.lastCharacterIndex < 0 || li.lastCharacterIndex < li.firstCharacterIndex) continue;
+                if (ti.characterInfo[prev.lastCharacterIndex].character == '\n') continue;              // hard break: not a wrap
+                bool lastOfPara = l == ti.lineCount - 1 || ti.characterInfo[li.lastCharacterIndex].character == '\n';
+                if (!lastOfPara) continue;
+                int n = 0; for (int c = li.firstCharacterIndex; c <= li.lastCharacterIndex; c++) if (Counted(ti.characterInfo[c].character)) n++;
+                if (n == 1) return l;
+            }
+            return -1;
+        }
+        private void AntiOrphan(TMP_Text t, string where)
+        {
+            if (t == null || string.IsNullOrEmpty(t.text) || t.text.Contains("<nobr>")) return;
+            int l = OrphanLine(t, out int lines); if (l < 0) return;
+            // 1) auto-size a little smaller (<= 8%) if that pulls the orphan back so the paragraph needs one line fewer
+            if (t.enableAutoSizing)
+            {
+                float f0 = t.fontSize, maxW = t.fontSizeMax, floor = Mathf.Max(t.fontSizeMin, f0 * .92f); string txt0 = t.text.Replace("\n", "\\n"); char oc = OrphanChar(t, l);
+                for (float f = f0 - .5f; f >= floor - .01f; f -= .5f)
+                {
+                    t.fontSizeMax = f;
+                    if (OrphanLine(t, out int nl) < 0 && nl < lines) { orphanLog.Add(where + "/" + t.name + " '" + txt0 + "' orphan '" + oc + "' on line " + (l + 1) + "/" + lines + " -> auto-size " + f0.ToString("F1") + " -> " + t.fontSize.ToString("F1") + " (" + nl + " line" + (nl > 1 ? "s" : "") + "): FIXED"); return; }
+                }
+                t.fontSizeMax = maxW; l = OrphanLine(t, out lines); if (l < 0) return;
+            }
+            // 2) else keep the last two characters together (<nobr>)
+            var ti = t.textInfo; var li = ti.lineInfo[l]; int c0 = -1, cp = -1;
+            for (int c = li.firstCharacterIndex; c <= li.lastCharacterIndex && c0 < 0; c++) if (Counted(ti.characterInfo[c].character)) c0 = c;
+            for (int c = li.firstCharacterIndex - 1; c >= 0 && cp < 0; c--) if (Counted(ti.characterInfo[c].character)) cp = c;
+            string raw = t.text, before = raw.Replace("\n", "\\n");
+            if (c0 < 0 || cp < 0) { orphanLog.Add(where + "/" + t.name + " '" + before + "' orphan on line " + (l + 1) + "/" + lines + " - NOT FIXABLE (no previous character)"); return; }
+            int s0 = ti.characterInfo[cp].index, s1 = ti.characterInfo[c0].index, end = raw.IndexOf('\n', s1); if (end < 0) end = raw.Length;
+            while (s0 > 0 && raw[s0 - 1] < 128 && (char.IsLetterOrDigit(raw[s0 - 1]) || ".%+-".IndexOf(raw[s0 - 1]) >= 0)) s0--; // keep a number / Latin token whole ("1.5 秒", not "1." + "5 秒")
+            t.text = raw.Substring(0, s0) + "<nobr>" + raw.Substring(s0, end - s0) + "</nobr>" + raw.Substring(end);
+            bool ok = OrphanLine(t, out int after) < 0;
+            orphanLog.Add(where + "/" + t.name + " '" + before + "' orphan '" + ti.characterInfo[c0].character + "' on line " + (l + 1) + "/" + lines + " -> <nobr> last 2 chars" + (raw.Substring(s0, s1 - s0).Length > 1 && raw[s0] < 128 ? " (+ whole number token)" : "") + ": " + (ok ? "FIXED (" + after + " lines, font " + t.fontSize.ToString("F1") + ")" : "STILL ORPHAN"));
+        }
+        /// Diagnostics (-cardtext): every reward in the pool and every rune option, three per card set, laid out on the real cards;
+        /// per text: lines, characters on the last line, orphan before / after the layout fix.
+        public string DebugCardTextAudit()
+        {
+            if (!EnsurePickUi()) return "no RewardPickUI (art step 5 off?)\n";
+            var items = new List<(StoneSignal.UI.RewardOption o, StoneSignal.UI.RewardRarity r, string id)>();
+            foreach (var r in session.config.rewards) if (r != null) items.Add((RewardOption(r), RarityOf(r), r.effect.ToString()));
+            for (int i = 0; i < RuneRules.Names.Length; i++) items.Add((RuneOption(i), RuneRarity(i), "rune " + RuneRules.Names[i]));
+            var sb = new System.Text.StringBuilder(); orphanLog.Clear(); int bad = 0;
+            for (int g = 0; g < items.Count; g += 3)
+            {
+                int n = Mathf.Min(3, items.Count - g); var opts = new StoneSignal.UI.RewardOption[n]; var rar = new StoneSignal.UI.RewardRarity[n];
+                for (int i = 0; i < n; i++) { opts[i] = items[g + i].o; rar[i] = items[g + i].r; }
+                pickUi.gameObject.SetActive(true); pickUi.Show(opts, rar); FitRewardText();
+                for (int i = 0; i < n; i++)
+                {
+                    var card = pickUi.transform.Find("RewardCard" + i); if (card == null) continue;
+                    sb.Append("  ").Append(items[g + i].id).Append(" [").Append(rar[i]).Append(']');
+                    foreach (var t in card.GetComponentsInChildren<TMP_Text>(true))
+                    {
+                        if (t.name != "Title" && t.name != "Desc") continue;
+                        int ol = OrphanLine(t, out int lines); var ti = t.textInfo; var last = lines > 0 ? ti.lineInfo[lines - 1] : default; int lc = 0;
+                        if (lines > 0) for (int c = last.firstCharacterIndex; c <= last.lastCharacterIndex && c >= 0; c++) if (Counted(ti.characterInfo[c].character)) lc++;
+                        if (ol >= 0) bad++;
+                        sb.Append(" | ").Append(t.name).Append(" '").Append(t.text.Replace("\n", "\\n")).Append("' lines=").Append(lines).Append(" lastLineChars=").Append(lc).Append(" font=").Append(t.fontSize.ToString("F1")).Append(ol >= 0 ? " ORPHAN" : "");
+                    }
+                    sb.Append('\n');
+                }
+            }
+            pickUi.gameObject.SetActive(false);
+            return "card text audit " + Screen.width + "x" + Screen.height + ": " + items.Count + " options, orphans after fix = " + bad + "\n" + sb +
+                   "  layout fixes applied: " + (orphanLog.Count == 0 ? "none" : "\n    " + string.Join("\n    ", orphanLog)) + "\n";
         }
         // StoneSignalRoundedCN-Heavy SDF (first TMP fallback, Editor/CjkFontSetup). Labels that are Chinese use it as primary font so digits and
         // CJK come from one atlas/material; pure-number HUD text stays on the default font.

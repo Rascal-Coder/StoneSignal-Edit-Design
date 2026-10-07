@@ -111,9 +111,15 @@ namespace StoneSignal
         /// continuous in the finger position, so the ghost never jumps, and it only lifts relative to the card the finger
         /// is on or next to (never to the top of the whole hand stack: cells covered by the block row, e.g. the bottom-left
         /// corner at 1920x1080 / 2048x1536, must stay reachable).
+        /// v18.3 (玩法策划) hand pass-through: while dragging, the faded hand (35%) does not block the board. The aim is always the plain
+        /// DragOffset above the finger (no lift over the cards), so board cells under the hand can be targeted; the cancel zone shrinks to
+        /// the lower half of the BOTTOM card row (tower cards) - the old "lower half of any hand card" rule made the top band of the block
+        /// row unreachable (finger on a block card's lower half aims at that band). false = v18.2 behaviour (lift + any-card cancel).
+        public bool HandPassThrough = true;
         public float OffsetFor(Vector2 finger)
         {
             float s = CanvasScale > 0 ? CanvasScale : 1f, b = DragOffset * s, m = Mathf.Min(LiftMargin * s, b), f = Mathf.Max(1f, LiftFeather * s);
+            if (HandPassThrough) return b;
             float baseAim = finger.y + b, aim = baseAim;
             foreach (var r in HandScreenRects())
             {
@@ -127,7 +133,13 @@ namespace StoneSignal
         public Vector2 AimFor(Vector2 finger) => finger + Vector2.up * OffsetFor(finger);
         /// "Back over the hand" = finger on the LOWER half of a hand card: ghost hidden, release cancels. The upper half
         /// lifts the ghost instead (adaptive offset), so a drag can still finish on cells just above / under the cards.
-        public bool InCancelZone(Vector2 finger) { foreach (var r in HandScreenRects()) if (r.Contains(finger) && finger.y < r.center.y) return true; return false; }
+        public bool InCancelZone(Vector2 finger)
+        {
+            var rects = HandScreenRects(); float bottom = float.MaxValue;
+            if (HandPassThrough) foreach (var r in rects) bottom = Mathf.Min(bottom, r.yMin);
+            foreach (var r in rects) if (r.Contains(finger) && finger.y < r.center.y && (!HandPassThrough || r.yMin <= bottom + r.height * .25f)) return true; // bottom row (a selected card may sit a little higher)
+            return false;
+        }
         /// Diagnostics (drag report): the controller's own hand test and a hard cancel of any gesture in progress.
         public bool IsOverHand(Vector2 pos) => OverHand(pos);
         /// 玩法策划 v18 hand fade: true while a card drag is in progress (Dragging, or Direction with the finger still down) and the finger

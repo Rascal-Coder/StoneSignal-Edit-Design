@@ -212,12 +212,64 @@ namespace StoneSignal.EditorTools
                 log.Add("  legendary merge 100k: C " + t[0] + " R " + t[1] + " E " + t[2] + " L " + t[3]);
                 return runes == 0 && t[3] == 0 && Within(t[0], N, .6) && Within(t[1], N, .3) && Within(t[2], N, .1);
             });
-            Case("reward roll: shipped pool shape (13 普通 + ExtraDraw 精良, no 稀有/传说) -> empty tiers fall to 精良: rune 300 / C 420 / R 280", () =>
+            // ---- v18.3 planner tier table (RewardTiers) on the shipped pool
+            RewardEffect[] shipped = { RewardEffect.AllDamage, RewardEffect.AllAttackSpeed, RewardEffect.AllRange, RewardEffect.BaseHP, RewardEffect.CannonRadius, RewardEffect.AddBlock, RewardEffect.NextDraw, RewardEffect.PathSlow, RewardEffect.BonusSlot, RewardEffect.KillGold, RewardEffect.WaveGold, RewardEffect.TowerDiscount, RewardEffect.WaveHeal, RewardEffect.ExtraDraw };
+            var cfg = AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/Game/Settings/GameConfig.asset");
+            var poolFx = new List<RewardEffect>(); if (cfg != null && cfg.rewards != null) foreach (var r in cfg.rewards) if (r != null) poolFx.Add(r.effect); if (poolFx.Count == 0) poolFx.AddRange(shipped);
+            Case("tier table v18.3: 普通 WaveGold KillGold WaveHeal AddBlock NextDraw CannonRadius / 精良 AllRange PathSlow TowerDiscount ExtraDraw / 稀有 AllDamage AllAttackSpeed BonusSlot; unlisted -> 普通; runes 精良, 共鸣 稀有", () =>
             {
-                var pool = new int[14]; pool[13] = 1; const int N = 100000;
-                var t = Single(pool, 300, N, 13, out int runes, out _);
-                log.Add("  shipped pool 100k: rune " + runes + " C " + t[0] + " R " + t[1] + " E " + t[2] + " L " + t[3]);
-                return Within(runes, N, .3) && Within(t[0], N, .42) && Within(t[1], N, .28) && t[2] == 0 && t[3] == 0;
+                bool ok = true; RewardTier T(RewardEffect e) => RewardTiers.For(e);
+                foreach (var e in new[] { RewardEffect.WaveGold, RewardEffect.KillGold, RewardEffect.WaveHeal, RewardEffect.AddBlock, RewardEffect.NextDraw, RewardEffect.CannonRadius }) ok &= T(e) == RewardTier.Common && RewardTiers.Listed(e);
+                foreach (var e in new[] { RewardEffect.AllRange, RewardEffect.PathSlow, RewardEffect.TowerDiscount, RewardEffect.ExtraDraw }) ok &= T(e) == RewardTier.Rare && RewardTiers.Listed(e);
+                foreach (var e in new[] { RewardEffect.AllDamage, RewardEffect.AllAttackSpeed, RewardEffect.BonusSlot }) ok &= T(e) == RewardTier.Epic && RewardTiers.Listed(e);
+                foreach (var e in new[] { RewardEffect.BaseHP, RewardEffect.ArrowRange, RewardEffect.NextWaveGold }) ok &= T(e) == RewardTier.Common && !RewardTiers.Listed(e);
+                for (int i = 0; i < 5; i++) ok &= RewardTiers.RuneTier(i) == RewardTier.Rare; ok &= RewardTiers.RuneTier(5) == RewardTier.Epic;
+                var unl = new List<string>(); foreach (var e in poolFx) if (!RewardTiers.Listed(e)) unl.Add(e.ToString());
+                log.Add("  pool (" + poolFx.Count + "): " + string.Join(" ", poolFx) + " | in pool but not in the planner table (-> 普通): " + (unl.Count > 0 ? string.Join(", ", unl) : "none"));
+                return ok;
+            });
+            Case("tier table applied to the reward assets in GameConfig (PrototypeBuild.EnsureRewardPool)", () =>
+            {
+                if (cfg == null) return false; bool ok = true; var bad = new List<string>();
+                foreach (var r in cfg.rewards) if (r != null && r.tier != RewardTiers.For(r.effect)) { ok = false; bad.Add(r.effect + "=" + r.tier); }
+                if (!ok) log.Add("  asset tier mismatch: " + string.Join(", ", bad));
+                return ok;
+            });
+            Case("reward roll v18.3 shipped pool, 100k picks of three: ExtraDraw ~5.25% per option (1st option, 5 sigma), ~15% per pick; tiers 1st option rune 300 / 普通 420 / 精良 210 / 稀有 70 (传说 empty -> 稀有); no duplicates", () =>
+            {
+                var tiers = new List<int>(); foreach (var e in poolFx) tiers.Add((int)RewardTiers.For(e));
+                const int N = 100000; var rng = new RngStream(183); var idx = new List<int>(); var rn = new List<int>();
+                int P = poolFx.Count; var perOpt = new int[3, P + 6]; var perPick = new int[P + 6]; var tierOpt = new int[3, 6]; int dup = 0, shortPick = 0;
+                for (int k = 0; k < N; k++)
+                {
+                    RewardRoll.Offer(tiers, 300, r => RuneRules.RollType(c, r), rng, idx, rn, 3);
+                    if (idx.Count != 3) shortPick++;
+                    var seen = new HashSet<int>();
+                    for (int i = 0; i < idx.Count; i++)
+                    {
+                        int key = idx[i] >= 0 ? idx[i] : P + rn[i];
+                        if (!seen.Add(key)) dup++;
+                        perOpt[i, key]++;
+                        int tb = idx[i] >= 0 ? tiers[idx[i]] : 4 + (rn[i] == 5 ? 1 : 0); tierOpt[i, tb]++;   // 4 = rune 精良, 5 = rune 稀有 (display)
+                    }
+                    foreach (var key in seen) perPick[key]++;
+                }
+                string Pct(int v) => (100.0 * v / N).ToString("F2") + "%";
+                var sb = new System.Text.StringBuilder("  v18.3 distribution (100k picks of three, seed 183, rune gate 300 permille):\n  item | tier | option1 | option2 | option3 | per pick\n");
+                string[] cn = { "普通", "精良", "稀有", "传说" };
+                for (int i = 0; i < P + 6; i++)
+                {
+                    string name = i < P ? poolFx[i].ToString() : "rune " + RuneRules.Names[i - P]; string tn = i < P ? cn[tiers[i]] : (i - P == 5 ? "稀有(rune)" : "精良(rune)");
+                    sb.Append("  ").Append(name).Append(" | ").Append(tn).Append(" | ").Append(Pct(perOpt[0, i])).Append(" | ").Append(Pct(perOpt[1, i])).Append(" | ").Append(Pct(perOpt[2, i])).Append(" | ").Append(Pct(perPick[i])).Append("\n");
+                }
+                string[] tl = { "普通", "精良", "稀有", "传说", "rune 精良", "rune 稀有" };
+                for (int t = 0; t < 6; t++) sb.Append("  tier ").Append(tl[t]).Append(" | option1 ").Append(Pct(tierOpt[0, t])).Append(" | option2 ").Append(Pct(tierOpt[1, t])).Append(" | option3 ").Append(Pct(tierOpt[2, t])).Append("\n");
+                sb.Append("  duplicates within a pick: ").Append(dup).Append(", picks with fewer than 3 options: ").Append(shortPick);
+                log.Add(sb.ToString());
+                int ed = poolFx.IndexOf(RewardEffect.ExtraDraw); if (ed < 0) return false;
+                double pick = (double)perPick[ed] / N;
+                return dup == 0 && shortPick == 0 && Within(perOpt[0, ed], N, .7 * .3 / 4) && pick > .14 && pick < .17
+                    && Within(tierOpt[0, 4] + tierOpt[0, 5], N, .3) && Within(tierOpt[0, 0], N, .42) && Within(tierOpt[0, 1], N, .21) && Within(tierOpt[0, 2], N, .07) && tierOpt[0, 3] == 0;
             });
             Case("reward roll: empty-tier weights (down first, else up)", () =>
             {

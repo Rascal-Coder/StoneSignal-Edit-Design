@@ -17,4 +17,5 @@ MonoBehaviour:
   effectText: 'L: EXTRA PLATFORM'
   effect: 10
   amount: 1
+  tier: 2
   blockShape: {fileID: 11400000, guid: d47a7dd1353782143a328190487c791c, type: 2}

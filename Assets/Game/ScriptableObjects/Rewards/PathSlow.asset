@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Heavy Footsteps
   description: All path enemies move 8% slower
-  effectText: 'PATH SPEED -8%'
+  effectText: PATH SPEED -8%
   effect: 9
   amount: 0.08
+  tier: 1
   blockShape: {fileID: 0}

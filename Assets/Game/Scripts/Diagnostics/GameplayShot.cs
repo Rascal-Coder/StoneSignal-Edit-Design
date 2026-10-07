@@ -36,6 +36,9 @@ namespace StoneSignal
             yield return new WaitForSecondsRealtime(1f);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-camcompare") >= 0) { yield return CamCompare(); Debug.Log("CAM COMPARE DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-dragthrough") >= 0) { yield return DragThrough(); Debug.Log("DRAG THROUGH DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cardtext") >= 0) { yield return CardText(); Debug.Log("CARD TEXT DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudshots") >= 0) { yield return HudShots(); Debug.Log("HUD SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots3") >= 0) { yield return CnShots3(); Debug.Log("CN SHOTS3 DONE " + path); Application.Quit(0); yield break; }
             var grid = s.grid; s.Economy.AddGold(900);
@@ -312,6 +315,124 @@ namespace StoneSignal
                 yield return Shot("drag_fade_released");
             }
             File.WriteAllText(Path.Combine(dir, "cn3_" + res + ".txt"), sb.ToString());
+        }
+        // ---- v18.3 diagnostics ------------------------------------------------------------------------------------------------
+        bool Notch() { bool n = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-notch") >= 0; if (n) HudScaler.SimulatedSafeArea = new Rect(132, 63, Screen.width - 264, Screen.height - 63); return n; }
+        IEnumerator WaitRt(float sec) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < sec) yield return null; }
+        /// Worst-case hand: free draw, then top up to BlockHandManager.MaxCards (7) block cards.
+        IEnumerator FullHand()
+        {
+            if (s.Game.State == GameState.Build) s.Draw();
+            var hand = s.Blocks.Hand; int g = 0;
+            while (hand.Cards.Count < BlockHandManager.MaxCards && g++ < 20) hand.AddCard(s.config.blocks[g % s.config.blocks.Length], RuneRules.NoRune);
+            s.Blocks.NotifyChanged(); yield return null; yield return null;
+        }
+        IEnumerator ShotNamed(string dir, string name) { yield return Clean(); for (int f = 0; f < 6; f++) yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, name + ".png")); }
+        /// -camcompare [-touch] [-notch]: full 7-card hand, CameraFit Screen vs HudFree: report, coverage, toast anchor / guard, full-frame HUD shot.
+        IEnumerator CamCompare()
+        {
+            bool notch = Notch(); var ui = FindObjectOfType<GameUI>(); var fit = CameraFit.Instance; string dir = Path.GetDirectoryName(path);
+            string res = Screen.width + "x" + Screen.height + (notch ? "_notch" : "");
+            var sb = new System.Text.StringBuilder("camera compare " + res + " aspect " + ((float)Screen.width / Screen.height).ToString("F3") + " touch=" + PointerInput.TouchMode + " safe=" + HudScaler.SafeArea + "\n");
+            yield return FullHand(); yield return WaitRt(.6f);
+            sb.Append("hand: " + s.Blocks.Hand.Cards.Count + " block cards + " + s.config.towers.Length + " tower cards\n");
+            foreach (var mode in new[] { CameraFitMode.Screen, CameraFitMode.HudFree })
+            {
+                CameraFit.Mode = mode; int f0 = fit.Fits; fit.Refit(); float tw = Time.realtimeSinceStartup;
+                while (fit.Fits == f0 && Time.realtimeSinceStartup - tw < 4f) yield return null;
+                yield return WaitRt(.5f);
+                bool pass = fit.CoveredCells == 0 && fit.LandingsVisible && fit.ArrowsVisible && fit.CellPx1080 >= fit.minCellPx1080 && fit.EnemyPx1080 >= fit.minEnemyPx1080;
+                sb.Append("=== mode " + mode + "\n" + fit.Report + fit.Coverage + "\n");
+                yield return ShotNamed(dir, "hud_" + mode.ToString().ToLowerInvariant() + "_" + res);
+                yield return WaitRt(.3f);
+                ui.DebugNotice("Cell occupied / protected"); yield return WaitRt(.4f);
+                string toast = ui.NoticeDebug; bool guard = ui.ToastGuardTriggered; yield return WaitRt(1.4f);
+                sb.Append("  toast: " + toast + " | guard triggered=" + guard + "\n");
+                sb.Append("SUMMARY\t" + mode + "\t" + res + "\tortho " + fit.Size.ToString("F2") + "\tpan " + fit.Pan.ToString("F2") + "\tcell1080 " + fit.CellPx1080.ToString("F1") + "\tenemy1080 " + fit.EnemyPx1080.ToString("F1") +
+                          "\tcovered " + fit.CoveredCells + "\tbad " + fit.CoveredBad + "\tlandings " + fit.LandingsVisible + "\tarrows " + fit.ArrowsVisible + "\tpanfix " + fit.PanFixed + "\ttoastGuard " + guard + "\tHUDFREE-CRITERIA " + (pass ? "PASS" : "FAIL") + "\n");
+            }
+            CameraFit.Mode = CameraFitMode.Screen; fit.Refit();
+            File.WriteAllText(Path.Combine(dir, "cam_" + res + ".txt"), sb.ToString());
+            HudScaler.SimulatedSafeArea = null;
+        }
+        /// -dragthrough [-touch]: full hand (Screen fit); a wall ghost dragged onto a board cell under a FADED block card (shot mid-drag),
+        /// release -> the cell is accepted (direction select); then a tower dragged onto a wall under the faded hand is placed.
+        IEnumerator DragThrough()
+        {
+            var ui = FindObjectOfType<GameUI>(); var pic = PlacementInputController.Instance; var grid = s.grid; var cam = s.viewCamera != null ? s.viewCamera : Camera.main;
+            string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height; var sb = new System.Text.StringBuilder("drag through " + res + " touch=" + PointerInput.TouchMode + " passThrough=" + pic.HandPassThrough + "\n");
+            yield return FullHand(); yield return WaitRt(.6f);
+            var cards = ui.DebugHandCards(); var blockRects = new List<(Rect r, int index)>(); var c4 = new Vector3[4];
+            foreach (var h in cards) if (!h.tower) { h.rt.GetWorldCorners(c4); blockRects.Add((Rect.MinMaxRect(c4[0].x, c4[0].y, c4[2].x, c4[2].y), h.index)); }
+            Vector2 Top(Vector2Int c, bool wall) => cam.WorldToScreenPoint(grid.ToWorld(c) + Vector3.up * (wall ? grid.wallTop : grid.tileTop));
+            Vector2Int target = new Vector2Int(-1, -1); int under = -1; float baseOff = pic.DragOffset * pic.CanvasScale;
+            for (int y = 0; y < grid.height && target.x < 0; y++) for (int x = 0; x < grid.width && target.x < 0; x++)
+            {
+                var c = new Vector2Int(x, y); if (!grid.CanPlace(c) || OnRoute(c) || s.Validator.ValidatePlacement(new List<Vector2Int> { c }) != null) continue;
+                var sp = Top(c, false); var fg = sp - Vector2.up * baseOff; foreach (var b in blockRects) if (b.r.Contains(sp) && !pic.InCancelZone(fg) && fg.y > 0 && grid.RaycastCell(cam.ScreenPointToRay(pic.AimFor(fg)), out var hc, out _) && hc == c) { target = c; under = b.index; break; }
+            }
+            Vector2 fingerOverride = default; bool nearest = false;
+            if (target.x < 0)
+            {
+                // no board cell lies under a block card (e.g. 4:3): take the placeable cell nearest above the block row whose aim is reachable with the finger ON a block card
+                float rowTop = float.MinValue; foreach (var b in blockRects) rowTop = Mathf.Max(rowTop, b.r.yMax); float best = float.MaxValue;
+                for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
+                {
+                    var c = new Vector2Int(x, y); if (!grid.CanPlace(c) || OnRoute(c) || s.Validator.ValidatePlacement(new List<Vector2Int> { c }) != null) continue;
+                    var sp = Top(c, false); var fg = sp - Vector2.up * baseOff; if (sp.y - rowTop >= best) continue;
+                    foreach (var b in blockRects) if (b.r.Contains(fg) && !pic.InCancelZone(fg) && grid.RaycastCell(cam.ScreenPointToRay(pic.AimFor(fg)), out var hc, out _) && hc == c) { best = sp.y - rowTop; target = c; under = b.index; fingerOverride = fg; nearest = true; break; }
+                }
+                if (target.x < 0) { sb.Append("no placeable board cell under or reachable from a block card at this aspect\n"); File.WriteAllText(Path.Combine(dir, "drag_" + res + ".txt"), sb.ToString()); yield break; }
+                sb.Append("no placeable board cell lies under the hand at this aspect (worst-case hand covers edge cells only); nearest cell " + target + " is " + best.ToString("F0") + " px above the block row; finger rests on faded block card #" + under + "\n");
+            }
+            int dragIdx = -1; Rect dragR = default; foreach (var b in blockRects) if (b.index != under && !b.r.Contains(Top(target, false))) { dragIdx = b.index; dragR = b.r; break; }
+            sb.Append("target cell " + target + (nearest ? " (finger over" : " under") + " block card #" + under + " (screen " + Top(target, false).ToString("F0") + "), dragging block card #" + dragIdx + "\n");
+            // --- wall ghost
+            Vector2 start = dragR.center, finger = nearest ? fingerOverride : Top(target, false) - Vector2.up * baseOff;
+            PointerInput.Inject(start, true, true, false); pic.CardDown(false, dragIdx, start); yield return null;
+            for (int i = 1; i <= 12; i++) { PointerInput.Inject(Vector2.Lerp(start, finger, i / 12f), false, true, false); yield return null; }
+            // let the hand fade settle (0.45 s) without triggering hold-still direction: the finger wiggles more than HoldStill each frame
+            float wig = (pic.Machine.HoldStill + 3f) * pic.CanvasScale; int fr = 0;
+            float tw0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - tw0 < .45f) { PointerInput.Inject(finger + new Vector2((fr++ & 1) == 0 ? wig : 0f, 0), false, true, false); yield return null; }
+            PointerInput.Inject(finger, false, true, false); yield return null;
+            var hits = new List<UnityEngine.EventSystems.RaycastResult>(); var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null) es.RaycastAll(new UnityEngine.EventSystems.PointerEventData(es) { position = Top(target, false) }, hits);
+            string hitNames = ""; foreach (var h in hits) hitNames += h.gameObject.name + ";";
+            sb.Append("mid-drag: state=" + pic.Machine.State + " cell=" + pic.Machine.Cell + " handFade=" + pic.HandFade + " passThrough(raycasts off)=" + ui.HandPassThroughActive + " alphas " + ui.HandAlphas + "\n  UI raycast at the target cell: " + hits.Count + " hit(s) " + hitNames + "\n");
+            yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "drag_wall_" + res + ".png"));
+            // the capture stalls a frame: step one cell aside and back (resets the hold-still timer), then release
+            PointerInput.Inject(finger + Vector2.right * (Top(target + Vector2Int.right, false) - Top(target, false)).magnitude, false, true, false); yield return null;
+            PointerInput.Inject(finger, false, true, false); yield return null;
+            string preRelease = pic.Machine.State + " " + pic.Machine.Cell;
+            PointerInput.Inject(finger, false, false, true); yield return null; yield return null;
+            sb.Append("  just before release: " + preRelease + "\n");
+            sb.Append("after release: state=" + pic.Machine.State + " cell=" + pic.Machine.Cell + " -> " + (pic.Machine.State == PlacementState.Direction && pic.Machine.Cell == target ? "PASS wall accepted on the cell under the faded hand (direction select open)" : "FAIL") + "\n");
+            PointerInput.ClearInjection(); pic.CancelPlacement(); yield return WaitRt(.4f);
+            // --- tower onto a wall under the faded hand
+            bool wall = TryWall(target); s.Economy.AddGold(500); int towers0 = s.Towers.Towers.Count; yield return null;
+            Rect tr = default; foreach (var h in ui.DebugHandCards()) if (h.tower && h.index == 0) { h.rt.GetWorldCorners(c4); tr = Rect.MinMaxRect(c4[0].x, c4[0].y, c4[2].x, c4[2].y); }
+            Vector2 tStart = tr.center, tFinger = Top(target, true) - Vector2.up * baseOff;
+            PointerInput.Inject(tStart, true, true, false); pic.CardDown(true, 0, tStart); yield return null;
+            for (int i = 1; i <= 12; i++) { PointerInput.Inject(Vector2.Lerp(tStart, tFinger, i / 12f), false, true, false); yield return null; }
+            yield return WaitRt(.2f);
+            string mid = "state=" + pic.Machine.State + " cell=" + pic.Machine.Cell + " cancelZone=" + pic.InCancelZone(tFinger);
+            PointerInput.Inject(tFinger, false, false, true); yield return null; yield return null; PointerInput.ClearInjection();
+            bool placed = s.Towers.Towers.Count == towers0 + 1; bool dirOpen = !placed && pic.Machine.State == PlacementState.Direction && pic.Machine.Cell == target; if (dirOpen) mid += " | released into direction select on the target cell";
+            sb.Append("tower drag onto the wall at " + target + " (wall committed " + wall + "): mid " + mid + " -> towers " + towers0 + " -> " + s.Towers.Towers.Count + " " + (placed ? "PASS tower placed under the faded hand" : dirOpen ? "PASS (accepted on the cell; tower needs direction select)" : "FAIL") + "\n");
+            pic.CancelPlacement();
+            File.WriteAllText(Path.Combine(dir, "drag_" + res + ".txt"), sb.ToString());
+        }
+        /// -cardtext [-touch] [-notch]: orphan-character audit of every reward / rune card text, then the ExtraDraw card (new text) on a reward screen.
+        IEnumerator CardText()
+        {
+            bool notch = Notch(); var ui = FindObjectOfType<GameUI>(); string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height + (notch ? "_notch" : "");
+            yield return WaitRt(.5f);
+            var sb = new System.Text.StringBuilder(ui.DebugCardTextAudit());
+            var C = StoneSignal.UI.RewardRarity.Common; var R = StoneSignal.UI.RewardRarity.Rare; var E = StoneSignal.UI.RewardRarity.Epic;
+            if (ui.DebugShowRewardPick(new[] { R, C, E }, new[] { RewardEffect.ExtraDraw, RewardEffect.NextDraw, RewardEffect.AllDamage }))
+            { yield return WaitRt(1.2f); sb.Append(TextAudit("reward screen ExtraDraw / NextDraw / AllDamage")); yield return ShotNamed(dir, "reward_extradraw_" + res); }
+            File.WriteAllText(Path.Combine(dir, "cardtext_" + res + ".txt"), sb.ToString());
+            HudScaler.SimulatedSafeArea = null;
         }
         // v18.2 -hudshots [-touch] [-notch]: full HUD frame with the aspect-adaptive camera (CameraFit report), touch-mode hotkey badge check,
         // clean-frame draw calls, then a real weighted reward offer (RewardRoll) on the reward screen. Writes hud_<res>.txt.

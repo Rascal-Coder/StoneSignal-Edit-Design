@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Far Horizon
   description: All tower range +15%
-  effectText: 'ALL RANGE +15%'
+  effectText: ALL RANGE +15%
   effect: 6
   amount: 0.15
+  tier: 1
   blockShape: {fileID: 0}
