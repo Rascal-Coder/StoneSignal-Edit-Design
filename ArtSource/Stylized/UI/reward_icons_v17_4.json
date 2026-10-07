@@ -1,5 +1,5 @@
 {
-  "version": "v17.4",
+  "version": "v17.4 (+ v17.6 extra_draw, v17.6b next_draw = 符文保底, v18 glossary titles)",
   "atlas_folder": "Assets/Game/Art/Stylized/UI (HUD.spriteatlas)",
   "source_px": 256,
   "baked_shadow": true,
@@ -36,15 +36,17 @@
     },
     {
       "effect": "AddBlock",
-      "title_cn": "石牌补给",
+      "title_cn": "墙牌补给",
       "sprite": "ui_reward_add_block",
       "motif": "O tetromino on a card + gold plus"
     },
     {
       "effect": "NextDraw",
-      "title_cn": "下次抽牌 +N",
+      "title_cn": "符文保底",
       "sprite": "ui_reward_next_draw",
-      "motif": "card deck (draw-pile back) + up arrow + gold plus"
+      "motif": "blue blueprint wall card with a T piece + neutral gold-rimmed rune hexagon (white star, pale-gold glow) socketed on the stem + gold shield with a check (guarantee)",
+      "desc_cn": "下次抽牌至少 1 张带符文",
+      "redrawn": "v17.6b (was: deck + up arrow for the old draw +N text)"
     },
     {
       "effect": "PathSlow",
@@ -78,7 +80,7 @@
     },
     {
       "effect": "TowerDiscount",
-      "title_cn": "塔价折扣",
+      "title_cn": "建塔折扣",
       "sprite": "ui_reward_tower_discount",
       "motif": "coin with a red % price tag"
     },
@@ -93,6 +95,14 @@
       "title_cn": "每波回血",
       "sprite": "ui_reward_wave_heal",
       "motif": "core crystal + green cross + green loop arrow"
+    },
+    {
+      "effect": "ExtraDraw",
+      "title_cn": "免广告再抽一次",
+      "rarity": "精良 (Rare, blue card)",
+      "sprite": "ui_reward_extra_draw",
+      "motif": "ember-rune draw-pile card back (ui_draw_pile look) + a 2nd back fanning off to the right + gold '+1' badge; no video-ad badge (reads apart from next_draw: purple deck + up arrow + plus)",
+      "added": "v17.6"
     }
   ],
   "runes": [

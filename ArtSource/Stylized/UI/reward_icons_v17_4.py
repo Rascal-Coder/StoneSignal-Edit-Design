@@ -4,7 +4,7 @@ Chunky toon HUD language (same as ui9_reward_frame / ui_card_tower_frame / ui_co
   silhouette, navy #1E1A3A edge outside that, baked hard shadow (navy 50 %, down-right).
 Painted at 1024 px (4x) and LANCZOS-downsampled to 256 px -> Assets/Game/Art/Stylized/UI/ui_reward_<id>.png.
 Colour rules: cyan only for frost/slow (path_slow), green only for heal/core repair (base_hp badge, wave_heal).
-Usage: python reward_icons_v17_4.py <out_dir>"""
+v17.6: + extra_draw (ExtraDraw 免广告再抽一次); v17.6b: next_draw redrawn for 符文保底. Usage: python reward_icons_v17_4.py <out_dir> [icon_id ...]  (no ids = all)"""
 import math, sys, os
 import numpy as np, cv2
 from PIL import Image, ImageDraw
@@ -189,13 +189,43 @@ def add_block(d):
         for j in range(2): tile(d, x0 + i * s, y0 + j * s, s)
     plus_badge(d, 770, 790, 120, GOLD)
 def next_draw(d):
-    card(d, (140, 260, 560, 860), PURP_D, 46)
-    P(d, rot([(-210, -300), (210, -300), (210, 300), (-210, 300)], 10, 0, 0, 520, 520), PURP_D)
-    card(d, (400, 140, 820, 740), NAVYC, 46, emblem='flame')
-    # up-out arrow (draw one more)
-    L(d, [(300, 860), (300, 640)], w=70 + 2 * W); L(d, [(300, 860), (300, 640)], w=70, fill=GOLD)
-    arrowhead(d, 300, 560, -90, 120, GOLD)
-    plus_badge(d, 800, 800, 110, GOLD)
+    """v17.6b 符文保底 (NextDraw = 'next draw has at least 1 rune card'): blue blueprint wall card (hand-card look) with a T piece,
+    a neutral gold-rimmed rune hexagon (white star, pale-gold toon glow halo - no specific rune colour) socketed on its stem cell, gold shield + check
+    = guarantee. (v17.4 drew a deck + up arrow for the old 'draw +N' text.)"""
+    BP, BP_L, BP_RIM = C('365CAA'), C('4E76C4'), C('E8F0FF')
+    CELL, CELL_L, CELL_D = C('96C8FF'), C('E1F2FF'), C('6096DC')
+    x0, y0, x1, y1 = 170, 150, 740, 890
+    RR(d, (x0, y0, x1, y1), 64, BP_RIM)                                              # blueprint card: white rim
+    d.rounded_rectangle((x0 + 30, y0 + 30, x1 - 30, y1 - 30), 40, fill=BP)
+    for k in range(1, 6):                                                            # grid lines
+        gx = x0 + 30 + (x1 - x0 - 60) * k / 6; d.line([(gx, y0 + 36), (gx, y1 - 36)], fill=BP_L, width=8)
+    for k in range(1, 8):
+        gy = y0 + 30 + (y1 - y0 - 60) * k / 8; d.line([(x0 + 36, gy), (x1 - 36, gy)], fill=BP_L, width=8)
+    s_ = 160; tx, ty = (x0 + x1) / 2 - 1.5 * s_, 290                                   # T piece (light-blue hand-card cells)
+    for i, j in [(0, 0), (1, 0), (2, 0), (1, 1)]:
+        cx_, cy_ = tx + i * s_, ty + j * s_
+        RR(d, (cx_, cy_, cx_ + s_, cy_ + s_), 22, CELL, w=16)
+        d.rectangle((cx_ + 16, cy_ + s_ - 42, cx_ + s_ - 16, cy_ + s_ - 16), fill=CELL_D)
+        d.rectangle((cx_ + 22, cy_ + 20, cx_ + s_ * .55, cy_ + 38), fill=CELL_L)
+    hx, hy, hr = (x0 + x1) / 2, 290 + 160 + 95, 138                                             # rune socket on the T's stem cell
+    hexp = lambda r: [(hx + r * math.cos(math.radians(60 * k - 90)), hy + r * math.sin(math.radians(60 * k - 90))) for k in range(6)]
+    P(d, hexp(hr + 34), GOLD_L, w=14)                                                # toon glow halo (pale gold)
+    P(d, hexp(hr), GOLD)                                                             # gold rim
+    d.polygon([(hx, hy), *hexp(hr - W)[1:4]], fill=GOLD_D)                           # rim toon shade (lower right)
+    P(d, hexp(hr * .72), NAVYC, w=14)                                                # socket face
+    P(d, star(hx, hy + 4, hr * .5, hr * .17, 4, -90), CREAM, w=10)                    # neutral white star
+    d.polygon(star(hx, hy + 4, hr * .26, hr * .1, 4, -45), fill=CREAM)
+    gloss(d, (hx - hr * .62, hy - hr * .62, hx - hr * .34, hy - hr * .4), GOLD_L)
+    sparkle(d, x0 + 100, y1 - 150, 40, GOLD_L); sparkle(d, x1 - 100, y0 + 100, 30, GOLD_L)
+    # guarantee mark: gold shield + cream check (bottom right)
+    sx, sy, sw, sh = 790, 770, 270, 310
+    sm = [(sx - sw / 2, sy - sh * .36), (sx - sw * .25, sy - sh * .45), (sx, sy - sh * .5), (sx + sw * .25, sy - sh * .45), (sx + sw / 2, sy - sh * .36),
+          (sx + sw / 2, sy + sh * .02), (sx + sw * .36, sy + sh * .26), (sx, sy + sh * .5), (sx - sw * .36, sy + sh * .26), (sx - sw / 2, sy + sh * .02)]
+    P(d, sm, GOLD)
+    d.polygon([(sx, sy - sh * .5 + W), (sx, sy + sh * .5 - W), (sx + sw * .36 - W * .6, sy + sh * .26 - W * .4), (sx + sw / 2 - W, sy + sh * .02), (sx + sw / 2 - W, sy - sh * .36 + W * .5)], fill=GOLD_D)
+    gloss(d, (sx - sw * .36, sy - sh * .34, sx - sw * .14, sy - sh * .2), GOLD_L)
+    ck = [(sx - sw * .26, sy - sh * .02), (sx - sw * .06, sy + sh * .18), (sx + sw * .28, sy - sh * .2)]
+    L(d, ck, w=58 + 2 * 14); L(d, ck, w=58, fill=CREAM)
 def path_slow(d):
     # snail: tan body, ice shell (cyan allowed: frost/slow), ice shards
     body = [(140, 800), (180, 700), (300, 690), (720, 700), (860, 650), (900, 560), (950, 580), (950, 700), (880, 800)]
@@ -278,10 +308,61 @@ def wave_heal(d):
     plus_badge(d, 730, 730, 180, GREEN)
     sparkle(d, 210, 220, 44, GREEN_L); sparkle(d, 820, 360, 36, GREEN_L)
 
+# ---------------- v17.6 ExtraDraw (免广告再抽一次, 精良): the ember-rune draw-pile card back (ui_draw_pile) with a second
+# back fanning off it to the right + a gold '+1' badge. Distinct from next_draw (purple deck + up arrow + plus cross); no ad badge.
+PILE, PILE_D, PILE_L, PILE_GOLD = C('3A3268'), C('2A2450'), C('5A5299'), C('E7B13E')
+def rrect_poly(x0, y0, x1, y1, radii, n=10):
+    """Rounded rectangle outline as a point list; radii = (tl, tr, br, bl)."""
+    tl, tr, br, bl = radii; pts = []
+    for (cx, cy, r, a0) in [(x0 + tl, y0 + tl, tl, 180), (x1 - tr, y0 + tr, tr, 270), (x1 - br, y1 - br, br, 0), (x0 + bl, y1 - bl, bl, 90)]:
+        if r <= 0: pts.append((cx, cy)); continue
+        pts += [(cx + r * math.cos(math.radians(a0 + 90 * k / n)), cy + r * math.sin(math.radians(a0 + 90 * k / n))) for k in range(n + 1)]
+    return pts
+def pile_card(d, cx, cy, w, h, ang, emblem=True):
+    """ui_draw_pile card back, rotated by ang (deg) about its centre: navy-purple fill, top gloss band, bottom shade band,
+    gold inner border with 4 corner studs, gold ring with 4 diamond studs around an orange ember flame."""
+    t = lambda pts: rot(pts, ang, 0, 0, cx, cy)
+    x0, y0, x1, y1 = -w / 2, -h / 2, w / 2, h / 2; r = w * .11
+    P(d, t(rrect_poly(x0, y0, x1, y1, (r, r, r, r))), PILE)
+    i = W * .5
+    d.polygon(t(rrect_poly(x0 + i + 4, y0 + h * .025, x1 - i - 4, y0 + h * .075, (h * .025,) * 4)), fill=PILE_L)              # top gloss
+    d.polygon(t(rrect_poly(x0 + i, y1 - h * .1, x1 - i, y1 - i, (0, 0, r - i, r - i))), fill=PILE_D)                           # bottom shade
+    b = w * .095; bw = 14
+    L(d, t(rrect_poly(x0 + b, y0 + b * 1.25, x1 - b, y1 - h * .1 - b * .55, (r * .45,) * 4) + [rrect_poly(x0 + b, y0 + b * 1.25, x1 - b, y1 - h * .1 - b * .55, (r * .45,) * 4)[0]]), w=bw, fill=PILE_GOLD)
+    for sx, sy in [(x0 + b * 1.9, y0 + b * 2.15), (x1 - b * 1.9, y0 + b * 2.15), (x0 + b * 1.9, y1 - h * .1 - b * 1.45), (x1 - b * 1.9, y1 - h * .1 - b * 1.45)]:
+        px, py = t([(sx, sy)])[0]; d.ellipse((px - 13, py - 13, px + 13, py + 13), fill=PILE_GOLD)
+    if not emblem: return
+    ex, ey = t([(0, -h * .03)])[0]; rr = w * .27
+    d.ellipse((ex - rr, ey - rr, ex + rr, ey + rr), outline=PILE_GOLD, width=18)
+    for k in range(4):
+        a = math.radians(45 + 90 * k + ang); sx, sy = ex + rr * math.cos(a), ey + rr * math.sin(a); q = 21
+        d.polygon(rot([(0, -q), (q, 0), (0, q), (-q, 0)], 45 + 90 * k + ang + 45, 0, 0, sx, sy), fill=PILE_GOLD)
+    tear = [(0, -1), (.2, -.62), (.42, -.18), (.52, .22), (.44, .56), (.22, .8), (0, .86), (-.22, .8), (-.44, .56), (-.52, .22), (-.42, -.18), (-.2, -.62)]
+    P(d, t([(x * rr * .9, -h * .03 + y * rr * .9) for x, y in tear]), ORANGE, w=16)                         # ember flame (ui_draw_pile)
+    d.polygon(t([(x * rr * .42, -h * .03 + rr * .3 + y * rr * .42) for x, y in tear]), fill=C('FFE278'), outline=INK, width=10)
+def one_glyph(x, y, s):
+    """'1' as a chunky polygon (height s, top-left x,y)."""
+    return [(x + s * .18, y + s * .2), (x + s * .5, y), (x + s * .72, y), (x + s * .72, y + s * .8), (x + s * .9, y + s * .8), (x + s * .9, y + s),
+            (x + s * .2, y + s), (x + s * .2, y + s * .8), (x + s * .4, y + s * .8), (x + s * .4, y + s * .3), (x + s * .26, y + s * .38)]
+def plus_one_badge(d, cx, cy, rx, ry):
+    E(d, (cx - rx, cy - ry, cx + rx, cy + ry), GOLD)
+    d.chord((cx - rx + W, cy - ry + W, cx + rx - W, cy + ry - W), 20, 160, fill=GOLD_D)                       # toon shade (lower)
+    E(d, (cx - rx + W * 1.6, cy - ry + W * 1.6, cx + rx - W * 1.6, cy + ry * .55), GOLD, w=0)
+    gloss(d, (cx - rx * .62, cy - ry * .72, cx - rx * .18, cy - ry * .42), GOLD_L)
+    s = ry * 1.05; a, b = s * .34, s * .11; px, py = cx - rx * .36, cy + 4                                   # '+'
+    P(d, [(px - b, py - a), (px + b, py - a), (px + b, py - b), (px + a, py - b), (px + a, py + b), (px + b, py + b), (px + b, py + a), (px - b, py + a), (px - b, py + b), (px - a, py + b), (px - a, py - b), (px - b, py - b)], CREAM, w=12)
+    P(d, one_glyph(cx + rx * .02, cy - s * .5 + 4, s), CREAM, w=12)                                            # '1'
+def extra_draw(d):
+    pile_card(d, 660, 470, 420, 560, 18)                     # second card fanning off to the right
+    pile_card(d, 405, 575, 450, 590, -8)                     # the draw pile (ember-rune back, same look as ui_draw_pile)
+    plus_one_badge(d, 790, 190, 190, 135)
+    sparkle(d, 935, 560, 52, GOLD_L); sparkle(d, 170, 250, 40)
+
 ICONS = [('all_damage', all_damage), ('all_attack_speed', all_attack_speed), ('all_range', all_range), ('arrow_range', arrow_range),
          ('cannon_radius', cannon_radius), ('add_block', add_block), ('next_draw', next_draw), ('path_slow', path_slow),
          ('bonus_slot', bonus_slot), ('kill_gold', kill_gold), ('wave_gold', wave_gold), ('next_wave_gold', next_wave_gold),
-         ('tower_discount', tower_discount), ('base_hp', base_hp), ('wave_heal', wave_heal)]
+         ('tower_discount', tower_discount), ('base_hp', base_hp), ('wave_heal', wave_heal),
+         ('extra_draw', extra_draw)]   # v17.6
 
 def finish(art):
     """art RGBA @S -> cream outline + navy edge + baked hard shadow, fitted into S (keeps a margin), then downsample."""
@@ -328,6 +409,8 @@ def render(name, fn):
 if __name__ == '__main__':
     out = sys.argv[1] if len(sys.argv) > 1 else '.'
     os.makedirs(out, exist_ok=True)
+    only = set(sys.argv[2:])
     for n, fn in ICONS:
+        if only and n not in only: continue
         im, sc = render(n, fn); im.save(os.path.join(out, f'ui_reward_{n}.png'), optimize=True)
         print(n, 'fit scale %.2f' % sc)

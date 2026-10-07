@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-10-08 — v17.6 ExtraDraw reward icon, chunky toon toast, 符文保底 icon
+
+- **ExtraDraw icon:**
+  - New `ui_reward_extra_draw.png` (256 px, v17.4 generator `reward_icons_v17_4.py` → `extra_draw()`): the ember-rune draw-pile back plus a second card fanning off it and a gold +1 badge. No ad badge; reads apart from next_draw.
+  - `RewardIconMap.For(ExtraDraw)` returns it, so the `ui_draw_pile` placeholder is no longer used.
+  - Icon JSON and sheet preview updated.
+- **Toast art:**
+  - `ui9_toast.png` (9-slice 128×78: 72 px navy #2A2F5A pill, ink stroke, cream outline, navy edge, baked hard shadow; border pinned in `StylizedFxV14.BuildAtlas`).
+  - `ui_icon_warn.png` (red #E5484D rounded triangle, white !) and `ui_icon_info.png` (gold circle, navy i).
+  - Painter `toast_paint_v17_6.py`.
+- **ToastStyle / ToastFx** (new `Scripts/UI/ToastStyle.cs`, does not edit GameUI):
+  - `ToastStyle.Apply(noticePill, hint, S)` restyles the dev notice pill: 78 px rect, padding 28, 44 px warn/info icon picked from the text, CN Heavy 30 px white with outline #1E1A3A .25.
+  - `ToastFx` animates pop 0.85→1.05→1 + fade (0.18 s), hold 1.2 s, fade-out 0.2 s + rise 12 px. It restarts on a new text or a re-show; still one toast at a time.
+  - GameUI hookup is one line plus `NoticeSeconds = 1.58`, see the doc.
+- **Documentation:** `Docs/toast_extradraw_v17_6.md`. Previews: `toast_extradraw_v17_6.png`, `reward_icons_v17_6.png`.
+- **v17.6b NextDraw icon (符文保底):**
+  - The v18 glossary renamed `RewardEffect.NextDraw` to 「符文保底」 (下次抽牌至少 1 张带符文). The old icon (deck + up arrow) showed the old "draw +N" text.
+  - `ui_reward_next_draw.png` redrawn in `reward_icons_v17_4.py` → `next_draw()`: a blue blueprint wall card (hand-card look) with a T piece, a neutral gold-rimmed rune hex (white star, pale-gold glow) socketed on its stem, and a gold shield with a check (guarantee). Same file name; the other 15 icons are byte-identical.
+  - Glossary audit of the 16 icons: only NextDraw was wrong. Names updated in the icon JSON, `RewardIconMap` comments and the sheet labels: 石牌补给 → 墙牌补给, 下次抽牌 +N → 符文保底, 塔价折扣 → 建塔折扣.
+  - Preview: `next_draw_v17_6b.png` (`ArtSource/Stylized/UI/next_draw_preview_v17_6b.py`); `reward_icons_v17_6.png` regenerated.
+
 ## 2026-10-08 — v17.5 Core look and crystal, core damage flash, landing dust, plank footprints
 
 - **Core cream-white/bloom, root cause:**
