@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_VFX_SpawnPortal
+  m_Shader: {fileID: 4800000, guid: f019094365db5a54c8f826c7e8b44670, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2980
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CrackTex:
+        m_Texture: {fileID: 2800000, guid: b09d4ade38df94d4bb4a7258d76edf2f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RuneTex:
+        m_Texture: {fileID: 2800000, guid: 92d61d9aebc88484bb1efecabe1b74bf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ScorchTex:
+        m_Texture: {fileID: 2800000, guid: 9fb9094252844474d8016866ff7b29ed, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Active: 1
+    - _Crack: 0
+    - _Flare: 0
+    - _RuneScale: 0.7
+    - _Spin: 0.12
+    m_Colors:
+    - _CrackColor: {r: 3.2, g: 1.2, b: 0.3, a: 1}
+    - _RuneTint: {r: 1.4, g: 1, b: 0.8, a: 1}
+  m_BuildTextureStacks: []

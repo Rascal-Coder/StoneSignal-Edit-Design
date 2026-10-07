@@ -1,5 +1,5 @@
 {
- "note": "Blender coords (Z up). Unity: pos=(-x, z, -y), yaw=-rotZ, scale=(sx, sz, sy)",
+ "note": "Blender coords (Z up). Unity: pos=(-x, z, -y), yaw=-rotZ, scale=(sx, sz, sy) | v16.1: removed 7 props in bottom-right HUD zone (Stump/Log near front centre-right, RockPile + 3 grey Rock blocks + Rock_Small on the front-right islet next to BATTLE). | v17.1: entry islands use SM_Env_Island_Cliff_4x4_Portal_01 (no mounds/leaf litter inside r 1.45); trees on portal islands moved behind the portal (north, r~1.7) so canopies never cover the rune circle from the game camera; W campfire moved west.",
  "items": [
   {
    "asset": "SM_Env_Board_Cliff_16x12_01",
@@ -3694,7 +3694,7 @@
    ]
   },
   {
-   "asset": "SM_Env_Island_Cliff_4x4_01",
+   "asset": "SM_Env_Island_Cliff_4x4_Portal_01",
    "pos": [
     -12.6,
     2.5,
@@ -3836,8 +3836,8 @@
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
-    -13.559,
-    2.389,
+    -13.9,
+    1.4,
     0.55
    ],
    "rotZ": 312.73,
@@ -3850,8 +3850,8 @@
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
-    -12.848,
-    3.488,
+    -12.9,
+    0.8,
     0.55
    ],
    "rotZ": 31.18,
@@ -3862,7 +3862,7 @@
    ]
   },
   {
-   "asset": "SM_Env_Island_Cliff_4x4_01",
+   "asset": "SM_Env_Island_Cliff_4x4_Portal_01",
    "pos": [
     12.6,
     -2.5,
@@ -4004,8 +4004,8 @@
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    12.762,
-    -1.334,
+    13.9,
+    -3.6,
     0.55
    ],
    "rotZ": 17.05,
@@ -4018,8 +4018,8 @@
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    13.321,
-    -2.368,
+    12.9,
+    -4.2,
     0.55
    ],
    "rotZ": 49.59,
@@ -4030,7 +4030,7 @@
    ]
   },
   {
-   "asset": "SM_Env_Island_Cliff_4x4_01",
+   "asset": "SM_Env_Island_Cliff_4x4_Portal_01",
    "pos": [
     0.5,
     10.6,
@@ -4142,34 +4142,6 @@
    ]
   },
   {
-   "asset": "SM_Env_Stump_01",
-   "pos": [
-    0.082,
-    11.478,
-    0.55
-   ],
-   "rotZ": 244.81,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Log_01",
-   "pos": [
-    0.092,
-    11.618,
-    0.55
-   ],
-   "rotZ": 147.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
    "asset": "SM_Enemy_Boss_01",
    "pos": [
     -12.6,
@@ -4186,8 +4158,8 @@
   {
    "asset": "SM_Prop_Campfire_01",
    "pos": [
-    13.2,
-    -3.4,
+    14.2,
+    -2.2,
     0.55
    ],
    "rotZ": 0.0,
@@ -4464,48 +4436,6 @@
    ]
   },
   {
-   "asset": "SM_Env_RockPile_01",
-   "pos": [
-    -10.97,
-    7.04,
-    0.55
-   ],
-   "rotZ": 122.2,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Rock_1x1_01",
-   "pos": [
-    -10.4,
-    7.3,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    0.75,
-    0.75,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Rock_1x1_01",
-   "pos": [
-    -10.36,
-    7.33,
-    1.15
-   ],
-   "rotZ": 17.19,
-   "scale": [
-    0.65,
-    0.65,
-    1
-   ]
-  },
-  {
    "asset": "SM_Env_Rock_1x1_01",
    "pos": [
     -10.43,
@@ -4532,22 +4462,6 @@
     1.6,
     1.6
    ]
-  },
-  {
-   "asset": "SM_Env_Rock_TetrisI_01",
-   "pos": [
-    -9.4,
-    8.4,
-    0.2
-   ],
-   "rotZ": 68.75,
-   "scale": [
-    0.6,
-    0.6,
-    0.6
-   ],
-   "rotX": 20.05,
-   "rotY": 0.0
   },
   {
    "asset": "SM_Env_Rock_Small_01",
@@ -4627,20 +4541,6 @@
     0.02
    ],
    "rotZ": 192.26,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Rock_Small_01",
-   "pos": [
-    -7.425,
-    8.724,
-    -0.05
-   ],
-   "rotZ": 151.48,
    "scale": [
     1,
     1,

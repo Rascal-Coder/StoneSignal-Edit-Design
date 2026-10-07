@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using StoneSignal.VFX;
 using UnityEditor;
@@ -178,7 +178,7 @@ public static class StylizedFxV14
             var tp = AssetDatabase.GUIDToAssetPath(guid); var ti = (TextureImporter)AssetImporter.GetAtPath(tp);
             var border = ti.spriteBorder;   // keep borders from our .meta
             var nm = System.IO.Path.GetFileNameWithoutExtension(tp);   // v16 draw pile: pin borders (no hand-written metas)
-            if (nm == "ui9_draw_bubble") border = new Vector4(30, 28, 30, 28); else if (nm.StartsWith("ui_draw_") || nm == "ui_icon_free") border = Vector4.zero;
+            if (nm == "ui9_draw_bubble") border = new Vector4(30, 28, 30, 28); else if (nm.StartsWith("ui9_reward_frame_")) border = new Vector4(36, 36, 36, 36); else if (nm.StartsWith("ui9_reward_band_")) border = new Vector4(12, 12, 12, 12); else if (nm == "ui9_reward_tier_pill") border = new Vector4(29, 29, 29, 29); else if (nm.StartsWith("ui_reward_") || nm.StartsWith("ui_dir_") || nm == "ui_fx_skull") border = Vector4.zero; else if (nm.StartsWith("ui_draw_") || nm == "ui_icon_free") border = Vector4.zero;
             ti.textureType = TextureImporterType.Sprite; ti.spriteImportMode = SpriteImportMode.Single; ti.mipmapEnabled = false; ti.alphaIsTransparency = true;
             ti.spriteBorder = border; ti.spritePixelsPerUnit = 100; ti.npotScale = TextureImporterNPOTScale.None; ti.wrapMode = TextureWrapMode.Clamp;
             ti.SaveAndReimport();   // rewrites minimal hand-written metas into full Tuanjie metas

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-08 — v17.1 出生门清场 + 中文 TMP 字体
+
+- 出生门（PF_VFX_SpawnPortal）下方黄橙斑块的原因：不是 Leaves 道具，而是 `SM_Env_Island_Cliff_4x4_01` 模型自带的 16 个落叶/草丘（最高 +0.2 m）和 40 片落叶碎片，岛顶边缘也被抖动抬高了最多 +0.12 m。新增变体 `SM_Env_Island_Cliff_4x4_Portal_01`：岛的轮廓和随机种子不变，岛顶是平的，半径 1.45 m 内（门贴花半径 1.3 m + 探测余量）没有草丘和碎叶。`level_layout.json` 中 3 个入口岛（item 248/260/272）换成这个变体；东、西两门旁的 4 棵树和营火挪到门后方，任何门 2.6 m 内都没有 `SM_Env_Leaves_01`。`StylizedArtIntegration.Assets` 新增 `PF_Env_Island_Cliff_4x4_Portal`。下次 BatchImport 会重建 LevelDressing。符文石开关（ArtCatalog.portalShowRunestones）和门 prefab 都没改。预览：portal_clear_v17_1.png。
+- 中文字体：`Assets/Game/Art/Fonts/StoneSignalRoundedCN-Heavy.ttf`（1,461 KB，4,188 字），是 Resource Han Rounded CN Heavy 0.990 的子集，按 SIL OFL 1.1 授权，已改名以避开保留字体名 “Source”。字符集为 `StoneSignal_CJK_Charset.txt`，许可证文件为 `StoneSignalRoundedCN - OFL.txt`。TMP SDF 的生成、回退链和描边材质设置见 `Docs/font_cjk_tmp_spec.md`。
+
 ## 2026-10-07 — 敌人朝向、塔占地、关卡装饰槽、游戏截图钩子
 
 - 敌人朝向：根节点 +Z 以 `Quaternion.RotateTowards` 平滑转向水平移动方向（仅绕 Y），转速 `EnemyData.turnSpeed`（默认 540°/s）；出生/分裂子体从出生点直接朝向首段路径。无任何按模型的 yaw/180° 偏移（美术统一 +Z、根旋转为零）。
@@ -237,3 +242,10 @@ Changed:
 - Sprites (original ember/rune look, no price on card): ui_draw_pile (top card back, navy + gold inlay + ember-rune emblem, 168x216 fixed), ui_draw_pile_layer (plain back for stack layers), ui9_draw_bubble (ivory status pill 176x72, 9-slice L30 B28 R30 T28), ui_draw_bubble_tail (26x15 notch), ui_icon_free (ember star 56). Reuses ui_badge_video_ad. ui9_draw_price_tag no longer used.
 - DrawPileUI (StoneSignal.VFX): SetState(Free|Ad|Used|Full), SetStackCount(3-5), PlayDrawPulse(), SetHandCount(n,7); pill bobs +-4px/1.6s.
 - Spec Docs/draw_pile_v16_spec.md + mockup Docs/draw_pile_v16.png; StylizedFxV14.BuildAtlas pins v16 borders.
+
+## v16.1 / v16.2 (art, uncommitted, 2026-10-08)
+- v16.1: toon wall/enemy props in UNITY_INSTANCING_BUFFER (_RuneIdx/_HiAmount/_HiColor/_GroundClip/_StatusTint/_StatusRim), RuneInlay resonance radius 1, DrawPileUI option B default (showTail=false) + Full state + HandCount + HLG icon/label fix, HUD-zone props removed from PF_Env_LevelDressing_16x12, EnemyStatusFx(+System) + ui_status_* icons. Measured 119 DC.
+- v16.2: art-led SpawnPortal (painted rune circle, scorch/crack decals, Blender runestones+rubble, 4x4 flare). EnemyDeathFx (T_FX_DeathPuff_4x4 + ui_fx_skull, PF_VFX_EnemyDeath via BatchImport). DirectionIndicator sprites ui_dir_ring/ui_dir_arrow/ui_dir_arrow_pressed/ui_dir_pulse in HUD atlas folder.
+- GridView.DrawFlow change dropped (dev fixed flow arrows in b65d8fb/bc8e310).
+- v16.2 (cont.): level_layout.json source: 7 HUD-zone props removed (RockPile, 3 grey Rock blocks, Rock_Small, Stump, Log); SS_Water subtle shore ripples + SpawnRipple.Play (0 extra DC); core enclosure SM_Core_Enclosure_Intact/Cracked/Broken + CoreDamageFx; RewardPickUI + ui9_reward_frame_* / gems / ribbon / sheen / flame edge (borders pinned in StylizedFxV14).
+- v17: SM_Enemy_Flyer_01 remade as cartoon bird (build_stylized_batch1.py flyer(), same rig/clip names), FlyingMotion (heightOffset 1.2, bobAmp 0.12, bankMax 28) auto-added by EnemyGroundFx.SetFlying(true), flyer shadow 0.55 + optional flyingBlobMaterial; RewardPickUI v17 chunky toon cards (ui9_reward_frame_*/band_*/tier_pill), old ornate reward sprites removed (Docs/reward_pick_v17.md).

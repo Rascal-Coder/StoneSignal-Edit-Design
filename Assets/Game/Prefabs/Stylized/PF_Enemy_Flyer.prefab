@@ -43,6 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2272854470012426659}
   - component: {fileID: 2595149169053551968}
+  - component: {fileID: 8437528547277943156}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: PF_Enemy_Flyer
@@ -65,7 +66,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4352567312545765382}
-  - {fileID: 24921380647633706}
+  - {fileID: 4296770029636713551}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2595149169053551968
@@ -86,7 +87,21 @@ MonoBehaviour:
   deathDissolveDelay: 0.35
   deathDissolveDuration: 0.6
   deathVfx: {fileID: 0}
---- !u!1001 &1565156774538967795
+--- !u!114 &8437528547277943156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7627164793974606073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4711e720e1182ba45943f5dcfe495a7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  headHeight: 1.3010101
+  radius: 0.7149764
+--- !u!1001 &3333004046841283990
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -140,19 +155,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1686355778012253961, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
       propertyPath: radius
-      value: 0.56060666
+      value: 0.7596624
       objectReference: {fileID: 0}
     - target: {fileID: 2725124897096463443, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.7848493
+      value: 1.0635273
       objectReference: {fileID: 0}
     - target: {fileID: 2725124897096463443, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.7848493
+      value: 1.0635273
       objectReference: {fileID: 0}
     - target: {fileID: 2725124897096463443, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.7848493
+      value: 1.0635273
       objectReference: {fileID: 0}
     - target: {fileID: 3665994463482207982, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
       propertyPath: m_Name
@@ -163,10 +178,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
---- !u!4 &24921380647633706 stripped
+--- !u!4 &4296770029636713551 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1576264362734156249, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
-  m_PrefabInstance: {fileID: 1565156774538967795}
+  m_PrefabInstance: {fileID: 3333004046841283990}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8953679386428529307
 PrefabInstance:

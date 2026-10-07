@@ -598,28 +598,47 @@ def splitter():  # Splitter: twin lobes on separate bones so the death clip tear
         return {}
     return rigged_enemy("SM_Enemy_Splitter_01", P, bones, walk_clips(26, .05, 9, extra=ex)(20))
 
-def flyer():  # hover drone: sway + wing flap
-    P = [(cyl(.16, .16, .02, 10, (0, 0, .01), "EnemyDark"), "root"),
-         (uv_sphere(.26, 14, 8, (0, 0, .8), (1, 1, .85), "EnemyRed"), "body"), (uv_sphere(.16, 10, 6, (0, -.18, .76), (1, .5, .9), "EnemyWhite"), "body"),
-         (cyl(.08, .0, .2, 8, (0, 0, .52), "SlotHE", rot=(math.radians(180), 0, 0)), "body"),
-         (cyl(.3, .3, .05, 16, (0, 0, 1.02), "EnemyDark"), "head"), (cyl(.25, .25, .06, 16, (0, 0, 1.02), "EnemyWhite"), "head")]
-    P += [(e, "body") for e in eyes(-.24, .82, .08, .05)]
-    for side, bn in ((-1, "wingL"), (1, "wingR")):
-        P.append((box((.42, .2, .03), (side * .45, .02, .82), "EnemyWhite", bevel=.01, rot=(0, side * math.radians(-10), 0)), bn))
-        P.append((box((.3, .08, .035), (side * .42, -.07, .83), "EnemyRed", bevel=.008), bn))
-    bones = {"root": ((0, 0, 0), (0, 0, .1), None), "body": ((0, 0, .55), (0, 0, .95), "root"), "head": ((0, 0, .95), (0, 0, 1.1), "body"),
-             "wingL": ((-.24, 0, .82), (-.66, 0, .82), "body"), "wingR": ((.24, 0, .82), (.66, 0, .82), "body")}
-    def move(t):
-        f = S(t * PI2 * 4) * 35
-        return {"body": ((0, .08 * S(t * PI2), 0), (6 * S(t * PI2), 0, 5 * S(t * PI2 + 1)), (1, 1, 1)), "head": ((0, 0, 0), (0, 360 * t, 0), (1, 1, 1)),
+def flyer():  # v17 bird: chunky round cartoon bird, big 3-feather wings, tail fan, crest; flies (FlyingMotion lifts it 1.2 m in game)
+    BZ = .42  # body centre height above the pivot (pivot = ground point under the bird; FlyingMotion adds flight height)
+    P = [(uv_sphere(.30, 16, 10, (0, .02, BZ), (1, 1.15, .92), "EnemyRed"), "body"),
+         (uv_sphere(.22, 14, 8, (0, -.12, BZ - .06), (1, .8, .9), "EnemyWhite"), "body"),                 # belly
+         (uv_sphere(.21, 14, 9, (0, -.26, BZ + .2), (1, 1, .95), "EnemyRed"), "head"),                   # head
+         (cyl(.085, 0, .2, 4, (0, -.5, BZ + .17), "SlotHE", rot=(math.radians(90), 0, math.radians(45))), "head"),   # beak forward (-Y)
+         (cyl(.06, 0, .07, 4, (0, -.47, BZ + .12), "SlotFire", rot=(math.radians(90), 0, math.radians(45))), "head")]
+    for side in (-1, 1):   # big eyes: white sclera, yellow iris, dark pupil, all facing -Y
+        P += [(uv_sphere(.075, 10, 8, (side * .1, -.42, BZ + .25), (1, .55, 1.15), "EnemyWhite"), "head"),
+              (uv_sphere(.05, 8, 6, (side * .1, -.455, BZ + .245), (1, .5, 1.1), "EnemyEye"), "head"),
+              (uv_sphere(.026, 6, 5, (side * .1, -.478, BZ + .24), (1, .5, 1.1), "EnemyDark"), "head"),
+              (box((.11, .03, .03), (side * .11, -.43, BZ + .35), "EnemyDark", rot=(0, side * math.radians(-18), 0)), "head")]   # angry brows
+    for k, (dx, h, tilt) in enumerate(((0, .2, 0), (-.06, .15, -25), (.06, .15, 25))):   # crest tuft
+        P.append((cyl(.045, 0, h, 4, (dx, -.2, BZ + .42 + h * .4), "EnemyDark", rot=(math.radians(-25), math.radians(tilt), 0)), "head"))
+    for k, a in enumerate((-28, 0, 28)):   # tail fan (behind = +Y)
+        P.append((box((.09, .32, .03), (math.sin(math.radians(a)) * .12, .36 + .02 * abs(k - 1), BZ + .06), "EnemyDark", bevel=.012, rot=(math.radians(18), 0, math.radians(a))), "tail"))
+    for side in (-1, 1):   # tucked feet
+        P.append((box((.06, .1, .05), (side * .09, -.04, BZ - .3), "SlotHE", bevel=.012), "body"))
+    for side, bn in ((-1, "wingL"), (1, "wingR")):   # big broad wings: solid red slab + 3 white scalloped primaries along the trailing edge
+        x0 = side * .24; z = BZ + .08
+        P.append((box((.62, .36, .06), (x0 + side * .3, .02, z), "EnemyRed", bevel=.03, seg=2), bn))
+        P.append((box((.62, .07, .07), (x0 + side * .3, -.15, z + .005), "EnemyDark", bevel=.02), bn))   # leading-edge stripe (reads from top)
+        for k in range(3):
+            P.append((uv_sphere(.13, 10, 6, (x0 + side * (.16 + k * .2), .22 + .03 * k, z - .005), (1.1 - k * .1, 1.15, .28), "EnemyWhite"), bn))
+        P.append((uv_sphere(.12, 10, 6, (x0 + side * .62, .02, z), (1.2, 1.4, .3), "EnemyRed"), bn))   # rounded tip
+    bones = {"root": ((0, 0, 0), (0, 0, .1), None), "body": ((0, 0, BZ - .25), (0, 0, BZ + .1), "root"), "head": ((0, -.2, BZ + .1), (0, -.25, BZ + .35), "body"),
+             "tail": ((0, .25, BZ), (0, .5, BZ + .1), "body"),
+             "wingL": ((-.26, 0, BZ + .08), (-.9, 0, BZ + .08), "body"), "wingR": ((.26, 0, BZ + .08), (.9, 0, BZ + .08), "body")}
+    def move(t):   # 2 flaps per loop (0.6 s @30fps), downstroke faster (eased), body lifts on downstroke
+        ph = (t * 2) % 1; f = 38 * math.cos(PI2 * ph) - 4
+        return {"body": ((0, .04 * S(t * PI2 * 2 + 1.2), 0), (4 * S(t * PI2 * 2), 0, 0), (1, 1, 1)),
+                "head": ((0, 0, 0), (-4 * S(t * PI2 * 2 + .6), 0, 0), (1, 1, 1)), "tail": ((0, 0, 0), (8 * S(t * PI2 * 2 + 2), 0, 0), (1, 1, 1)),
                 "wingL": ((0, 0, 0), (f, 0, 0), (1, 1, 1)), "wingR": ((0, 0, 0), (-f, 0, 0), (1, 1, 1))}
     def hit(t):
         k = S(min(t * 2, 1) * math.pi)
-        return {"body": ((0, -.08 * k, 0), (-20 * k, 0, 10 * k), (1.1, .9, 1.1)), "wingL": ((0, 0, 0), (40 * k, 0, 0), (1, 1, 1)), "wingR": ((0, 0, 0), (-40 * k, 0, 0), (1, 1, 1))}
+        return {"body": ((0, -.06 * k, 0), (-18 * k, 0, 10 * k), (1.12, .88, 1.12)), "head": ((0, 0, 0), (-14 * k, 0, 0), (1, 1, 1)),
+                "wingL": ((0, 0, 0), (60 * k, 0, 0), (1, 1, 1)), "wingR": ((0, 0, 0), (-60 * k, 0, 0), (1, 1, 1))}
     def death(t):
         e = min(1, t * 1.3)
-        return {"body": ((0, -.6 * e * e, 0), (-50 * e, 0, 120 * e), (1, 1, 1)), "wingL": ((0, 0, 0), (-60 * e, 0, 0), (1, 1, 1)), "wingR": ((0, 0, 0), (60 * e, 0, 0), (1, 1, 1))}
-    return rigged_enemy("SM_Enemy_Flyer_01", P, bones, {"SS_Move": (36, True, move), "SS_Hit": (8, False, hit), "SS_Death": (24, False, death)})
+        return {"body": ((0, -.5 * e * e, 0), (-60 * e, 0, 140 * e), (1, 1, 1)), "wingL": ((0, 0, 0), (-70 * e, 0, 0), (1, 1, 1)), "wingR": ((0, 0, 0), (70 * e, 0, 0), (1, 1, 1))}
+    return rigged_enemy("SM_Enemy_Flyer_01", P, bones, {"SS_Move": (18, True, move), "SS_Hit": (8, False, hit), "SS_Death": (24, False, death)})
 
 def boss():  # 2x2, ~2.6 m red/white mech: legs, arms, head
     P = []
@@ -667,8 +686,9 @@ def tile_dirt():
         parts.append(ico(.05, 1, (rng.uniform(-.35, .35), rng.uniform(-.35, .35), .23), (1.3, 1, .5), (0, 0, rng.random()), "DirtDark"))
     return [to_object("SM_Env_Tile_Dirt_01", parts)]
 
-def island():
-    """4x4 m island chunk: leafy top at z 0.55, 3 jittered rock strata down to -1.6 (pivot = centre at water level)."""
+def island(clear=0.0, name="SM_Env_Island_Cliff_4x4_01"):
+    """v17.1 clear>0: spawn-portal variant, no mounds/leaf litter/top bumps inside r=clear (same rng stream -> same silhouette).
+    4x4 m island chunk: leafy top at z 0.55, 3 jittered rock strata down to -1.6 (pivot = centre at water level)."""
     parts = []
     def slab(w, z0, z1, top, side, jit):
         bm = bmesh.new()
@@ -693,7 +713,9 @@ def island():
     # leafy/grassy top with uneven rim, then 5 jittered rock strata stepping in/out (spec: layered cliff, strata)
     top = slab(4.15, .3, .55, "GrassTop", "StrataC", .07)
     for v in top.verts:
-        if v.co.z > .5: v.co.z += rng.uniform(-.05, .12) if v.co.xy.length > .3 else 0
+        if v.co.z > .5:
+            dz = rng.uniform(-.05, .12) if v.co.xy.length > .3 else 0
+            v.co.z += 0 if clear else dz   # portal variant: flat top cap so the decal never clips
     parts.append(top)
     global ISLAND_TOP
     ISLAND_TOP = [(v.co.x, v.co.y) for v in top.verts if v.co.z > .4]
@@ -707,13 +729,21 @@ def island():
         parts.append(ico(rng.uniform(.18, .36), 1, (math.cos(a) * 1.98, math.sin(a) * 1.98, z), (1.4, 1, .7), (0, 0, a), rng.choice(["StoneSide", "StrataC", "StrataB"]), jitter=.05))
     for k in range(16):  # grass / leaf mounds -> height variation on top
         a = rng.uniform(0, math.tau); r = rng.uniform(0, 1.75)
-        parts.append(ico(rng.uniform(.3, .65), 1, (math.cos(a) * r, math.sin(a) * r, .55), (1.2, 1, .32), (0, 0, a),
-                         rng.choice(["GrassTop", "Moss", "LeafOrange", "LeafRed", "GrassDry"]), jitter=.06))
+        m = ico(rng.uniform(.3, .65), 1, (math.cos(a) * r, math.sin(a) * r, .55), (1.2, 1, .32), (0, 0, a),
+                rng.choice(["GrassTop", "Moss", "LeafOrange", "LeafRed", "GrassDry"]), jitter=.06)
+        if clear and r - .25 < clear: m.free()
+        else: parts.append(m)
     for k in range(40):  # leaf litter
         a = rng.uniform(0, math.tau); r = rng.uniform(.2, 1.95)
-        parts.append(ico(rng.uniform(.05, .1), 1, (math.cos(a) * r, math.sin(a) * r, .62), (1.4, 1, .25), (0, 0, a),
-                         rng.choice(["LeafGold", "LeafOrange", "LeafHighlight", "LeafRed"])))
-    return [to_object("SM_Env_Island_Cliff_4x4_01", parts)]
+        m = ico(rng.uniform(.05, .1), 1, (math.cos(a) * r, math.sin(a) * r, .62), (1.4, 1, .25), (0, 0, a),
+                rng.choice(["LeafGold", "LeafOrange", "LeafHighlight", "LeafRed"]))
+        if clear and r < clear + .05: m.free()
+        else: parts.append(m)
+    return [to_object(name, parts)]
+
+def island_portal():  # v17.1: entry/spawn islands; portal decal r 1.3 + probe slack -> clear r 1.45
+    rng.seed(zlib.crc32(b"SM_Env_Island_Cliff_4x4_01"))
+    return island(1.45, "SM_Env_Island_Cliff_4x4_Portal_01")
 
 ISLAND_TOP = []
 def rect_poly(w, h, step, out_lo, out_hi):
@@ -901,7 +931,7 @@ oe.inputs[0].default_value = (0.013, 0.010, 0.04, 1); on.links.new(oe.outputs[0]
 ASSETS = [
     ("Environment", "SM_Env_Tile_Stone_A_01", lambda: tile("A")), ("Environment", "SM_Env_Tile_Stone_B_01", lambda: tile("B")),
     ("Environment", "SM_Env_Tile_Stone_C_01", tile_c), ("Environment", "SM_Env_Tile_Stone_D_01", lambda: tile("D")), ("Environment", "SM_Env_Tile_Stone_E_01", lambda: tile("E")), ("Environment", "SM_Env_Tile_Dirt_01", tile_dirt),
-    ("Environment", "SM_Env_Island_Cliff_4x4_01", island), ("Environment", "SM_Env_Board_Cliff_16x12_01", board_cliff), ("Environment", "SM_Env_Bridge_Plank_01", bridge),
+    ("Environment", "SM_Env_Island_Cliff_4x4_01", island), ("Environment", "SM_Env_Island_Cliff_4x4_Portal_01", island_portal), ("Environment", "SM_Env_Board_Cliff_16x12_01", board_cliff), ("Environment", "SM_Env_Bridge_Plank_01", bridge),
     ("Environment", "SM_Env_Dock_Post_01", dock_post), ("Environment", "SM_Prop_Brazier_01", brazier),
     ("Environment", "SM_Prop_Campfire_01", campfire), ("Environment", "SM_Prop_Lantern_01", lantern),
     ("Environment", "SM_Env_RockPile_01", rock_pile), ("Environment", "SM_Env_Stump_01", stump), ("Environment", "SM_Env_Log_01", log),

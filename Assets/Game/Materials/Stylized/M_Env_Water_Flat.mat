@@ -39,9 +39,15 @@ Material:
     m_Ints: []
     m_Floats:
     - _DepthRange: 0.08
+    - _RippleReach: 0.55
+    - _RippleSpacing: 0.16
+    - _RippleSpeed: 0.035
+    - _RippleStrength: 0.14
+    - _RippleWidth: 0.12
     m_Colors:
     - _BaseColor: {r: 0.039215688, g: 0.29803923, b: 0.61960787, a: 1}
     - _DeepColor: {r: 0.039215688, g: 0.29803923, b: 0.61960787, a: 1}
     - _GlowColor: {r: 0.55, g: 1.05, b: 1.25, a: 1}
+    - _RippleColor: {r: 0.54999995, g: 0.78, b: 0.95, a: 1}
     - _ShallowColor: {r: 0.49803922, g: 0.827451, b: 0.8784314, a: 1}
   m_BuildTextureStacks: []

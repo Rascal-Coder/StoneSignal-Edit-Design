@@ -17,9 +17,42 @@ CBUFFER_START(UnityPerMaterial)
     half _Dissolve, _DissolveEdge, _Wobble, _WobbleFreq, _BaseAO, _BaseAOHeight, _Mottle;
     half4 _DissolveColor;
     float _OutlineWidthPx, _OutlineZOffset;
-    half4 _HiColor; half _HiAmount;
-    half4 _RuneColor; half _RuneIdx;   // v15 rune inlay: glyph index into 4x2 _RuneAtlas (-1 = none), set per wall renderer via MPB (RuneInlay)   // v15 placement wall highlight (set per renderer via MPB by WallHighlight)
+#if !defined(UNITY_INSTANCING_ENABLED)
+    half4 _HiColor; half _HiAmount;      // v15 placement wall highlight (per renderer via MPB, WallHighlight)
+    half4 _RuneColor; half _RuneIdx;     // v15 rune inlay: glyph index into 4x2 _RuneAtlas (-1 = none), per renderer via MPB (RuneInlay)
+    float4 _GroundClip;
+    half4 _StatusTint, _StatusRim;       // v16.1 EnemyStatusFx: rgb colour, a amount (MPB per enemy)                  // v16.1 spawn portal: x = world Y clip plane, y = enabled (0 = off). Set via MPB by SpawnPortal
+#endif
 CBUFFER_END
+// v16.1: in the instanced variant the per-wall props live in an instancing buffer, so walls carrying an MPB still GPU-instance
+// (material enableInstancing). The non-instanced variant keeps them in UnityPerMaterial (SRP Batcher compatible).
+#if defined(UNITY_INSTANCING_ENABLED)
+UNITY_INSTANCING_BUFFER_START(SSWallProps)
+    UNITY_DEFINE_INSTANCED_PROP(half4, _HiColor)
+    UNITY_DEFINE_INSTANCED_PROP(half,  _HiAmount)
+    UNITY_DEFINE_INSTANCED_PROP(half4, _RuneColor)
+    UNITY_DEFINE_INSTANCED_PROP(half,  _RuneIdx)
+    UNITY_DEFINE_INSTANCED_PROP(float4, _GroundClip)
+    UNITY_DEFINE_INSTANCED_PROP(half4, _StatusTint)
+    UNITY_DEFINE_INSTANCED_PROP(half4, _StatusRim)
+UNITY_INSTANCING_BUFFER_END(SSWallProps)
+#define SS_HI_COLOR   UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _HiColor)
+#define SS_HI_AMOUNT  UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _HiAmount)
+#define SS_RUNE_COLOR UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _RuneColor)
+#define SS_RUNE_IDX   UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _RuneIdx)
+#define SS_GROUND_CLIP UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _GroundClip)
+#define SS_STATUS_TINT UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _StatusTint)
+#define SS_STATUS_RIM  UNITY_ACCESS_INSTANCED_PROP(SSWallProps, _StatusRim)
+#else
+#define SS_HI_COLOR   _HiColor
+#define SS_HI_AMOUNT  _HiAmount
+#define SS_RUNE_COLOR _RuneColor
+#define SS_RUNE_IDX   _RuneIdx
+#define SS_GROUND_CLIP _GroundClip
+#define SS_STATUS_TINT _StatusTint
+#define SS_STATUS_RIM  _StatusRim
+#endif
+void SS_GroundClipTest(float wsY) { float4 g = SS_GROUND_CLIP; if (g.y > 0.5) clip(wsY - g.x); }   // v16.1 portal rise: hide below the tile
 float _OutlineGlobalScale; // optional global from camera script; 0/unset -> 1
 
 struct Attributes
@@ -52,7 +85,7 @@ float3 SS_Deform(float3 p)
     float a = sin(t * 0.5) * 0.35 * _Wobble; float ca = cos(a), sa = sin(a);
     p.xz = float2(p.x * ca - p.z * sa, p.x * sa + p.z * ca);
     p.y += (sin(t * 2) * 0.5 + 0.5) * 0.08 * _Wobble;
-    p.y += 0.02 * _HiAmount;   // highlight lift
+    p.y += 0.02 * SS_HI_AMOUNT;   // highlight lift
     return p;
 }
 float3 SS_World(float4 posOS, half4 c) { return TransformObjectToWorld(SS_Deform(posOS.xyz)) + SS_Wind(0, c); }
@@ -82,6 +115,7 @@ struct Varyings
     half4  color      : TEXCOORD3;
     half   fog        : TEXCOORD4;
     float3 positionOS : TEXCOORD5;
+    UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -89,6 +123,7 @@ Varyings ToonVert(Attributes i)
 {
     Varyings o = (Varyings)0;
     UNITY_SETUP_INSTANCE_ID(i);
+    UNITY_TRANSFER_INSTANCE_ID(i, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     float3 ws = SS_World(i.positionOS, i.color);
     o.positionWS = ws; o.positionOS = i.positionOS.xyz;
@@ -102,7 +137,10 @@ Varyings ToonVert(Attributes i)
 
 half4 ToonFrag(Varyings i) : SV_Target
 {
+    UNITY_SETUP_INSTANCE_ID(i);
+    SS_GroundClipTest(i.positionWS.y);
     half edge = SS_DissolveClip(i.positionOS);
+    half runeIdx = SS_RUNE_IDX, hiAmount = SS_HI_AMOUNT; half3 runeCol = SS_RUNE_COLOR.rgb, hiCol = SS_HI_COLOR.rgb;
     float3 N = normalize(i.normalWS);
     Light light = GetMainLight(TransformWorldToShadowCoord(i.positionWS), i.positionWS, half4(1, 1, 1, 1));
     float ndl = dot(N, light.direction);
@@ -120,18 +158,23 @@ half4 ToonFrag(Varyings i) : SV_Target
     half3 c = diffuse + ambient + rim + _EmissionColor.rgb;
     c *= 1 + (SS_Noise(i.positionWS * 2.3) * 0.7 + SS_Noise(i.positionWS * 7.1) * 0.3 - 0.5) * _Mottle; // weathered mottling
     c *= lerp(1 - _BaseAO, 1, saturate(i.positionOS.y / max(_BaseAOHeight, 1e-3))); // contact AO at object base
-    if (_RuneIdx > -0.5)   // rune glyph on the block top (object-space xz -> 4x2 atlas cell), emissive + slow breathe
+    if (runeIdx > -0.5)   // rune glyph on the block top (object-space xz -> 4x2 atlas cell), emissive + slow breathe
     {
         float2 uv = saturate(i.positionOS.xz / 0.84 + 0.5); uv.y = 1 - uv.y;
-        float id = floor(_RuneIdx + 0.5); float2 cell = float2(fmod(id, 4), 1 - floor(id / 4));
+        float id = floor(runeIdx + 0.5); float2 cell = float2(fmod(id, 4), 1 - floor(id / 4));
         half g = SAMPLE_TEXTURE2D(_RuneAtlas, sampler_RuneAtlas, (uv + cell) * float2(0.25, 0.5)).a * saturate(N.y * 2 - 1);
-        c = lerp(c, _RuneColor.rgb * 0.55, g * 0.6) + _RuneColor.rgb * g * (0.9 + 0.25 * sin(_Time.y * 2.0));
+        c = lerp(c, runeCol * 0.55, g * 0.6) + runeCol * g * (0.9 + 0.25 * sin(_Time.y * 2.0));
     }
-    if (_HiAmount > 0.001)   // rim glow on block top edges + faint fill, pulsing
+    if (hiAmount > 0.001)   // rim glow on block top edges + faint fill, pulsing
     {
         float2 q = abs(i.positionOS.xz); float e = smoothstep(0.34, 0.46, max(q.x, q.y)) * saturate(N.y * 2 - 0.6);
         half pulse = 0.75 + 0.25 * sin(_Time.y * 6.0);
-        c += _HiColor.rgb * _HiAmount * (e * 1.8 + 0.15) * pulse;
+        c += hiCol * hiAmount * (e * 1.8 + 0.15) * pulse;
+    }
+    {   // v16.1 status tint (frost crust / poison green / burn char) + coloured fresnel rim
+        half4 st = SS_STATUS_TINT, sr = SS_STATUS_RIM;
+        c = lerp(c, c * 0.55 + st.rgb * 0.45, st.a);
+        c += sr.rgb * sr.a * smoothstep(0.45, 0.95, fres) * (0.85 + 0.15 * sin(_Time.y * 5.0));
     }
     c = lerp(c, _FlashColor.rgb, _HitFlash);
     c = lerp(c, _DissolveColor.rgb, edge);
@@ -140,11 +183,12 @@ half4 ToonFrag(Varyings i) : SV_Target
 }
 
 // ---- Outline (spec 4.6.3): smoothed normal from UV3, constant screen-space pixel width
-struct OutlineVaryings { float4 positionCS : SV_POSITION; half fog : TEXCOORD0; float3 positionOS : TEXCOORD1; };
+struct OutlineVaryings { float4 positionCS : SV_POSITION; half fog : TEXCOORD0; float3 positionOS : TEXCOORD1; float wsY : TEXCOORD2; UNITY_VERTEX_INPUT_INSTANCE_ID };
 OutlineVaryings OutlineVert(Attributes i)
 {
     OutlineVaryings o = (OutlineVaryings)0;
     UNITY_SETUP_INSTANCE_ID(i);
+    UNITY_TRANSFER_INSTANCE_ID(i, o);
     float3 nWS = TransformObjectToWorldNormal(i.normalOS);
     float3 tWS = TransformObjectToWorldDir(i.tangentOS.xyz);
     float3 bWS = cross(nWS, tWS) * i.tangentOS.w;
@@ -163,11 +207,11 @@ OutlineVaryings OutlineVert(Attributes i)
 #else
     posCS.z += _OutlineZOffset * posCS.w;
 #endif
-    o.positionCS = posCS; o.positionOS = i.positionOS.xyz;
+    o.positionCS = posCS; o.positionOS = i.positionOS.xyz; o.wsY = ws.y;
     o.fog = ComputeFogFactor(posCS.z);
     return o;
 }
-half4 OutlineFrag(OutlineVaryings i) : SV_Target { SS_DissolveClip(i.positionOS); return half4(MixFog(_OutlineColor.rgb, i.fog), 1); }
+half4 OutlineFrag(OutlineVaryings i) : SV_Target { UNITY_SETUP_INSTANCE_ID(i); SS_GroundClipTest(i.wsY); SS_DissolveClip(i.positionOS); return half4(MixFog(_OutlineColor.rgb, i.fog), 1); }
 
 // ---- Shadow caster / depth
 float3 _LightDirection;

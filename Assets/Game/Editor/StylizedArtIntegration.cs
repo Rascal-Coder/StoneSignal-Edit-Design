@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -64,6 +64,7 @@ public static class StylizedArtIntegration
         ("Environment", "SM_Env_Tile_Stone_E_01", "PF_Env_Tile_Stone_E", "Env"),
         ("Environment", "SM_Env_Tile_Dirt_01", "PF_Env_Tile_Dirt", "Env"),
         ("Environment", "SM_Env_Island_Cliff_4x4_01", "PF_Env_Island_Cliff_4x4", "Env"),
+        ("Environment", "SM_Env_Island_Cliff_4x4_Portal_01", "PF_Env_Island_Cliff_4x4_Portal", "Env"), // v17.1 flat-top spawn/entry island
         ("Environment", "SM_Env_Board_Cliff_16x12_01", "PF_Env_Board_Cliff_16x12", "Env"),
         ("Environment", "SM_Env_Bridge_Plank_01", "PF_Env_Bridge_Plank", "Env"),
         ("Environment", "SM_Env_Dock_Post_01", "PF_Env_Dock_Post", "Env"),
@@ -447,6 +448,27 @@ public static class StylizedArtIntegration
         return groups.Count;
     }
 
+    /// v16.1: true if a world point projects into the bottom-right HUD zone (600x420 px at 1080 ref height) of the game camera for any target aspect.
+    static bool InHudZoneBR(Vector3 wp)
+    {
+        var go = new GameObject("_hudcam"); var cam = go.AddComponent<Camera>();
+        try
+        {
+            var rot = Quaternion.Euler(GameCamPitchV10, GameCamYawV10, 0); cam.orthographic = true; cam.orthographicSize = GameCamOrthoV10;
+            cam.transform.SetPositionAndRotation(GameCamTargetV10 - rot * Vector3.forward * 30f, rot);
+            foreach (var asp in new[] { 16f / 9f, 19.5f / 9f, 20f / 9f, 4f / 3f })
+            {
+                cam.aspect = asp; float refW = 1080f * asp;
+                for (int k = 0; k < 2; k++)   // base and ~0.6 m above (prop silhouette)
+                {
+                    var v = cam.WorldToViewportPoint(wp + Vector3.up * (.6f * k));
+                    if (v.x > 1f - 600f / refW && v.y < 420f / 1080f && v.x < 1.05f && v.y > -.05f) return true;
+                }
+            }
+            return false;
+        }
+        finally { UnityEngine.Object.DestroyImmediate(go); }
+    }
     public static void BuildLevelDressing()
     {
         var mats = new Dictionary<string, Material> { ["Water"] = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_Env_Water_Flat.mat") };
@@ -459,17 +481,21 @@ public static class StylizedArtIntegration
         water.transform.SetParent(root.transform); water.transform.localScale = Vector3.one * 10; water.GetComponent<Renderer>().sharedMaterial = mats["Water"];
         var groups = new Dictionary<string, Transform>();
         Transform G(string n) { if (!groups.TryGetValue(n, out var t)) { t = new GameObject(n).transform; t.SetParent(root.transform, false); groups[n] = t; } return t; }
-        int bridges = 0;
+        int bridges = 0; var hudSkipped = new List<string>();
         foreach (var it in layout.items)
         {
             if (!keep.Any(k => it.asset.Contains(k)) || !byFbx.TryGetValue(it.asset, out var pf)) continue;
             bool onBoard = Mathf.Abs(it.pos[0]) < 7.9f && Mathf.Abs(it.pos[1]) < 5.9f;
             if (onBoard && !it.asset.Contains("Board_Cliff")) continue;
             string grp = it.asset.Contains("Board_Cliff") ? "BoardCliff" : it.asset.Contains("Bridge") || it.asset.Contains("Dock") || it.asset.Contains("Lantern") ? "EntryBridges" : it.asset.Contains("Tree") ? "Trees" : "Islands";
-            var go = Place(pf, G(grp), new Vector3(-it.pos[0], it.pos[2], -it.pos[1]), -it.rotZ);
+            var wp = new Vector3(-it.pos[0], it.pos[2], -it.pos[1]);
+            bool prop = it.asset.Contains("Rock_") || it.asset.Contains("RockPile") || it.asset.Contains("Stump") || it.asset.Contains("Log_") || it.asset.Contains("Campfire");
+            if (prop && InHudZoneBR(wp)) { hudSkipped.Add(it.asset + " @" + wp); continue; }   // v16.1: keep bottom-right HUD (BATTLE/DRAW) clear
+            var go = Place(pf, G(grp), wp, -it.rotZ);
             go.transform.localScale = new Vector3(it.scale[0], it.scale[2], it.scale[1]);
             if (it.asset.Contains("Bridge")) bridges++;
         }
+        Debug.Log("LEVEL DRESSING HUD zone (bottom-right 600x420 ref px, 16:9/19.5:9/20:9/4:3) removed " + hudSkipped.Count + ": " + string.Join(", ", hudSkipped));
         int rBefore = root.GetComponentsInChildren<Renderer>().Length;
         int mBefore = root.GetComponentsInChildren<Renderer>().SelectMany(r => r.sharedMaterials).Distinct().Count();
         int chunks = CombineDressing(root.transform, water);
@@ -583,8 +609,11 @@ public static class StylizedArtIntegration
             StylizedPlacementFX.BuildAll();
             StylizedVFXBuilder.BuildAll();
             StylizedFxV14.BuildAll();
+            StylizedPortalV161.Build();          // v16.2 art-led spawn portal
+            StylizedPortalV161.BuildStatus();    // v16.1 enemy status FX
             Checks();
             StylizedFxV14.Checks();
+            StylizedPortalV161.Checks(); StylizedPortalV161.StatusChecks(); StylizedPortalV161.BuildDeath(); StylizedPortalV161.DeathChecks();
             StylizedVFXBuilder.Checks();
             ThirdPartyArtIntegration.Checks();   // existing runtime art untouched
             Stage2Validation.Run();              // gameplay logic still passes

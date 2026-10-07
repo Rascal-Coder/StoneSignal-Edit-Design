@@ -40,7 +40,7 @@ ModelImporter:
       takeName: SS_Move
       internalID: 937429446219402992
       firstFrame: 0
-      lastFrame: 36
+      lastFrame: 18
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -150,8 +150,8 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    totalVerticesCount: 904
-    totalTrianglesCount: 802
+    totalVerticesCount: 2192
+    totalTrianglesCount: 2574
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
