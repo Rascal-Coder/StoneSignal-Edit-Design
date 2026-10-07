@@ -5,11 +5,11 @@
     {
       "name": "SM_Env_Tile_Stone_A_01",
       "folder": "Environment",
-      "tris": 186,
+      "tris": 92,
       "size_xyz_m": [
-        1.006,
         1.005,
-        0.284
+        0.998,
+        0.282
       ],
       "objects": [
         "SM_Env_Tile_Stone_A_01"
@@ -18,11 +18,11 @@
     {
       "name": "SM_Env_Tile_Stone_B_01",
       "folder": "Environment",
-      "tris": 202,
+      "tris": 148,
       "size_xyz_m": [
-        1.005,
-        0.996,
-        0.282
+        1.0,
+        1.004,
+        0.289
       ],
       "objects": [
         "SM_Env_Tile_Stone_B_01"
@@ -31,10 +31,10 @@
     {
       "name": "SM_Env_Tile_Stone_C_01",
       "folder": "Environment",
-      "tris": 250,
+      "tris": 196,
       "size_xyz_m": [
-        0.998,
-        1.001,
+        0.999,
+        1.006,
         0.284
       ],
       "objects": [
@@ -42,12 +42,38 @@
       ]
     },
     {
+      "name": "SM_Env_Tile_Stone_D_01",
+      "folder": "Environment",
+      "tris": 144,
+      "size_xyz_m": [
+        1.007,
+        0.985,
+        0.281
+      ],
+      "objects": [
+        "SM_Env_Tile_Stone_D_01"
+      ]
+    },
+    {
+      "name": "SM_Env_Tile_Stone_E_01",
+      "folder": "Environment",
+      "tris": 164,
+      "size_xyz_m": [
+        1.0,
+        0.992,
+        0.285
+      ],
+      "objects": [
+        "SM_Env_Tile_Stone_E_01"
+      ]
+    },
+    {
       "name": "SM_Env_Tile_Dirt_01",
       "folder": "Environment",
-      "tris": 114,
+      "tris": 100,
       "size_xyz_m": [
-        1.021,
         1.028,
+        1.011,
         0.255
       ],
       "objects": [
@@ -57,11 +83,11 @@
     {
       "name": "SM_Env_Island_Cliff_4x4_01",
       "folder": "Environment",
-      "tris": 2100,
+      "tris": 2040,
       "size_xyz_m": [
-        5.708,
-        5.689,
-        2.759
+        9.6,
+        9.6,
+        3.606
       ],
       "objects": [
         "SM_Env_Island_Cliff_4x4_01"
@@ -70,11 +96,11 @@
     {
       "name": "SM_Env_Board_Cliff_16x12_01",
       "folder": "Environment",
-      "tris": 3308,
+      "tris": 2888,
       "size_xyz_m": [
-        19.12,
-        15.169,
-        2.75
+        23.0,
+        19.0,
+        3.45
       ],
       "objects": [
         "SM_Env_Board_Cliff_16x12_01"
@@ -344,11 +370,11 @@
     {
       "name": "SM_Env_Tree_Maple_A_01",
       "folder": "Environment",
-      "tris": 2264,
+      "tris": 1174,
       "size_xyz_m": [
-        1.385,
-        1.341,
-        3.095
+        1.379,
+        1.378,
+        3.092
       ],
       "objects": [
         "SM_Env_Tree_Maple_A_01"
@@ -357,11 +383,11 @@
     {
       "name": "SM_Env_Tree_Maple_B_01",
       "folder": "Environment",
-      "tris": 2744,
+      "tris": 1424,
       "size_xyz_m": [
-        1.87,
-        1.903,
-        2.748
+        1.814,
+        1.942,
+        2.725
       ],
       "objects": [
         "SM_Env_Tree_Maple_B_01"
@@ -370,11 +396,11 @@
     {
       "name": "SM_Env_Tree_Maple_C_01",
       "folder": "Environment",
-      "tris": 2434,
+      "tris": 1264,
       "size_xyz_m": [
-        1.553,
-        1.511,
-        2.889
+        1.489,
+        1.612,
+        2.904
       ],
       "objects": [
         "SM_Env_Tree_Maple_C_01"

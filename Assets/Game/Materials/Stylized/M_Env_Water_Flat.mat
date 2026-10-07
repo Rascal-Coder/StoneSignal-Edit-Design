@@ -27,7 +27,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2950
   stringTagMap: {}
@@ -35,41 +35,13 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+    m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendOp: 0
-    - _CausticStrength: 0.45
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DepthRange: 4.5
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _FoamDepth: 0.22
-    - _QueueOffset: 0
-    - _RippleScale: 2.4
-    - _RippleSpeed: 0.35
-    - _SampleGI: 0
-    - _SparkleStrength: 1.2
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _ZWrite: 1
+    - _DepthRange: 0.28
     m_Colors:
-    - _BaseColor: {r: 0.02745098, g: 0.32941177, b: 0.627451, a: 1}
-    - _Color: {r: 0.02745098, g: 0.32941175, b: 0.62745106, a: 1}
-    - _DeepColor: {r: 0.043137256, g: 0.2901961, b: 0.6039216, a: 1}
-    - _FoamColor: {r: 0.95, g: 0.96999997, b: 1, a: 1}
-    - _ShallowColor: {r: 0.2, g: 0.78039217, b: 0.7607843, a: 1}
+    - _BaseColor: {r: 0.039215688, g: 0.29803923, b: 0.61960787, a: 1}
+    - _DeepColor: {r: 0.039215688, g: 0.29803923, b: 0.61960787, a: 1}
+    - _GlowColor: {r: 0.55, g: 1.05, b: 1.25, a: 1}
+    - _ShallowColor: {r: 0.49803922, g: 0.827451, b: 0.8784314, a: 1}
   m_BuildTextureStacks: []

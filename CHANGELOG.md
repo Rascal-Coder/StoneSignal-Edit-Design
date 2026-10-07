@@ -165,3 +165,26 @@ Changed:
 - `ThirdPartyArtIntegration.Checks` 的 "Block and landmarks assigned" 改为接受 entryBridge 代替 spawnPortal（多入口用栈桥标记）。
 - 地块 ±0.03 m 起伏仅为视觉；玩法高度固定 ground 0.25 / wall 0.6，运行时无任何逻辑读取网格包围盒。
 - Smoke test 改为与布局无关（每入口有路、不能封死核心、自动找合法绕路与塔位）。
+
+## Stylized art v8 (2026-10-07)
+- Water: depth gradient only, with a very soft shore fade. Removed ripples, caustics, wave lines and sparkles.
+- VFX: scorch is smaller and fainter, smoke lighter. This removes the dark smudges on the board.
+- Walls: desaturated lavender. Tiles: variants A-E, chosen per cell by a seeded hash with random 90-degree rotation and +-0.03-0.06 m height jitter (mean top 0.80). Tile B inset recoloured (it read as a hole).
+- New PF_Env_LevelDressing_16x12 (water, board cliff, islands, trees, bridges W4/E4/N3, snow; static-batched), PF_Env_Tile_Stone_D/E.
+- Placement feedback: StoneSignal/PlaceFX shader; PF_UI_PlaceGhost_Block/Tower, PF_UI_RangeRing, PF_UI_SlotHighlight, PF_Path_FlowSegment + M_Path_Flow; runtime PlacementGhost / RangeRing.
+- Enemy facing check: all 7 enemies face +Z (Blender and Unity checks).
+
+
+## Stylized art v9 (2026-10-07)
+- Water: uniform deep blue, slightly darker far away, plus a thin soft light band (~0.2 m) hugging shores. No noise, voronoi, foam, ripples or textures; stale material properties are stripped.
+- Island and board: sloped underwater skirts replace the flat shelves (no teal shelf polygons).
+- Enemies: imported models faced -Z in Unity. The model child under Rig is now rotated 180 degrees (root and Rig stay identity). Facing check added.
+- WebGL budget: trees about 1.2-1.4k tris (was 2.3-2.7k), fewer dressing trees, tile top subdivision 1. PF_Env_LevelDressing_16x12 is 64.8k tris / 70 renderers.
+
+
+## Stylized art v10 (2026-10-07)
+- Water: narrow glowing shore line (HDR _GlowColor, smooth falloff, slow 0.12 pulse, pure ALU).
+- Dressing recomposed: TL/TR mid islets (maples, rocks, small dock), BL dark big-tree foreground, BR islet with stone ruin-lighthouse, sparse leaves/reefs. 58.6k tris (limit 90k).
+- Game camera proposal: pitch 40, yaw 10, ortho 6.6, look-at (0,0.8,-2.2) (StylizedArtIntegration.GameCam*V10).
+- UI sprites in Assets/Game/Art/Stylized/UI (orb, tower card frames, blueprint card, tower icons rendered from the models); ArtSource/Stylized/render_ui_icons.py.
+

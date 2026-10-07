@@ -135,9 +135,9 @@ public static class StylizedVFXBuilder
         if (e.shards) { var r = deb.GetComponent<ParticleSystemRenderer>(); r.sharedMaterial = M(true, Streak); Stretch(deb, .05f, 2f); }
         var sp = PS(root, "Sparks", M(true, Streak), R(.18f, .4f), R(.05f, .09f), R(6f, 11f), e.flash, e.arcs ? 26 : 16, radius: .15f);
         Stretch(sp, .07f, 1.3f); Fade(sp, e.flash, e.core, .4f); Gravity(sp, .6f);
-        var sm = PS(root, "Smoke", M(false, Smoke, .15f), R(1.0f, 1.7f), R(.7f * s, 1.25f * s), R(.4f, 1.1f), A(e.smoke, .9f), e.arcs ? 4 : 8, radius: .35f * s);
+        var sm = PS(root, "Smoke", M(false, Smoke, .15f), R(1.0f, 1.7f), R(.7f * s, 1.25f * s), R(.4f, 1.1f), A(Color.Lerp(e.smoke, H("D8CCC8"), .5f), .5f), e.arcs ? 4 : 6, radius: .35f * s); /* v8: lighter smoke */
         Size(sm, .5f, 1.5f); Fade(sm, Color.Lerp(e.smoke, Color.white, .25f), e.smoke, .35f); Gravity(sm, -.12f); Drag(sm, 1.5f); Spin(sm);
-        var sc = PS(root, "Scorch", M(false, Scorch), 4f, 2.4f * s, 0, A(e.scorch, .8f), 1); Flat(sc, .03f); Fade(sc, e.scorch, e.scorch, .7f); Spin(sc);
+        var sc = PS(root, "Scorch", M(false, Scorch), 2.2f, 1.1f * s, 0, A(e.scorch, .3f), 1); /* v8: small faint scorch */ Flat(sc, .03f); Fade(sc, e.scorch, e.scorch, .7f); Spin(sc);
         if (e.embers)
         {
             var em = PS(root, "Embers", add, R(.9f, 1.6f), R(.05f, .1f), R(.5f, 2f), H("FFB040"), 22, radius: .5f);

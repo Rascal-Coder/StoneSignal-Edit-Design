@@ -310,243 +310,27 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
     -7.5,
     -5.5,
-    0.539
+    0.596
    ],
    "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.05,
-   "rotY": 0.45
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    -4.5,
-    0.542
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.33,
-   "rotY": 0.02
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    -3.5,
-    0.546
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.29,
-   "rotY": -1.23
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -7.5,
-    -2.5,
-    0.57
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.13,
-   "rotY": -0.83
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    -1.5,
-    0.555
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.31,
-   "rotY": 1.43
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    -0.5,
-    0.537
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.07,
-   "rotY": -1.15
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    0.5,
-    0.526
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.21,
-   "rotY": -0.94
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    -7.5,
-    1.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -7.5,
-    2.5,
-    0.554
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.01,
-   "rotY": 0.05
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    4.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -7.5,
-    5.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    -6.5,
-    -5.5,
-    0.562
-   ],
-   "rotZ": -90.0,
    "scale": [
     1,
     1,
     1
    ],
    "rotX": -0.77,
-   "rotY": 0.22
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -6.5,
-    -4.5,
-    0.573
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.69,
-   "rotY": -0.64
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -6.5,
-    -3.5,
-    0.551
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.01,
-   "rotY": -0.47
+   "rotY": -1.1
   },
   {
    "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    -6.5,
-    -2.5,
-    0.522
+    -7.5,
+    -4.5,
+    0.6
    ],
    "rotZ": 180.0,
    "scale": [
@@ -554,449 +338,309 @@
     1,
     1
    ],
-   "rotX": 0.5,
-   "rotY": 0.79
+   "rotX": 1.12,
+   "rotY": 0.05
   },
   {
    "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
-    -6.5,
-    -1.5,
-    0.54
+    -7.5,
+    -3.5,
+    0.498
    ],
-   "rotZ": -90.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": -0.45,
-   "rotY": -0.01
+   "rotX": -1.28,
+   "rotY": -1.17
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -7.5,
+    -2.5,
+    0.518
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.11,
+   "rotY": -0.21
   },
   {
    "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
-    -6.5,
+    -7.5,
+    -1.5,
+    0.506
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.61,
+   "rotY": 0.01
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -7.5,
     -0.5,
-    0.524
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.22,
-   "rotY": -0.69
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -6.5,
-    0.5,
-    0.55
+    0.5
    ],
    "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -6.5,
-    1.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -6.5,
-    2.5,
-    0.544
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.17,
-   "rotY": 0.25
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -6.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -6.5,
-    4.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -6.5,
-    5.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -5.5,
-    -5.5,
-    0.533
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.64,
-   "rotY": 0.72
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -5.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -5.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -5.5,
-    -2.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    -5.5,
-    -1.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -5.5,
-    -0.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -5.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -5.5,
-    1.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -5.5,
-    2.5,
-    0.565
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.27,
-   "rotY": -0.18
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -5.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -5.5,
-    4.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    -5.5,
-    5.5,
-    0.534
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.8,
-   "rotY": -0.05
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -4.5,
-    -5.5,
-    0.536
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.49,
-   "rotY": -0.24
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -4.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -4.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -4.5,
-    -2.5,
-    0.547
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.16,
-   "rotY": -0.03
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -4.5,
-    -1.5,
-    0.537
-   ],
-   "rotZ": 0.0,
    "scale": [
     1,
     1,
     1
    ],
    "rotX": -0.65,
+   "rotY": 1.45
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -7.5,
+    0.5,
+    0.495
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.35,
+   "rotY": 0.96
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -7.5,
+    1.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -7.5,
+    2.5,
+    0.578
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.29,
+   "rotY": 0.74
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -7.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -7.5,
+    4.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -7.5,
+    5.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -6.5,
+    -5.5,
+    0.58
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.9,
+   "rotY": -0.64
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -6.5,
+    -4.5,
+    0.511
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.46,
+   "rotY": 0.42
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -6.5,
+    -3.5,
+    0.595
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.12,
+   "rotY": -0.89
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -6.5,
+    -2.5,
+    0.601
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.5,
    "rotY": -0.44
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_A_01",
    "pos": [
-    -4.5,
+    -6.5,
+    -1.5,
+    0.609
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.11,
+   "rotY": 1.42
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -6.5,
     -0.5,
-    0.538
+    0.608
    ],
-   "rotZ": 0.0,
+   "rotZ": 180.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": 0.15,
-   "rotY": -0.6
+   "rotX": -0.92,
+   "rotY": 0.65
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
-    -4.5,
+    -6.5,
     0.5,
-    0.551
+    0.55
    ],
    "rotZ": 0.0,
    "scale": [
     1,
     1,
     1
-   ],
-   "rotX": 0.67,
-   "rotY": 0.17
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -4.5,
-    1.5,
-    0.561
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.17,
-   "rotY": -0.53
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -4.5,
-    2.5,
-    0.564
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.15,
-   "rotY": -0.04
+   ]
   },
   {
    "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
-    -4.5,
+    -6.5,
+    1.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -6.5,
+    2.5,
+    0.52
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.54,
+   "rotY": -0.09
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -6.5,
     3.5,
     0.55
    ],
-   "rotZ": -90.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
@@ -1006,11 +650,11 @@
   {
    "asset": "SM_Env_Tile_Stone_A_01",
    "pos": [
-    -4.5,
+    -6.5,
     4.5,
     0.55
    ],
-   "rotZ": -90.0,
+   "rotZ": 180.0,
    "scale": [
     1,
     1,
@@ -1020,11 +664,11 @@
   {
    "asset": "SM_Env_Tile_Stone_A_01",
    "pos": [
-    -4.5,
+    -6.5,
     5.5,
     0.55
    ],
-   "rotZ": 180.0,
+   "rotZ": 90.0,
    "scale": [
     1,
     1,
@@ -1034,25 +678,9 @@
   {
    "asset": "SM_Env_Tile_Stone_A_01",
    "pos": [
-    -3.5,
     -5.5,
-    0.525
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.19,
-   "rotY": -0.47
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    -3.5,
-    -4.5,
-    0.57
+    -5.5,
+    0.584
    ],
    "rotZ": 180.0,
    "scale": [
@@ -1060,17 +688,101 @@
     1,
     1
    ],
-   "rotX": -1.02,
-   "rotY": -1.43
+   "rotX": -0.99,
+   "rotY": -1.42
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_D_01",
    "pos": [
-    -3.5,
+    -5.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -5.5,
     -3.5,
     0.55
    ],
    "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -5.5,
+    -2.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -5.5,
+    -1.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -5.5,
+    -0.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -5.5,
+    0.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -5.5,
+    1.5,
+    0.55
+   ],
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
@@ -1080,247 +792,9 @@
   {
    "asset": "SM_Env_Tile_Dirt_01",
    "pos": [
-    -3.5,
-    -2.5,
-    0.558
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.3,
-   "rotY": 0.21
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -3.5,
-    -1.5,
-    0.562
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.72,
-   "rotY": -0.4
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -3.5,
-    -0.5,
-    0.566
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.1,
-   "rotY": 0.84
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -3.5,
-    0.5,
-    0.557
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.87,
-   "rotY": 0.77
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -3.5,
-    1.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -3.5,
+    -5.5,
     2.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -3.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -3.5,
-    4.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -3.5,
-    5.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -2.5,
-    -5.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -2.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -2.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -2.5,
-    -2.5,
-    0.564
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.2,
-   "rotY": -0.42
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    -2.5,
-    -1.5,
-    0.548
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.49,
-   "rotY": -0.05
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -2.5,
-    -0.5,
-    0.549
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.46,
-   "rotY": 0.9
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -2.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -2.5,
-    1.5,
-    0.549
+    0.523
    ],
    "rotZ": 90.0,
    "scale": [
@@ -1329,30 +803,42 @@
     1
    ],
    "rotX": -0.48,
-   "rotY": 0.43
+   "rotY": -0.17
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    -2.5,
-    2.5,
-    0.538
+    -5.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -5.5,
+    4.5,
+    0.55
    ],
    "rotZ": 90.0,
    "scale": [
     1,
     1,
     1
-   ],
-   "rotX": 0.67,
-   "rotY": 0.33
+   ]
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
-    -2.5,
-    3.5,
-    0.547
+    -5.5,
+    5.5,
+    0.511
    ],
    "rotZ": 0.0,
    "scale": [
@@ -1360,30 +846,122 @@
     1,
     1
    ],
-   "rotX": 0.67,
-   "rotY": 0.34
+   "rotX": 0.11,
+   "rotY": 0.7
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    -2.5,
-    4.5,
-    0.565
+    -4.5,
+    -5.5,
+    0.512
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.32,
+   "rotY": 1.43
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -4.5,
+    -4.5,
+    0.55
    ],
    "rotZ": 90.0,
    "scale": [
     1,
     1,
     1
-   ],
-   "rotX": -0.71,
-   "rotY": 0.14
+   ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
+    -4.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -4.5,
     -2.5,
-    5.5,
+    0.575
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.67,
+   "rotY": 0.49
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -4.5,
+    -1.5,
+    0.532
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.61,
+   "rotY": -0.11
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -4.5,
+    -0.5,
+    0.525
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.05,
+   "rotY": 0.3
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -4.5,
+    0.5,
+    0.569
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.18,
+   "rotY": 0.03
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -4.5,
+    1.5,
     0.568
    ],
    "rotZ": 180.0,
@@ -1392,15 +970,15 @@
     1,
     1
    ],
-   "rotX": -1.06,
-   "rotY": 0.98
+   "rotX": 0.44,
+   "rotY": -0.47
   },
   {
-   "asset": "SM_Env_Tile_Stone_C_01",
+   "asset": "SM_Env_Tile_Dirt_01",
    "pos": [
-    -1.5,
-    -5.5,
-    0.529
+    -4.5,
+    2.5,
+    0.569
    ],
    "rotZ": 0.0,
    "scale": [
@@ -1408,13 +986,249 @@
     1,
     1
    ],
+   "rotX": -0.31,
+   "rotY": 0.63
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -4.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -4.5,
+    4.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -4.5,
+    5.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -3.5,
+    -5.5,
+    0.509
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.69,
+   "rotY": 1.46
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -3.5,
+    -4.5,
+    0.5
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
    "rotX": 0.14,
-   "rotY": -1.44
+   "rotY": -1.14
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -3.5,
+    -2.5,
+    0.528
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.64,
+   "rotY": -0.07
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    -1.5,
+    0.502
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.42,
+   "rotY": 0.19
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    -0.5,
+    0.498
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.02,
+   "rotY": 0.09
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    0.5,
+    0.495
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.97,
+   "rotY": 0.23
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -3.5,
+    1.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    2.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
   },
   {
    "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    -1.5,
+    -3.5,
+    4.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -3.5,
+    5.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -2.5,
+    -5.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    -2.5,
     -4.5,
     0.55
    ],
@@ -1426,13 +1240,13 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    -1.5,
+    -2.5,
     -3.5,
     0.55
    ],
-   "rotZ": 90.0,
+   "rotZ": 0.0,
    "scale": [
     1,
     1,
@@ -1442,105 +1256,9 @@
   {
    "asset": "SM_Env_Tile_Dirt_01",
    "pos": [
-    -1.5,
     -2.5,
-    0.56
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.43,
-   "rotY": -0.37
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -1.5,
-    -1.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.4,
-   "rotY": -0.26
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -1.5,
-    -0.5,
-    0.56
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.66,
-   "rotY": 0.36
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -1.5,
-    0.5,
-    0.555
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.47,
-   "rotY": 0.03
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -1.5,
-    1.5,
-    0.551
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.04,
-   "rotY": -0.72
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -1.5,
-    2.5,
-    0.567
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.33,
-   "rotY": 0.83
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -1.5,
-    3.5,
-    0.528
+    -2.5,
+    0.529
    ],
    "rotZ": 180.0,
    "scale": [
@@ -1548,15 +1266,77 @@
     1,
     1
    ],
-   "rotX": 0.36,
-   "rotY": -1.14
+   "rotX": -0.52,
+   "rotY": -0.56
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -2.5,
+    -1.5,
+    0.585
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.55,
+   "rotY": -0.52
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    -2.5,
+    -0.5,
+    0.502
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.02,
+   "rotY": 0.75
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -2.5,
+    0.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
   },
   {
    "asset": "SM_Env_Tile_Dirt_01",
    "pos": [
-    -1.5,
-    4.5,
-    0.555
+    -2.5,
+    1.5,
+    0.578
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.31,
+   "rotY": -0.4
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -2.5,
+    2.5,
+    0.576
    ],
    "rotZ": 0.0,
    "scale": [
@@ -1564,14 +1344,30 @@
     1,
     1
    ],
-   "rotX": 0.05,
-   "rotY": -0.03
+   "rotX": -0.21,
+   "rotY": 0.54
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Dirt_01",
    "pos": [
-    -1.5,
-    5.5,
+    -2.5,
+    3.5,
+    0.522
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.16,
+   "rotY": 0.18
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -2.5,
+    4.5,
     0.573
    ],
    "rotZ": 0.0,
@@ -1580,579 +1376,75 @@
     1,
     1
    ],
-   "rotX": -1.33,
-   "rotY": -0.93
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    -5.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.19,
-   "rotY": 0.78
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -0.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    -2.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    -1.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.76,
-   "rotY": 0.07
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -0.5,
-    -0.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    1.5,
-    0.527
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.17,
-   "rotY": -1.28
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    2.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    -0.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    -0.5,
-    4.5,
-    0.559
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.6,
-   "rotY": -0.52
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    -0.5,
-    5.5,
-    0.529
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 1.15,
-   "rotY": 1.4
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    0.5,
-    -5.5,
-    0.544
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.04,
-   "rotY": 1.47
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    0.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    0.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    0.5,
-    -2.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    0.5,
-    -1.5,
-    0.532
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.54,
-   "rotY": 0.67
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    0.5,
-    -0.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    0.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    0.5,
-    1.5,
-    0.543
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.05,
-   "rotY": -0.61
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    0.5,
-    2.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    0.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    0.5,
-    4.5,
-    0.543
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.69,
-   "rotY": 0.42
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    0.5,
-    5.5,
-    0.558
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.48,
-   "rotY": 0.52
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    -5.5,
-    0.544
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.11,
-   "rotY": 0.04
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    -4.5,
-    0.525
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.33,
-   "rotY": 0.56
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    -3.5,
-    0.536
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.45,
-   "rotY": -1.23
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    -2.5,
-    0.556
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.83,
-   "rotY": -0.71
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    -1.5,
-    0.521
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 1.48,
-   "rotY": -0.25
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    -0.5,
-    0.523
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.63,
-   "rotY": 1.31
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    1.5,
-    0.5,
-    0.537
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.45,
-   "rotY": -0.28
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    1.5,
-    1.5,
-    0.551
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.44,
-   "rotY": -0.08
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    1.5,
-    2.5,
-    0.543
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.46,
-   "rotY": 0.74
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    1.5,
-    3.5,
-    0.521
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.7,
-   "rotY": 0.15
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    1.5,
-    4.5,
-    0.535
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
    "rotX": -0.16,
-   "rotY": 0.47
+   "rotY": 0.62
   },
   {
-   "asset": "SM_Env_Tile_Stone_B_01",
+   "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
-    1.5,
+    -2.5,
     5.5,
-    0.559
+    0.519
    ],
-   "rotZ": 180.0,
+   "rotZ": 0.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": 0.14,
-   "rotY": 1.17
+   "rotX": 0.9,
+   "rotY": -1.5
   },
   {
-   "asset": "SM_Env_Tile_Stone_C_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
-    2.5,
+    -1.5,
     -5.5,
-    0.561
+    0.52
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -1.46,
+   "rotY": -1.22
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -1.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -1.5,
+    -3.5,
+    0.55
    ],
    "rotZ": 90.0,
    "scale": [
     1,
     1,
     1
-   ],
-   "rotX": 1.45,
-   "rotY": -0.47
+   ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Dirt_01",
    "pos": [
-    2.5,
-    -4.5,
-    0.544
+    -1.5,
+    -2.5,
+    0.527
    ],
    "rotZ": 0.0,
    "scale": [
@@ -2161,6 +1453,714 @@
     1
    ],
    "rotX": -0.46,
+   "rotY": -0.24
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -1.5,
+    -1.5,
+    0.524
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.43,
+   "rotY": 0.55
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -1.5,
+    -0.5,
+    0.532
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.09,
+   "rotY": -0.32
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -1.5,
+    0.5,
+    0.531
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.66,
+   "rotY": -0.33
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -1.5,
+    1.5,
+    0.578
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.59,
+   "rotY": 0.41
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    -1.5,
+    2.5,
+    0.582
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.92,
+   "rotY": -0.43
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -1.5,
+    3.5,
+    0.595
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.25,
+   "rotY": 0.98
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -1.5,
+    4.5,
+    0.53
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.59,
+   "rotY": 0.72
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -1.5,
+    5.5,
+    0.512
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.96,
+   "rotY": -1.28
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -0.5,
+    -5.5,
+    0.606
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.28,
+   "rotY": -0.79
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -0.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    -0.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    -0.5,
+    -2.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -0.5,
+    -1.5,
+    0.603
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.15,
+   "rotY": 0.44
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    -0.5,
+    -0.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    -0.5,
+    0.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -0.5,
+    1.5,
+    0.512
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.96,
+   "rotY": -1.28
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    -0.5,
+    2.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -0.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    -0.5,
+    4.5,
+    0.572
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.45,
+   "rotY": 0.51
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    -0.5,
+    5.5,
+    0.597
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.22,
+   "rotY": 0.43
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    0.5,
+    -5.5,
+    0.581
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.26,
+   "rotY": 0.81
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    0.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    0.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    0.5,
+    -2.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    0.5,
+    -1.5,
+    0.586
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.46,
+   "rotY": -1.45
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    0.5,
+    -0.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    0.5,
+    0.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    0.5,
+    1.5,
+    0.512
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.39,
+   "rotY": 0.84
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    0.5,
+    2.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    0.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    0.5,
+    4.5,
+    0.532
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.69,
+   "rotY": -0.15
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    0.5,
+    5.5,
+    0.521
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.27,
+   "rotY": -0.39
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    1.5,
+    -5.5,
+    0.516
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.08,
+   "rotY": 0.68
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    1.5,
+    -4.5,
+    0.597
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.22,
+   "rotY": 0.43
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    1.5,
+    -3.5,
+    0.606
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.03,
+   "rotY": 1.08
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    1.5,
+    -2.5,
+    0.495
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -1.09,
+   "rotY": 0.51
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    1.5,
+    -1.5,
+    0.519
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.84,
+   "rotY": -1.1
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    1.5,
+    -0.5,
+    0.512
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.96,
+   "rotY": -1.28
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    1.5,
+    0.5,
+    0.525
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.58,
+   "rotY": -0.31
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    1.5,
+    1.5,
+    0.568
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.49,
+   "rotY": 0.1
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    1.5,
+    2.5,
+    0.524
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.73,
+   "rotY": 0.19
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    1.5,
+    3.5,
+    0.508
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.29,
+   "rotY": -1.03
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    1.5,
+    4.5,
+    0.503
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.42,
+   "rotY": -0.46
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    1.5,
+    5.5,
+    0.496
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.63,
+   "rotY": -1.11
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    2.5,
+    -5.5,
+    0.496
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.09,
+   "rotY": 0.25
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    2.5,
+    -4.5,
+    0.494
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.32,
    "rotY": -1.34
   },
   {
@@ -2170,20 +2170,6 @@
     -3.5,
     0.55
    ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    2.5,
-    -2.5,
-    0.55
-   ],
    "rotZ": 90.0,
    "scale": [
     1,
@@ -2192,7 +2178,21 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    2.5,
+    -2.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
     2.5,
     -1.5,
@@ -2206,29 +2206,29 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_D_01",
    "pos": [
     2.5,
     -0.5,
-    0.56
+    0.513
    ],
-   "rotZ": 90.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": -0.36,
-   "rotY": 0.02
+   "rotX": -0.18,
+   "rotY": 0.77
   },
   {
-   "asset": "SM_Env_Tile_Stone_C_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
     2.5,
     0.5,
     0.55
    ],
-   "rotZ": 180.0,
+   "rotZ": 90.0,
    "scale": [
     1,
     1,
@@ -2236,13 +2236,13 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
     2.5,
     1.5,
     0.55
    ],
-   "rotZ": -90.0,
+   "rotZ": 0.0,
    "scale": [
     1,
     1,
@@ -2254,25 +2254,25 @@
    "pos": [
     2.5,
     2.5,
-    0.541
+    0.524
    ],
-   "rotZ": 90.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": -0.35,
-   "rotY": -0.74
+   "rotX": 0.43,
+   "rotY": 0.55
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
     2.5,
     3.5,
     0.55
    ],
-   "rotZ": 180.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
@@ -2280,66 +2280,66 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
     2.5,
     4.5,
     0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    2.5,
+    5.5,
+    0.586
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.78,
+   "rotY": 0.21
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    3.5,
+    -5.5,
+    0.494
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.81,
+   "rotY": -0.09
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    3.5,
+    -4.5,
+    0.519
    ],
    "rotZ": 0.0,
    "scale": [
     1,
     1,
     1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    2.5,
-    5.5,
-    0.578
    ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.57,
-   "rotY": -0.43
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    3.5,
-    -5.5,
-    0.543
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.08,
-   "rotY": 0.01
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    3.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.49,
-   "rotY": -0.71
+   "rotX": 0.9,
+   "rotY": -1.5
   },
   {
    "asset": "SM_Env_Tile_Stone_A_01",
@@ -2348,7 +2348,7 @@
     -3.5,
     0.55
    ],
-   "rotZ": 0.0,
+   "rotZ": 90.0,
    "scale": [
     1,
     1,
@@ -2360,7 +2360,7 @@
    "pos": [
     3.5,
     -2.5,
-    0.544
+    0.494
    ],
    "rotZ": 90.0,
    "scale": [
@@ -2368,450 +2368,58 @@
     1,
     1
    ],
-   "rotX": -0.6,
-   "rotY": 0.39
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    3.5,
-    -1.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    3.5,
-    -0.5,
-    0.566
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.66,
-   "rotY": -0.02
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    3.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    3.5,
-    1.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    3.5,
-    2.5,
-    0.562
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.38,
-   "rotY": 0.1
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    3.5,
-    3.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    3.5,
-    4.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    3.5,
-    5.5,
-    0.523
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.41,
-   "rotY": 1.38
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    4.5,
-    -5.5,
-    0.554
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.38,
-   "rotY": 0.38
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    4.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    4.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    4.5,
-    -2.5,
-    0.559
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.37,
-   "rotY": 0.0
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    4.5,
-    -1.5,
-    0.555
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.65,
+   "rotX": -0.32,
    "rotY": 0.36
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
-    4.5,
+    3.5,
+    -1.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    3.5,
     -0.5,
-    0.559
+    0.607
    ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.52,
-   "rotY": -0.4
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    4.5,
-    0.5,
-    0.542
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.22,
-   "rotY": -0.06
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    4.5,
-    1.5,
-    0.537
-   ],
-   "rotZ": 0.0,
+   "rotZ": 180.0,
    "scale": [
     1,
     1,
     1
    ],
    "rotX": 0.62,
-   "rotY": -0.32
+   "rotY": -0.79
   },
   {
-   "asset": "SM_Env_Tile_Dirt_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
-    4.5,
-    2.5,
-    0.554
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": 0.21,
-   "rotY": -0.63
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    4.5,
     3.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    4.5,
-    4.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    4.5,
-    5.5,
-    0.557
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.1,
-   "rotY": -0.05
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
-    -5.5,
-    0.578
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.2,
-   "rotY": -0.85
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    5.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    5.5,
-    -2.5,
-    0.549
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.57,
-   "rotY": 0.59
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
-    -1.5,
-    0.539
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.24,
-   "rotY": -0.08
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
-    -0.5,
-    0.55
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
     0.5,
-    0.58
+    0.55
    ],
    "rotZ": 0.0,
    "scale": [
     1,
     1,
     1
-   ],
-   "rotX": -0.34,
-   "rotY": 1.25
+   ]
   },
   {
    "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    5.5,
-    1.5,
-    0.55
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
-    2.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    5.5,
     3.5,
+    1.5,
     0.55
    ],
    "rotZ": 90.0,
@@ -2822,11 +2430,147 @@
    ]
   },
   {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    3.5,
+    2.5,
+    0.526
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.2,
+   "rotY": -0.23
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    3.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
    "asset": "SM_Env_Tile_Stone_A_01",
    "pos": [
-    5.5,
+    3.5,
     4.5,
-    0.556
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    3.5,
+    5.5,
+    0.591
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.03,
+   "rotY": 0.04
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    4.5,
+    -5.5,
+    0.59
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.75,
+   "rotY": -0.14
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    4.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    4.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    4.5,
+    -2.5,
+    0.528
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.47,
+   "rotY": 0.73
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    4.5,
+    -1.5,
+    0.535
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.23,
+   "rotY": -0.57
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    4.5,
+    -0.5,
+    0.571
    ],
    "rotZ": 180.0,
    "scale": [
@@ -2835,146 +2579,586 @@
     1
    ],
    "rotX": 0.4,
-   "rotY": -0.66
+   "rotY": -0.73
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    4.5,
+    0.5,
+    0.531
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.3,
+   "rotY": -0.53
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    4.5,
+    1.5,
+    0.567
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.71,
+   "rotY": 0.01
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    4.5,
+    2.5,
+    0.522
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.21,
+   "rotY": 0.16
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    4.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    4.5,
+    4.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    4.5,
+    5.5,
+    0.587
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.01,
+   "rotY": -0.95
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_E_01",
+   "pos": [
+    5.5,
+    -5.5,
+    0.581
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.91,
+   "rotY": -0.04
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    5.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    5.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    5.5,
+    -2.5,
+    0.567
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.43,
+   "rotY": -0.28
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    5.5,
+    -1.5,
+    0.605
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.59,
+   "rotY": 1.32
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    5.5,
+    -0.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    5.5,
+    0.5,
+    0.491
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.79,
+   "rotY": -1.48
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    5.5,
+    1.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    5.5,
+    2.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    5.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    5.5,
+    4.5,
+    0.505
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -1.32,
+   "rotY": 1.12
   },
   {
    "asset": "SM_Env_Tile_Stone_A_01",
    "pos": [
     5.5,
     5.5,
-    0.534
+    0.584
    ],
    "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 1.26,
+   "rotY": -0.85
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    6.5,
+    -5.5,
+    0.519
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.96,
+   "rotY": 0.18
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_D_01",
+   "pos": [
+    6.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    6.5,
+    -3.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    6.5,
+    -2.5,
+    0.576
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.45,
+   "rotY": -0.49
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    6.5,
+    -1.5,
+    0.495
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.96,
+   "rotY": -0.35
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    6.5,
+    -0.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    6.5,
+    0.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    6.5,
+    1.5,
+    0.55
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    6.5,
+    2.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    6.5,
+    3.5,
+    0.55
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    6.5,
+    4.5,
+    0.507
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -0.64,
+   "rotY": -0.9
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    6.5,
+    5.5,
+    0.599
+   ],
+   "rotZ": 180.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.55,
+   "rotY": -0.71
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    7.5,
+    -5.5,
+    0.496
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.37,
+   "rotY": 0.83
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_A_01",
+   "pos": [
+    7.5,
+    -4.5,
+    0.55
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_B_01",
+   "pos": [
+    7.5,
+    -3.5,
+    0.491
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.99,
+   "rotY": 0.58
+  },
+  {
+   "asset": "SM_Env_Tile_Dirt_01",
+   "pos": [
+    7.5,
+    -2.5,
+    0.579
+   ],
+   "rotZ": 270.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": 0.26,
+   "rotY": 0.55
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    7.5,
+    -1.5,
+    0.51
+   ],
+   "rotZ": 90.0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "rotX": -1.09,
+   "rotY": -0.11
+  },
+  {
+   "asset": "SM_Env_Tile_Stone_C_01",
+   "pos": [
+    7.5,
+    -0.5,
+    0.498
+   ],
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
     1
    ],
    "rotX": 1.19,
-   "rotY": -0.04
+   "rotY": -0.83
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
-    6.5,
-    -5.5,
-    0.52
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.02,
-   "rotY": -0.15
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    6.5,
-    -4.5,
+    7.5,
+    0.5,
     0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    6.5,
-    -3.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    6.5,
-    -2.5,
-    0.539
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.25,
-   "rotY": -0.26
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    6.5,
-    -1.5,
-    0.57
    ],
    "rotZ": 0.0,
    "scale": [
     1,
     1,
     1
-   ],
-   "rotX": -1.14,
-   "rotY": 1.28
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    6.5,
-    -0.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_D_01",
    "pos": [
-    6.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    6.5,
+    7.5,
     1.5,
-    0.55
+    0.608
    ],
-   "rotZ": -90.0,
+   "rotZ": 180.0,
    "scale": [
     1,
     1,
     1
-   ]
+   ],
+   "rotX": -0.92,
+   "rotY": 0.65
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_B_01",
    "pos": [
-    6.5,
+    7.5,
     2.5,
     0.55
    ],
@@ -2986,227 +3170,43 @@
    ]
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
-    6.5,
+    7.5,
     3.5,
-    0.55
+    0.601
    ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    6.5,
-    4.5,
-    0.565
-   ],
-   "rotZ": 180.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": 1.06,
-   "rotY": -0.66
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    6.5,
-    5.5,
-    0.558
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.05,
-   "rotY": 1.41
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    7.5,
-    -5.5,
-    0.531
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.38,
-   "rotY": 1.37
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    7.5,
-    -4.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    7.5,
-    -3.5,
-    0.563
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.35,
-   "rotY": 0.7
-  },
-  {
-   "asset": "SM_Env_Tile_Dirt_01",
-   "pos": [
-    7.5,
-    -2.5,
-    0.554
-   ],
-   "rotZ": 0.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.32,
-   "rotY": -0.68
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    7.5,
-    -1.5,
-    0.53
-   ],
-   "rotZ": 180.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.26,
-   "rotY": -0.65
+   "rotX": 1.5,
+   "rotY": -0.44
   },
   {
    "asset": "SM_Env_Tile_Stone_C_01",
    "pos": [
     7.5,
-    -0.5,
-    0.544
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.78,
-   "rotY": -0.05
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    7.5,
-    0.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_C_01",
-   "pos": [
-    7.5,
-    1.5,
-    0.559
-   ],
-   "rotZ": -90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -1.27,
-   "rotY": 0.0
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    7.5,
-    2.5,
-    0.55
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_A_01",
-   "pos": [
-    7.5,
-    3.5,
-    0.547
-   ],
-   "rotZ": 90.0,
-   "scale": [
-    1,
-    1,
-    1
-   ],
-   "rotX": -0.5,
-   "rotY": 0.78
-  },
-  {
-   "asset": "SM_Env_Tile_Stone_B_01",
-   "pos": [
-    7.5,
     4.5,
-    0.553
+    0.514
    ],
-   "rotZ": 0.0,
+   "rotZ": 270.0,
    "scale": [
     1,
     1,
     1
    ],
-   "rotX": -0.77,
-   "rotY": -0.98
+   "rotX": 0.57,
+   "rotY": -0.7
   },
   {
-   "asset": "SM_Env_Tile_Stone_A_01",
+   "asset": "SM_Env_Tile_Stone_E_01",
    "pos": [
     7.5,
     5.5,
-    0.539
+    0.511
    ],
    "rotZ": 0.0,
    "scale": [
@@ -3214,8 +3214,8 @@
     1,
     1
    ],
-   "rotX": -0.4,
-   "rotY": 0.93
+   "rotX": 1.46,
+   "rotY": 0.42
   },
   {
    "asset": "SM_Tower_Cannon_1x1_01",
@@ -3770,7 +3770,7 @@
     3.12,
     0
    ],
-   "rotZ": 257.71,
+   "rotZ": 111.33,
    "scale": [
     1,
     1,
@@ -3784,7 +3784,7 @@
     3.12,
     0
    ],
-   "rotZ": 141.9,
+   "rotZ": 51.86,
    "scale": [
     1,
     1,
@@ -3798,7 +3798,7 @@
     1.88,
     0
    ],
-   "rotZ": 142.28,
+   "rotZ": 223.77,
    "scale": [
     1,
     1,
@@ -3812,7 +3812,7 @@
     1.88,
     0
    ],
-   "rotZ": 180.2,
+   "rotZ": 24.9,
    "scale": [
     1,
     1,
@@ -3836,113 +3836,29 @@
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
-    -13.466,
-    2.86,
+    -13.559,
+    2.389,
     0.55
    ],
-   "rotZ": 171.25,
+   "rotZ": 312.73,
    "scale": [
-    1.0871403841960627,
-    1.0871403841960627,
-    1.0871403841960627
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -13.76,
-    3.057,
-    0.55
-   ],
-   "rotZ": 216.45,
-   "scale": [
-    1.2314306745254706,
-    1.2314306745254706,
-    1.2314306745254706
+    0.907349090417831,
+    0.907349090417831,
+    0.907349090417831
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
-    -13.135,
-    3.187,
+    -12.848,
+    3.488,
     0.55
    ],
-   "rotZ": 132.2,
+   "rotZ": 31.18,
    "scale": [
-    1.1228958563724847,
-    1.1228958563724847,
-    1.1228958563724847
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -13.49,
-    2.697,
-    0.55
-   ],
-   "rotZ": 43.74,
-   "scale": [
-    1.012599939515858,
-    1.012599939515858,
-    1.012599939515858
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -13.533,
-    1.451,
-    0.55
-   ],
-   "rotZ": 168.39,
-   "scale": [
-    0.8365689411443513,
-    0.8365689411443513,
-    0.8365689411443513
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -12.895,
-    1.001,
-    0.55
-   ],
-   "rotZ": 294.09,
-   "scale": [
-    1.286120560947621,
-    1.286120560947621,
-    1.286120560947621
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -13.091,
-    3.011,
-    0.55
-   ],
-   "rotZ": 52.28,
-   "scale": [
-    1.285943759538513,
-    1.285943759538513,
-    1.285943759538513
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -13.047,
-    3.853,
-    0.55
-   ],
-   "rotZ": 222.54,
-   "scale": [
-    1.1824002738851567,
-    1.1824002738851567,
-    1.1824002738851567
+    1.012259594571257,
+    1.012259594571257,
+    1.012259594571257
    ]
   },
   {
@@ -4022,7 +3938,7 @@
     -3.12,
     0
    ],
-   "rotZ": 157.22,
+   "rotZ": 284.25,
    "scale": [
     1,
     1,
@@ -4036,7 +3952,7 @@
     -3.12,
     0
    ],
-   "rotZ": 189.59,
+   "rotZ": 42.56,
    "scale": [
     1,
     1,
@@ -4050,7 +3966,7 @@
     -1.88,
     0
    ],
-   "rotZ": 13.6,
+   "rotZ": 76.74,
    "scale": [
     1,
     1,
@@ -4064,7 +3980,7 @@
     -1.88,
     0
    ],
-   "rotZ": 268.93,
+   "rotZ": 215.7,
    "scale": [
     1,
     1,
@@ -4086,115 +4002,31 @@
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_C_01",
+   "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    13.597,
-    -3.648,
+    12.762,
+    -1.334,
     0.55
    ],
-   "rotZ": 245.81,
+   "rotZ": 17.05,
    "scale": [
-    1.2812174481450276,
-    1.2812174481450276,
-    1.2812174481450276
+    0.9105409117288242,
+    0.9105409117288242,
+    0.9105409117288242
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    13.637,
-    -2.056,
+    13.321,
+    -2.368,
     0.55
    ],
-   "rotZ": 240.15,
+   "rotZ": 49.59,
    "scale": [
-    0.8560663420686304,
-    0.8560663420686304,
-    0.8560663420686304
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    12.819,
-    -3.603,
-    0.55
-   ],
-   "rotZ": 65.9,
-   "scale": [
-    0.9304409400507176,
-    0.9304409400507176,
-    0.9304409400507176
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    12.96,
-    -2.018,
-    0.55
-   ],
-   "rotZ": 103.66,
-   "scale": [
-    1.0303453135438398,
-    1.0303453135438398,
-    1.0303453135438398
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    12.727,
-    -1.262,
-    0.55
-   ],
-   "rotZ": 163.4,
-   "scale": [
-    0.917384048353889,
-    0.917384048353889,
-    0.917384048353889
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    13.677,
-    -3.63,
-    0.55
-   ],
-   "rotZ": 223.33,
-   "scale": [
-    0.8276543573356695,
-    0.8276543573356695,
-    0.8276543573356695
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    13.429,
-    -3.732,
-    0.55
-   ],
-   "rotZ": 144.39,
-   "scale": [
-    0.928628061070444,
-    0.928628061070444,
-    0.928628061070444
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    13.912,
-    -1.722,
-    0.55
-   ],
-   "rotZ": 169.46,
-   "scale": [
-    1.1479113926665916,
-    1.1479113926665916,
-    1.1479113926665916
+    0.8588961190391842,
+    0.8588961190391842,
+    0.8588961190391842
    ]
   },
   {
@@ -4260,7 +4092,7 @@
     5.91,
     0
    ],
-   "rotZ": 246.94,
+   "rotZ": 106.05,
    "scale": [
     1,
     1,
@@ -4274,7 +4106,7 @@
     8.65,
     0
    ],
-   "rotZ": 124.56,
+   "rotZ": 280.56,
    "scale": [
     1,
     1,
@@ -4288,7 +4120,7 @@
     5.91,
     0
    ],
-   "rotZ": 136.26,
+   "rotZ": 62.13,
    "scale": [
     1,
     1,
@@ -4302,7 +4134,7 @@
     8.65,
     0
    ],
-   "rotZ": 2.32,
+   "rotZ": 199.94,
    "scale": [
     1,
     1,
@@ -4324,115 +4156,31 @@
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_A_01",
+   "asset": "SM_Env_Tree_Maple_C_01",
    "pos": [
-    1.392,
-    11.737,
+    0.082,
+    11.478,
     0.55
    ],
-   "rotZ": 70.55,
+   "rotZ": 244.81,
    "scale": [
-    1.2849293611959136,
-    1.2849293611959136,
-    1.2849293611959136
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    1.305,
-    11.77,
-    0.55
-   ],
-   "rotZ": 159.89,
-   "scale": [
-    0.9325109778362168,
-    0.9325109778362168,
-    0.9325109778362168
+    1.0821841465666933,
+    1.0821841465666933,
+    1.0821841465666933
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_C_01",
    "pos": [
-    -0.172,
-    10.826,
+    0.092,
+    11.618,
     0.55
    ],
-   "rotZ": 170.43,
+   "rotZ": 147.0,
    "scale": [
-    0.8936566065865613,
-    0.8936566065865613,
-    0.8936566065865613
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    1.287,
-    11.244,
-    0.55
-   ],
-   "rotZ": 19.39,
-   "scale": [
-    1.0974010823159779,
-    1.0974010823159779,
-    1.0974010823159779
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -0.138,
-    10.743,
-    0.55
-   ],
-   "rotZ": 334.88,
-   "scale": [
-    0.8709555388070083,
-    0.8709555388070083,
-    0.8709555388070083
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    1.154,
-    10.69,
-    0.55
-   ],
-   "rotZ": 154.58,
-   "scale": [
-    1.1560173730685697,
-    1.1560173730685697,
-    1.1560173730685697
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    0.899,
-    11.191,
-    0.55
-   ],
-   "rotZ": 320.26,
-   "scale": [
-    0.9646213799367976,
-    0.9646213799367976,
-    0.9646213799367976
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    1.798,
-    11.422,
-    0.55
-   ],
-   "rotZ": 160.75,
-   "scale": [
-    0.95591357150834,
-    0.95591357150834,
-    0.95591357150834
+    0.9570735851883958,
+    0.9570735851883958,
+    0.9570735851883958
    ]
   },
   {
@@ -4466,867 +4214,97 @@
   {
    "asset": "SM_Env_Island_Cliff_4x4_01",
    "pos": [
-    -12.2,
-    9.6,
+    10.2,
+    -7.4,
     0
    ],
-   "rotZ": 11.46,
+   "rotZ": 17.19,
    "scale": [
-    1.3,
-    1.3,
+    0.75,
+    0.75,
     1
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    -12.304,
-    8.935,
+    9.432,
+    -7.858,
     0.55
    ],
-   "rotZ": 159.28,
+   "rotZ": 89.43,
    "scale": [
-    0.8708224617083816,
-    0.8708224617083816,
-    0.8708224617083816
+    0.8719066998332573,
+    0.8719066998332573,
+    0.8719066998332573
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    -10.207,
-    10.667,
+    10.408,
+    -8.498,
     0.55
    ],
-   "rotZ": 343.99,
+   "rotZ": 189.07,
    "scale": [
-    0.880410383378966,
-    0.880410383378966,
-    0.880410383378966
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -10.077,
-    9.115,
-    0.55
-   ],
-   "rotZ": 276.74,
-   "scale": [
-    1.0006544875674335,
-    1.0006544875674335,
-    1.0006544875674335
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -11.45,
-    7.471,
-    0.55
-   ],
-   "rotZ": 170.45,
-   "scale": [
-    1.0422643531262419,
-    1.0422643531262419,
-    1.0422643531262419
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -10.284,
-    8.539,
-    0.55
-   ],
-   "rotZ": 265.44,
-   "scale": [
-    1.1084473212784778,
-    1.1084473212784778,
-    1.1084473212784778
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -13.645,
-    8.028,
-    0.55
-   ],
-   "rotZ": 276.0,
-   "scale": [
-    0.8264221645453497,
-    0.8264221645453497,
-    0.8264221645453497
+    1.1500549982293715,
+    1.1500549982293715,
+    1.1500549982293715
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
-    -9.988,
-    10.092,
+    10.067,
+    -8.423,
     0.55
    ],
-   "rotZ": 92.53,
+   "rotZ": 42.5,
    "scale": [
-    1.2857364229176462,
-    1.2857364229176462,
-    1.2857364229176462
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -10.582,
-    8.402,
-    0.55
-   ],
-   "rotZ": 120.59,
-   "scale": [
-    1.4199455756771266,
-    1.4199455756771266,
-    1.4199455756771266
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -11.23,
-    9.872,
-    0.55
-   ],
-   "rotZ": 113.93,
-   "scale": [
-    0.9791597127416269,
-    0.9791597127416269,
-    0.9791597127416269
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -11.224,
-    9.623,
-    0.55
-   ],
-   "rotZ": 340.74,
-   "scale": [
-    0.8424658649844442,
-    0.8424658649844442,
-    0.8424658649844442
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -11.166,
-    7.603,
-    0.55
-   ],
-   "rotZ": 344.44,
-   "scale": [
-    1.420041877065836,
-    1.420041877065836,
-    1.420041877065836
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -13.812,
-    10.994,
-    0.55
-   ],
-   "rotZ": 293.33,
-   "scale": [
-    0.8862597286944436,
-    0.8862597286944436,
-    0.8862597286944436
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -14.474,
-    9.649,
-    0.55
-   ],
-   "rotZ": 109.19,
-   "scale": [
-    1.2498714614832855,
-    1.2498714614832855,
-    1.2498714614832855
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -10.952,
-    11.348,
-    0.55
-   ],
-   "rotZ": 165.88,
-   "scale": [
-    1.3094914712642254,
-    1.3094914712642254,
-    1.3094914712642254
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -13.584,
-    8.65,
-    0.55
-   ],
-   "rotZ": 271.04,
-   "scale": [
-    0.9607498829442405,
-    0.9607498829442405,
-    0.9607498829442405
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -10.113,
-    10.499,
-    0.55
-   ],
-   "rotZ": 196.06,
-   "scale": [
-    0.9044500510183443,
-    0.9044500510183443,
-    0.9044500510183443
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -14.214,
-    10.602,
-    0.55
-   ],
-   "rotZ": 95.36,
-   "scale": [
-    0.8546536884115761,
-    0.8546536884115761,
-    0.8546536884115761
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -10.795,
-    10.574,
-    0.55
-   ],
-   "rotZ": 349.96,
-   "scale": [
-    0.9125747103410035,
-    0.9125747103410035,
-    0.9125747103410035
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -10.998,
-    10.928,
-    0.55
-   ],
-   "rotZ": 84.58,
-   "scale": [
-    1.1500669844488918,
-    1.1500669844488918,
-    1.1500669844488918
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -12.056,
-    8.648,
-    0.55
-   ],
-   "rotZ": 105.76,
-   "scale": [
-    1.1684747343807134,
-    1.1684747343807134,
-    1.1684747343807134
-   ]
-  },
-  {
-   "asset": "SM_Env_Stump_01",
-   "pos": [
-    -13.76,
-    8.3,
-    0.55
-   ],
-   "rotZ": 87.34,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Island_Cliff_4x4_01",
-   "pos": [
-    12.6,
-    9.2,
-    0
-   ],
-   "rotZ": 91.67,
-   "scale": [
-    1.2,
-    1.2,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    12.49,
-    10.891,
-    0.55
-   ],
-   "rotZ": 88.32,
-   "scale": [
-    0.8996594297355425,
-    0.8996594297355425,
-    0.8996594297355425
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    13.644,
-    8.27,
-    0.55
-   ],
-   "rotZ": 23.33,
-   "scale": [
-    0.9635749347142255,
-    0.9635749347142255,
-    0.9635749347142255
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    12.639,
-    10.718,
-    0.55
-   ],
-   "rotZ": 291.04,
-   "scale": [
-    1.2246622588600604,
-    1.2246622588600604,
-    1.2246622588600604
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    14.675,
-    9.082,
-    0.55
-   ],
-   "rotZ": 317.82,
-   "scale": [
-    0.9502238135513785,
-    0.9502238135513785,
-    0.9502238135513785
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    10.888,
-    9.777,
-    0.55
-   ],
-   "rotZ": 83.84,
-   "scale": [
-    0.8327542548866761,
-    0.8327542548866761,
-    0.8327542548866761
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    12.067,
-    8.81,
-    0.55
-   ],
-   "rotZ": 334.86,
-   "scale": [
-    1.0419540262463305,
-    1.0419540262463305,
-    1.0419540262463305
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    13.718,
-    7.95,
-    0.55
-   ],
-   "rotZ": 279.0,
-   "scale": [
-    1.232091138248938,
-    1.232091138248938,
-    1.232091138248938
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    13.846,
-    9.25,
-    0.55
-   ],
-   "rotZ": 223.18,
-   "scale": [
-    0.941469524237107,
-    0.941469524237107,
-    0.941469524237107
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    11.203,
-    10.712,
-    0.55
-   ],
-   "rotZ": 359.95,
-   "scale": [
-    0.8248533978285282,
-    0.8248533978285282,
-    0.8248533978285282
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    12.561,
-    8.856,
-    0.55
-   ],
-   "rotZ": 294.78,
-   "scale": [
-    1.0658466822721646,
-    1.0658466822721646,
-    1.0658466822721646
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    11.706,
-    10.13,
-    0.55
-   ],
-   "rotZ": 73.23,
-   "scale": [
-    1.3169327592265336,
-    1.3169327592265336,
-    1.3169327592265336
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    10.603,
-    8.578,
-    0.55
-   ],
-   "rotZ": 286.5,
-   "scale": [
-    1.2316171832948137,
-    1.2316171832948137,
-    1.2316171832948137
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    13.447,
-    10.439,
-    0.55
-   ],
-   "rotZ": 58.93,
-   "scale": [
-    1.2520138269384091,
-    1.2520138269384091,
-    1.2520138269384091
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    10.971,
-    10.237,
-    0.55
-   ],
-   "rotZ": 150.42,
-   "scale": [
-    0.8333844445871952,
-    0.8333844445871952,
-    0.8333844445871952
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    12.587,
-    8.74,
-    0.55
-   ],
-   "rotZ": 149.92,
-   "scale": [
-    1.3617601431781852,
-    1.3617601431781852,
-    1.3617601431781852
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    14.422,
-    9.161,
-    0.55
-   ],
-   "rotZ": 140.66,
-   "scale": [
-    1.0632327369033072,
-    1.0632327369033072,
-    1.0632327369033072
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    14.192,
-    8.592,
-    0.55
-   ],
-   "rotZ": 152.55,
-   "scale": [
-    1.3332395777763217,
-    1.3332395777763217,
-    1.3332395777763217
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    12.215,
-    9.457,
-    0.55
-   ],
-   "rotZ": 278.3,
-   "scale": [
-    0.8844838120761689,
-    0.8844838120761689,
-    0.8844838120761689
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    14.55,
-    9.857,
-    0.55
-   ],
-   "rotZ": 32.05,
-   "scale": [
-    1.2044264868102812,
-    1.2044264868102812,
-    1.2044264868102812
-   ]
-  },
-  {
-   "asset": "SM_Env_Stump_01",
-   "pos": [
-    11.16,
-    8.0,
-    0.55
-   ],
-   "rotZ": 253.45,
-   "scale": [
-    1,
-    1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Island_Cliff_4x4_01",
-   "pos": [
-    12.8,
-    -9.8,
-    0
-   ],
-   "rotZ": 137.51,
-   "scale": [
-    1.1,
-    1.1,
-    1
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    13.599,
-    -8.309,
-    0.55
-   ],
-   "rotZ": 187.62,
-   "scale": [
-    1.401574863445855,
-    1.401574863445855,
-    1.401574863445855
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    13.933,
-    -8.877,
-    0.55
-   ],
-   "rotZ": 108.58,
-   "scale": [
-    1.3442399890199244,
-    1.3442399890199244,
-    1.3442399890199244
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    13.109,
-    -9.713,
-    0.55
-   ],
-   "rotZ": 19.21,
-   "scale": [
-    1.4020090785893724,
-    1.4020090785893724,
-    1.4020090785893724
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    12.532,
-    -9.573,
-    0.55
-   ],
-   "rotZ": 247.76,
-   "scale": [
-    1.3792392470253967,
-    1.3792392470253967,
-    1.3792392470253967
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    12.474,
-    -10.196,
-    0.55
-   ],
-   "rotZ": 145.61,
-   "scale": [
-    1.3501283964326487,
-    1.3501283964326487,
-    1.3501283964326487
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    13.688,
-    -11.435,
-    0.55
-   ],
-   "rotZ": 15.02,
-   "scale": [
-    1.4100568844871977,
-    1.4100568844871977,
-    1.4100568844871977
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    13.729,
-    -8.405,
-    0.55
-   ],
-   "rotZ": 88.94,
-   "scale": [
-    1.2711737489713157,
-    1.2711737489713157,
-    1.2711737489713157
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    14.335,
-    -10.956,
-    0.55
-   ],
-   "rotZ": 303.29,
-   "scale": [
-    1.2369647392986987,
-    1.2369647392986987,
-    1.2369647392986987
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    11.95,
-    -11.298,
-    0.55
-   ],
-   "rotZ": 215.83,
-   "scale": [
-    1.157533694072487,
-    1.157533694072487,
-    1.157533694072487
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    11.582,
-    -11.049,
-    0.55
-   ],
-   "rotZ": 110.96,
-   "scale": [
-    0.9620182519907572,
-    0.9620182519907572,
-    0.9620182519907572
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    11.522,
-    -8.732,
-    0.55
-   ],
-   "rotZ": 157.81,
-   "scale": [
-    0.8151939321479221,
-    0.8151939321479221,
-    0.8151939321479221
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    11.726,
-    -10.795,
-    0.55
-   ],
-   "rotZ": 160.85,
-   "scale": [
-    1.202073917962489,
-    1.202073917962489,
-    1.202073917962489
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    13.043,
-    -10.324,
-    0.55
-   ],
-   "rotZ": 144.12,
-   "scale": [
-    0.8436284272633219,
-    0.8436284272633219,
-    0.8436284272633219
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    11.748,
-    -8.505,
-    0.55
-   ],
-   "rotZ": 181.56,
-   "scale": [
-    1.2271122539527597,
-    1.2271122539527597,
-    1.2271122539527597
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    14.631,
-    -9.322,
-    0.55
-   ],
-   "rotZ": 112.94,
-   "scale": [
-    1.2682557540570432,
-    1.2682557540570432,
-    1.2682557540570432
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    13.533,
-    -9.397,
-    0.55
-   ],
-   "rotZ": 234.99,
-   "scale": [
-    1.3097578021773748,
-    1.3097578021773748,
-    1.3097578021773748
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    14.691,
-    -9.49,
-    0.55
-   ],
-   "rotZ": 263.55,
-   "scale": [
-    1.3297431414666192,
-    1.3297431414666192,
-    1.3297431414666192
+    0.9672491287140909,
+    0.9672491287140909,
+    0.9672491287140909
    ]
   },
   {
    "asset": "SM_Env_RockPile_01",
    "pos": [
-    11.48,
-    -10.9,
+    9.375,
+    -8.0,
     0.55
    ],
-   "rotZ": 45.25,
+   "rotZ": 260.29,
    "scale": [
     1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Dock_Post_01",
+   "pos": [
+    9.0,
+    -6.0,
+    0
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Bridge_Plank_01",
+   "pos": [
+    8.7,
+    -6.3,
+    0.35
+   ],
+   "rotZ": 34.38,
+   "scale": [
+    0.55,
     1,
     1
    ]
@@ -5334,11 +4312,95 @@
   {
    "asset": "SM_Env_Island_Cliff_4x4_01",
    "pos": [
-    -12.6,
-    -9.4,
+    -10.0,
+    -7.6,
     0
    ],
-   "rotZ": 28.65,
+   "rotZ": 108.86,
+   "scale": [
+    0.7,
+    0.7,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tree_Maple_A_01",
+   "pos": [
+    -9.538,
+    -6.948,
+    0.55
+   ],
+   "rotZ": 346.33,
+   "scale": [
+    0.8310481928723182,
+    0.8310481928723182,
+    0.8310481928723182
+   ]
+  },
+  {
+   "asset": "SM_Env_Tree_Maple_B_01",
+   "pos": [
+    -10.37,
+    -7.741,
+    0.55
+   ],
+   "rotZ": 122.44,
+   "scale": [
+    0.9400713550876674,
+    0.9400713550876674,
+    0.9400713550876674
+   ]
+  },
+  {
+   "asset": "SM_Env_Tree_Maple_A_01",
+   "pos": [
+    -10.383,
+    -7.592,
+    0.55
+   ],
+   "rotZ": 302.39,
+   "scale": [
+    1.1778724380431749,
+    1.1778724380431749,
+    1.1778724380431749
+   ]
+  },
+  {
+   "asset": "SM_Env_RockPile_01",
+   "pos": [
+    -10.77,
+    -8.16,
+    0.55
+   ],
+   "rotZ": 162.98,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_Small_01",
+   "pos": [
+    -8.6,
+    -6.4,
+    0.0
+   ],
+   "rotZ": 57.3,
+   "scale": [
+    2.2,
+    2.2,
+    2.2
+   ]
+  },
+  {
+   "asset": "SM_Env_Island_Cliff_4x4_01",
+   "pos": [
+    10.6,
+    8.0,
+    0
+   ],
+   "rotZ": 126.05,
    "scale": [
     1.0,
     1.0,
@@ -5346,237 +4408,211 @@
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_A_01",
+   "asset": "SM_Env_Tree_Maple_C_01",
    "pos": [
-    -11.391,
-    -10.456,
+    9.832,
+    6.718,
     0.55
    ],
-   "rotZ": 247.01,
+   "rotZ": 111.46,
    "scale": [
-    1.268701542950267,
-    1.268701542950267,
-    1.268701542950267
+    1.6022811807512012,
+    1.6022811807512012,
+    1.6022811807512012
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_C_01",
    "pos": [
-    -12.503,
-    -8.873,
+    10.097,
+    6.908,
     0.55
    ],
-   "rotZ": 272.22,
+   "rotZ": 138.88,
    "scale": [
-    0.9031988420374345,
-    0.9031988420374345,
-    0.9031988420374345
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -11.312,
-    -10.379,
-    0.55
-   ],
-   "rotZ": 51.69,
-   "scale": [
-    1.126441656625368,
-    1.126441656625368,
-    1.126441656625368
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -11.133,
-    -10.207,
-    0.55
-   ],
-   "rotZ": 221.71,
-   "scale": [
-    0.9543094657912878,
-    0.9543094657912878,
-    0.9543094657912878
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -13.768,
-    -8.191,
-    0.55
-   ],
-   "rotZ": 58.04,
-   "scale": [
-    1.408662444582796,
-    1.408662444582796,
-    1.408662444582796
+    1.6340284505594658,
+    1.6340284505594658,
+    1.6340284505594658
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
-    -12.748,
-    -9.714,
+    11.768,
+    8.167,
     0.55
    ],
-   "rotZ": 285.16,
+   "rotZ": 219.93,
    "scale": [
-    0.9718215564251032,
-    0.9718215564251032,
-    0.9718215564251032
+    1.5727925480949434,
+    1.5727925480949434,
+    1.5727925480949434
+   ]
+  },
+  {
+   "asset": "SM_Env_RockPile_01",
+   "pos": [
+    9.5,
+    7.2,
+    0.55
+   ],
+   "rotZ": 75.01,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_RockPile_01",
+   "pos": [
+    9.0,
+    7.0,
+    0.1
+   ],
+   "rotZ": 114.59,
+   "scale": [
+    1.6,
+    1.6,
+    1.6
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_Small_01",
+   "pos": [
+    8.4,
+    8.6,
+    0
+   ],
+   "rotZ": 22.92,
+   "scale": [
+    2.6,
+    2.6,
+    2.6
+   ]
+  },
+  {
+   "asset": "SM_Env_Island_Cliff_4x4_01",
+   "pos": [
+    -10.2,
+    7.6,
+    0
+   ],
+   "rotZ": 51.57,
+   "scale": [
+    0.7,
+    0.7,
+    1
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    -12.4,
-    -11.134,
+    -10.311,
+    8.064,
     0.55
    ],
-   "rotZ": 347.82,
+   "rotZ": 140.74,
    "scale": [
-    1.094475084996723,
-    1.094475084996723,
-    1.094475084996723
+    1.1485687896505197,
+    1.1485687896505197,
+    1.1485687896505197
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_A_01",
+   "asset": "SM_Env_RockPile_01",
    "pos": [
-    -13.512,
-    -9.524,
+    -10.97,
+    7.04,
     0.55
    ],
-   "rotZ": 90.73,
+   "rotZ": 27.7,
    "scale": [
-    1.1482058268737385,
-    1.1482058268737385,
-    1.1482058268737385
+    1,
+    1,
+    1
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_B_01",
+   "asset": "SM_Env_Rock_1x1_01",
    "pos": [
-    -12.105,
-    -10.025,
-    0.55
-   ],
-   "rotZ": 95.31,
-   "scale": [
-    1.4438238608823262,
-    1.4438238608823262,
-    1.4438238608823262
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -13.946,
-    -10.111,
-    0.55
-   ],
-   "rotZ": 159.22,
-   "scale": [
-    0.9148914381861155,
-    0.9148914381861155,
-    0.9148914381861155
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -12.67,
-    -11.145,
-    0.55
-   ],
-   "rotZ": 91.31,
-   "scale": [
-    1.2155045980801598,
-    1.2155045980801598,
-    1.2155045980801598
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -11.456,
-    -9.515,
-    0.55
-   ],
-   "rotZ": 322.46,
-   "scale": [
-    1.2764752041635223,
-    1.2764752041635223,
-    1.2764752041635223
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_B_01",
-   "pos": [
-    -12.63,
-    -11.064,
-    0.55
-   ],
-   "rotZ": 221.78,
-   "scale": [
-    1.080951368596379,
-    1.080951368596379,
-    1.080951368596379
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -12.945,
-    -9.428,
-    0.55
-   ],
-   "rotZ": 175.82,
-   "scale": [
-    1.198137631450001,
-    1.198137631450001,
-    1.198137631450001
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -10.926,
-    -8.907,
-    0.55
-   ],
-   "rotZ": 127.79,
-   "scale": [
-    0.8691357239336348,
-    0.8691357239336348,
-    0.8691357239336348
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -13.636,
-    -8.101,
-    0.55
-   ],
-   "rotZ": 108.42,
-   "scale": [
-    0.8869223615729798,
-    0.8869223615729798,
-    0.8869223615729798
-   ]
-  },
-  {
-   "asset": "SM_Env_Stump_01",
-   "pos": [
-    -13.8,
     -10.4,
+    7.3,
     0.55
    ],
-   "rotZ": 214.49,
+   "rotZ": 0.0,
+   "scale": [
+    0.75,
+    0.75,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_1x1_01",
+   "pos": [
+    -10.36,
+    7.33,
+    1.15
+   ],
+   "rotZ": 17.19,
+   "scale": [
+    0.65,
+    0.65,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_1x1_01",
+   "pos": [
+    -10.43,
+    7.35,
+    1.75
+   ],
+   "rotZ": 34.38,
+   "scale": [
+    0.55,
+    0.55,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Prop_Lantern_01",
+   "pos": [
+    -10.4,
+    7.35,
+    2.35
+   ],
+   "rotZ": 0.0,
+   "scale": [
+    1.6,
+    1.6,
+    1.6
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_TetrisI_01",
+   "pos": [
+    -9.4,
+    8.4,
+    0.2
+   ],
+   "rotZ": 68.75,
+   "scale": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "rotX": 20.05,
+   "rotY": 0.0
+  },
+  {
+   "asset": "SM_Env_Rock_Small_01",
+   "pos": [
+    9.201,
+    5.747,
+    -0.05
+   ],
+   "rotZ": 297.02,
    "scale": [
     1,
     1,
@@ -5584,115 +4620,227 @@
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_B_01",
+   "asset": "SM_Env_Leaves_01",
+   "pos": [
+    10.986,
+    -6.283,
+    0.02
+   ],
+   "rotZ": 60.58,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Leaves_01",
+   "pos": [
+    -5.694,
+    -8.926,
+    0.02
+   ],
+   "rotZ": 144.02,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_Small_01",
+   "pos": [
+    10.874,
+    3.429,
+    -0.05
+   ],
+   "rotZ": 177.21,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Leaves_01",
+   "pos": [
+    -10.704,
+    7.192,
+    0.02
+   ],
+   "rotZ": 268.13,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Leaves_01",
+   "pos": [
+    -9.515,
+    2.417,
+    0.02
+   ],
+   "rotZ": 21.4,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Rock_Small_01",
+   "pos": [
+    -10.384,
+    -5.242,
+    -0.05
+   ],
+   "rotZ": 55.8,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Leaves_01",
+   "pos": [
+    -3.839,
+    -8.054,
+    0.02
+   ],
+   "rotZ": 0.08,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Leaves_01",
+   "pos": [
+    -8.37,
+    -7.174,
+    0.02
+   ],
+   "rotZ": 125.0,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
     -8.6,
     5.6,
     0.55
    ],
-   "rotZ": 54.53,
+   "rotZ": 24.17,
    "scale": [
-    0.9035280062567274,
-    0.9035280062567274,
-    0.9035280062567274
+    0.9519881706946883,
+    0.9519881706946883,
+    0.9519881706946883
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_A_01",
+   "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
     -8.7,
     -5.6,
     0.55
    ],
-   "rotZ": 243.21,
+   "rotZ": 51.07,
    "scale": [
-    1.0127132756557402,
-    1.0127132756557402,
-    1.0127132756557402
+    0.9630644391392693,
+    0.9630644391392693,
+    0.9630644391392693
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_A_01",
+   "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
     8.6,
     5.6,
     0.55
    ],
-   "rotZ": 219.4,
+   "rotZ": 207.05,
    "scale": [
-    1.1178213999894866,
-    1.1178213999894866,
-    1.1178213999894866
+    1.0185378658079398,
+    1.0185378658079398,
+    1.0185378658079398
    ]
   },
   {
-   "asset": "SM_Env_Tree_Maple_B_01",
+   "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
     8.7,
     -5.6,
     0.55
    ],
-   "rotZ": 138.18,
+   "rotZ": 291.84,
    "scale": [
-    0.9660599599911559,
-    0.9660599599911559,
-    0.9660599599911559
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_A_01",
-   "pos": [
-    -6.0,
-    6.7,
-    0.55
-   ],
-   "rotZ": 19.3,
-   "scale": [
-    1.1052201713665037,
-    1.1052201713665037,
-    1.1052201713665037
+    1.1482756804261784,
+    1.1482756804261784,
+    1.1482756804261784
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_B_01",
    "pos": [
-    5.8,
+    -6.0,
     6.7,
     0.55
    ],
-   "rotZ": 204.45,
+   "rotZ": 165.15,
    "scale": [
-    1.0446181245963166,
-    1.0446181245963166,
-    1.0446181245963166
-   ]
-  },
-  {
-   "asset": "SM_Env_Tree_Maple_C_01",
-   "pos": [
-    -5.5,
-    -6.7,
-    0.55
-   ],
-   "rotZ": 322.17,
-   "scale": [
-    1.08338059353242,
-    1.08338059353242,
-    1.08338059353242
+    0.9779630785545048,
+    0.9779630785545048,
+    0.9779630785545048
    ]
   },
   {
    "asset": "SM_Env_Tree_Maple_A_01",
    "pos": [
+    5.8,
+    6.7,
+    0.55
+   ],
+   "rotZ": 35.13,
+   "scale": [
+    0.9856589595607504,
+    0.9856589595607504,
+    0.9856589595607504
+   ]
+  },
+  {
+   "asset": "SM_Env_Tree_Maple_B_01",
+   "pos": [
+    -5.5,
+    -6.7,
+    0.55
+   ],
+   "rotZ": 164.54,
+   "scale": [
+    1.0730141922113272,
+    1.0730141922113272,
+    1.0730141922113272
+   ]
+  },
+  {
+   "asset": "SM_Env_Tree_Maple_C_01",
+   "pos": [
     3.5,
     -6.7,
     0.55
    ],
-   "rotZ": 56.76,
+   "rotZ": 7.94,
    "scale": [
-    0.9000998937413134,
-    0.9000998937413134,
-    0.9000998937413134
+    1.1377463932186753,
+    1.1377463932186753,
+    1.1377463932186753
    ]
   },
   {

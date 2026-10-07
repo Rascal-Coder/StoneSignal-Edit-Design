@@ -60,6 +60,8 @@ public static class StylizedArtIntegration
         ("Enemies", "SM_Enemy_Shard_01", "PF_Enemy_Shard", "Shard"),
         ("Enemies", "SM_Enemy_Boss_01", "PF_Enemy_Boss", "Enemy"),
         ("Environment", "SM_Env_Tile_Stone_C_01", "PF_Env_Tile_Stone_C", "Env"),
+        ("Environment", "SM_Env_Tile_Stone_D_01", "PF_Env_Tile_Stone_D", "Env"),
+        ("Environment", "SM_Env_Tile_Stone_E_01", "PF_Env_Tile_Stone_E", "Env"),
         ("Environment", "SM_Env_Tile_Dirt_01", "PF_Env_Tile_Dirt", "Env"),
         ("Environment", "SM_Env_Island_Cliff_4x4_01", "PF_Env_Island_Cliff_4x4", "Env"),
         ("Environment", "SM_Env_Board_Cliff_16x12_01", "PF_Env_Board_Cliff_16x12", "Env"),
@@ -137,10 +139,10 @@ public static class StylizedArtIntegration
         var water = AssetDatabase.LoadAssetAtPath<Material>(wp);
         if (water == null) { water = new Material(Shader.Find("Universal Render Pipeline/Unlit")); AssetDatabase.CreateAsset(water, wp); }
         water.shader = Shader.Find("StoneSignal/Water"); water.renderQueue = 2950;
-        water.SetColor("_ShallowColor", Hex("33C7C2")); water.SetColor("_DeepColor", Hex("0B4A9A")); water.SetFloat("_DepthRange", 4.5f); water.SetFloat("_CausticStrength", .45f); water.SetColor("_BaseColor", Hex("0754A0"));
+        water.SetColor("_ShallowColor", Hex("7FD3E0")); water.SetColor("_DeepColor", Hex("0A4C9E")); water.SetFloat("_DepthRange", .28f); water.SetColor("_GlowColor", new Color(.55f, 1.05f, 1.25f, 1)); water.SetColor("_BaseColor", Hex("0A4C9E")); StripUnused(water);
         EditorUtility.SetDirty(water);
         block.SetFloat("_BaseAO", .5f); block.SetFloat("_BaseAOHeight", .45f); block.SetFloat("_Mottle", .35f);
-        env.SetFloat("_Mottle", .18f); water.SetFloat("_FoamDepth", .22f); water.SetFloat("_RippleScale", 2.4f);
+        env.SetFloat("_Mottle", .18f);
         env.SetFloat("_BaseAO", .2f); env.SetFloat("_BaseAOHeight", .22f);
         tower.SetFloat("_BaseAO", .3f); tower.SetFloat("_BaseAOHeight", .35f);
         foreach (var (n, tint) in new[] { ("M_Foliage_Warm", "FFC8A8"), ("M_Foliage_Gold", "FFF0A0"), ("M_Foliage_Deep", "E8A0A0") })
@@ -169,6 +171,12 @@ public static class StylizedArtIntegration
             if (r is SkinnedMeshRenderer smr) { smr.updateWhenOffscreen = false; }
         }
         if (a.folder == "Towers") RestructureTower(rig.transform, mesh, a.fbx);
+        if (a.folder == "Enemies")  // v9: imported model faces -Z; turn the model child 180 deg so face = +Z (root & Rig stay identity)
+        {
+            var mp = mesh.transform.localPosition;
+            mesh.transform.localPosition = new Vector3(-mp.x, mp.y, -mp.z);
+            mesh.transform.localRotation = Quaternion.Euler(0, 180, 0) * mesh.transform.localRotation;
+        }
         if (a.folder == "Enemies")
         {
             var clips = AssetDatabase.LoadAllAssetsAtPath(ArtDir + a.folder + "/" + a.fbx + ".fbx").OfType<AnimationClip>()
@@ -316,22 +324,22 @@ public static class StylizedArtIntegration
         cam.fieldOfView = 32;
         cam.transform.position = new Vector3(9f, 21f, 25f); cam.transform.LookAt(new Vector3(0, .5f, .5f));
         EditorSceneManager.SaveScene(scene, ScenePath);
-        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v7.png"))) File.Delete(old);
+        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v10.png"))) File.Delete(old);
         Capture(cam, PreviewDir + "unity_demo.png");
         var ls = light.shadows; light.shadows = LightShadows.None;
         Capture(cam, PreviewDir + "unity_demo_noshadow.png");
         light.shadows = ls;
         // Game.unity Main Camera (read-only copy): orthographic size 9.2, same rotation, same offset to the board centre
-        var gRot = new Quaternion(0.3691325f, 0.13881999f, -0.05586581f, 0.91725093f); var gPos = new Vector3(-3.2f, 17.4f, -18.4f);
+        var gRot = Quaternion.Euler(GameCamPitchV10, GameCamYawV10, 0); var gPos = new Vector3(-3.2f, 17.4f, -18.4f);
         var fwd = gRot * Vector3.forward; float tHit = (.8f - gPos.y) / fwd.y;
         var wide = (cam.transform.position, cam.transform.rotation, cam.fieldOfView);
-        cam.orthographic = true; cam.orthographicSize = GameCamOrthoV7;  // tighter framing so the board fills the screen cam.transform.rotation = gRot; cam.transform.position = new Vector3(0, .8f, 0) - fwd * tHit;
+        cam.orthographic = true; cam.orthographicSize = GameCamOrthoV10; cam.transform.rotation = gRot; cam.transform.position = GameCamTargetV10 - fwd * 30f;  // v10 framing
         cam.farClipPlane = 200;
-        Capture(cam, PreviewDir + "level_gamecam_v7.png");
+        Capture(cam, PreviewDir + "level_gamecam_v10.png"); Capture(cam, PreviewDir + "level_compose_v10.png");
         cam.orthographic = false; cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
-        Capture(cam, PreviewDir + "level_wide_v7.png");
+        Capture(cam, PreviewDir + "level_wide_v10.png");
         cam.transform.position = new Vector3(3.2f, 3.4f, -5.2f); cam.transform.LookAt(new Vector3(-.3f, .2f, -8.6f)); cam.fieldOfView = 40;
-        Capture(cam, PreviewDir + "shore_closeup_v7.png");
+        Capture(cam, PreviewDir + "shore_closeup_v10.png");
         cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
         EditorSceneManager.SaveScene(scene, ScenePath);
     }
@@ -339,6 +347,9 @@ public static class StylizedArtIntegration
     // Glowing slot / core ring decal: additive procedural ring quad lying on the surface (visual only, no collider).
     // Recommended Game.unity Main Camera orthographic size (Game.unity is read-only for art; 程序开发 to apply). Was 9.2.
     public const float GameCamOrthoV7 = 6.4f;
+    /// v10 game camera (for 程序开发 -> Game.unity Main Camera): lower pitch, more frontal, board fills screen with UI margin at the bottom.
+    public const float GameCamPitchV10 = 40f, GameCamYawV10 = 10f, GameCamOrthoV10 = 6.6f;
+    public static readonly Vector3 GameCamTargetV10 = new Vector3(0, .8f, -2.2f);   // look-at point; camera = target - forward * 30
 
     static void SlotMarker(Transform parent, Vector3 pos, Vector2 size, Color c, int shape)
     {
@@ -371,6 +382,61 @@ public static class StylizedArtIntegration
     }
 
     [Serializable] class LayoutItem { public string asset; public float[] pos; public float rotZ; public float rotX; public float rotY; public float[] scale; }
+    /// PF_Env_LevelDressing_16x12: everything around the playable grid (water, board cliff, 4 corner islands + trees, spawn islands,
+    /// entry bridges W4/E4/N3 with dock posts + lanterns, snow). Root at world origin = grid centre; grid origin (-8,0,-6); tile top y=0.80.
+    /// Mobile/WebGL: all meshes static (static batching), shared atlas materials, no Opaque Texture, no SSAO.
+    /// Remove serialized properties/textures the shader no longer has (no stale noise/foam textures on the water material).
+    static void StripUnused(Material m)
+    {
+        var so = new SerializedObject(m);
+        foreach (var list in new[] { "m_SavedProperties.m_TexEnvs", "m_SavedProperties.m_Floats", "m_SavedProperties.m_Colors" })
+        {
+            var arr = so.FindProperty(list);
+            for (int k = arr.arraySize - 1; k >= 0; k--)
+                if (!m.HasProperty(arr.GetArrayElementAtIndex(k).FindPropertyRelative("first").stringValue)) arr.DeleteArrayElementAtIndex(k);
+        }
+        so.ApplyModifiedPropertiesWithoutUndo(); m.shaderKeywords = new string[0];
+    }
+
+    public static void BuildLevelDressing()
+    {
+        var mats = new Dictionary<string, Material> { ["Water"] = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_Env_Water_Flat.mat") };
+        var byFbx = Assets.ToDictionary(x => x.fbx, x => x.prefab);
+        var layout = JsonUtility.FromJson<Layout>(File.ReadAllText("ArtSource/Stylized/level_layout.json"));
+        string[] keep = { "Island", "Board_Cliff", "Tree", "Bridge", "Dock", "Lantern", "RockPile", "Stump", "Log_", "Campfire", "Rock_", "Leaves" };
+        var root = new GameObject("PF_Env_LevelDressing_16x12");
+        var water = GameObject.CreatePrimitive(PrimitiveType.Plane); water.name = "Water";
+        UnityEngine.Object.DestroyImmediate(water.GetComponent<Collider>());
+        water.transform.SetParent(root.transform); water.transform.localScale = Vector3.one * 10; water.GetComponent<Renderer>().sharedMaterial = mats["Water"];
+        var groups = new Dictionary<string, Transform>();
+        Transform G(string n) { if (!groups.TryGetValue(n, out var t)) { t = new GameObject(n).transform; t.SetParent(root.transform, false); groups[n] = t; } return t; }
+        int bridges = 0;
+        foreach (var it in layout.items)
+        {
+            if (!keep.Any(k => it.asset.Contains(k)) || !byFbx.TryGetValue(it.asset, out var pf)) continue;
+            bool onBoard = Mathf.Abs(it.pos[0]) < 7.9f && Mathf.Abs(it.pos[1]) < 5.9f;
+            if (onBoard && !it.asset.Contains("Board_Cliff")) continue;
+            string grp = it.asset.Contains("Board_Cliff") ? "BoardCliff" : it.asset.Contains("Bridge") || it.asset.Contains("Dock") || it.asset.Contains("Lantern") ? "EntryBridges" : it.asset.Contains("Tree") ? "Trees" : "Islands";
+            var go = Place(pf, G(grp), new Vector3(-it.pos[0], it.pos[2], -it.pos[1]), -it.rotZ);
+            go.transform.localScale = new Vector3(it.scale[0], it.scale[2], it.scale[1]);
+            if (it.asset.Contains("Bridge")) bridges++;
+        }
+        var snow = new GameObject("FX_Weather_Snow").AddComponent<ParticleSystem>();
+        snow.transform.SetParent(root.transform); snow.transform.position = new Vector3(0, 9, 0); snow.transform.rotation = Quaternion.Euler(90, 0, 0);
+        var main = snow.main; main.loop = true; main.prewarm = true; main.startLifetime = 9; main.startSpeed = .9f; main.startSize = .035f; main.maxParticles = 400;
+        var em = snow.emission; em.rateOverTime = 30;
+        var sh = snow.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(30, 22, 1);
+        snow.GetComponent<ParticleSystemRenderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_FX_Snow.mat");
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            if (!t.GetComponent<ParticleSystem>()) GameObjectUtility.SetStaticEditorFlags(t.gameObject, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic);
+        int tris = root.GetComponentsInChildren<MeshFilter>().Sum(m => m.sharedMesh ? m.sharedMesh.triangles.Length / 3 : 0);
+        int rends = root.GetComponentsInChildren<Renderer>().Length;
+        string path = PrefabDir + "PF_Env_LevelDressing_16x12.prefab";
+        PrefabUtility.SaveAsPrefabAsset(root, path); UnityEngine.Object.DestroyImmediate(root);
+        Debug.Log($"LEVEL DRESSING built: {path} tris={tris} renderers={rends} bridgePlanks={bridges}");
+        if (tris > 90000 || bridges < 11) throw new Exception($"LEVEL DRESSING FAIL tris={tris} bridges={bridges}");
+    }
+
     [Serializable] class Layout { public LayoutItem[] items; }
 
     internal static void Capture(Camera cam, string file)
@@ -392,6 +458,28 @@ public static class StylizedArtIntegration
     public static void Checks()
     {
         var errors = new List<string>();
+        // enemy facing: eye/face vertices (palette cell EnemyEye, uv .969/.906) must sit on +Z of the prefab root; root rotation identity
+        foreach (var en in Assets.Where(x => x.folder == "Enemies"))
+        {
+            var pfa = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + en.prefab + ".prefab");
+            if (pfa == null) continue;
+            var inst = (GameObject)PrefabUtility.InstantiatePrefab(pfa);
+            if (inst.transform.rotation != Quaternion.identity) errors.Add(en.prefab + " root rotation not identity");
+            float sum = 0; int n = 0;
+            foreach (var r in inst.GetComponentsInChildren<Renderer>())
+            {
+                Mesh m; Matrix4x4 l2w;
+                if (r is SkinnedMeshRenderer sk) { m = new Mesh(); sk.BakeMesh(m, true); l2w = sk.transform.localToWorldMatrix; }
+                else { var mf = r.GetComponent<MeshFilter>(); if (!mf || !mf.sharedMesh) continue; m = mf.sharedMesh; l2w = r.transform.localToWorldMatrix; }
+                var uv = m.uv; var v = m.vertices;
+                for (int k = 0; k < v.Length && k < uv.Length; k++)
+                    if (Mathf.Abs(uv[k].x - .96875f) < .01f && Mathf.Abs(uv[k].y - .90625f) < .01f) { sum += inst.transform.InverseTransformPoint(l2w.MultiplyPoint3x4(v[k])).z; n++; }
+            }
+            float fz = n > 0 ? sum / n : 0;
+            Debug.Log($"ENEMY FACING {en.prefab}: eye z={fz:F3} ({(fz > 0 ? "+Z OK" : "WRONG")})");
+            if (n > 0 && fz <= 0) errors.Add(en.prefab + " faces -Z");
+            UnityEngine.Object.DestroyImmediate(inst);
+        }
         foreach (var s in new[] { "StoneSignal/ToonLit", "StoneSignal/ToonLitOutline" })
         {
             var sh = Shader.Find(s);
@@ -438,6 +526,8 @@ public static class StylizedArtIntegration
         try
         {
             Import();
+            BuildLevelDressing();
+            StylizedPlacementFX.BuildAll();
             StylizedVFXBuilder.BuildAll();
             Checks();
             StylizedVFXBuilder.Checks();

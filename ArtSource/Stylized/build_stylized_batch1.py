@@ -26,7 +26,7 @@ for d in (ART, SRC, PREVIEW_DIR, os.path.join(ART, "Environment"), os.path.join(
 PALETTE = [
     ("LeafOrange", "D27A4A"), ("LeafRed", "B05442"), ("LeafGold", "DCA060"), ("LeafHighlight", "E6C98A"),
     ("LeafCore", "8E3436"), ("LeafShadow", "64273B"), ("Trunk", "6D3646"), ("Wood", "B07A55"),
-    ("StoneTopWarm", "C6B4DE"), ("StoneTopCool", "BCAAD8"), ("StoneSide", "A38E89"), ("StoneDark", "503E5D"),
+    ("StoneTopWarm", "B9B0C8"), ("StoneTopCool", "B0A8C0"), ("StoneSide", "A38E89"), ("StoneDark", "503E5D"),
     ("Ground", "A4514C"), ("GroundDark", "874A4A"), ("Sand", "F6D692"), ("Brick", "E9A47B"),
     ("MechWhite", "D9D4DA"), ("Indigo", "2B3A63"), ("AllyYellow", "F2B330"), ("OutlineIndigo", "1E1A3A"),
     ("Skin", "F3C9A0"), ("Metal", "6E6A80"), ("WaterDeep", "0754A0"), ("WaterShallow", "1C7CD0"),
@@ -35,7 +35,7 @@ PALETTE = [
     ("EnemyWhite", "F0F0F0"), ("EnemyEye", "FFE45C"), ("SlotKinetic", "FFE7A0"), ("SlotHE", "FFB52E"),
     ("SlotFire", "FF7A1F"), ("SlotIce", "7FE3FF"), ("SlotElec", "C77DFF"), ("SteelBlue", "C8D6FF"),
     ("GroundLavTop2", "84664F"), ("Dirt", "967259"), ("DirtDark", "7A5444"), ("Moss", "A4784C"),
-    ("WallSide", "A08CC0"), ("WallSideDark", "7E6CA4"), ("StrataA", "9A5A4E"), ("StrataB", "7A4A52"), ("StrataC", "B07A68"), ("GrassTop", "B4844A"),
+    ("WallSide", "9A90AC"), ("WallSideDark", "7A7090"), ("StrataA", "9A5A4E"), ("StrataB", "7A4A52"), ("StrataC", "B07A68"), ("GrassTop", "B4844A"),
 ]
 PIDX = {n: i for i, (n, _) in enumerate(PALETTE)}
 def hex_rgb(h): return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -142,7 +142,7 @@ def jitter_bm(bm, amount):
 def rough_tile(bm, ztop):
     """Uneven, rounded, gently undulating tile top (visual only; stays within +-2 cm so walls sit stably)."""
     top_e = [e for e in bm.edges if all(v.co.z > ztop - .05 for v in e.verts)]
-    bmesh.ops.subdivide_edges(bm, edges=top_e, cuts=2, use_grid_fill=True)
+    bmesh.ops.subdivide_edges(bm, edges=top_e, cuts=1, use_grid_fill=True)
     # grid fill can leave the inner top n-gon open (read as a dark 'hole'): close any open boundary on the top
     holes = [e for e in bm.edges if e.is_boundary and all(v.co.z > ztop - .05 for v in e.verts)]
     if holes:
@@ -150,6 +150,8 @@ def rough_tile(bm, ztop):
         for f in new: f.material_index = PIDX["GroundLavTop"]
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     ph = rng.uniform(0, 6)
+    for f in bm.faces:  # v8 tile variation: worn tone patches inside each tile (low contrast, ArtDirection rule 1)
+        if f.normal.z > .9 and rng.random() < .3: f.material_index = PIDX[rng.choice(["GroundLavTop2", "GroundLavTop2", "Dirt"])]
     for v in bm.verts:
         if v.co.z > ztop - .06:
             v.co.z += .012 * math.sin(v.co.x * 5 + ph) * math.cos(v.co.y * 4 - ph) + rng.uniform(-.004, .004)
@@ -164,8 +166,15 @@ def tile_detail(parts, ztop):
     if rng.random() < .5:  # crack
         parts.append(box((rng.uniform(.18, .35), .014, .01), (rng.uniform(-.2, .2), rng.uniform(-.2, .2), ztop + .002), "GroundLavSide", rot=(0, 0, rng.uniform(0, 3.14))))
 
+TILE_VARIANTS = "AABCDE"
+def cell_hash(x, y):
+    h = (x * 73856093) ^ (y * 19349663) ^ 0x5bd1e995
+    h = (h ^ (h >> 13)) * 0x27d4eb2d & 0xffffffff
+    return h ^ (h >> 15)
+
 def tile(variant):
-    top = "GroundLavTop"
+    rng.seed(ord(variant) * 31 + 17)  # each variant: its own chip/crack/pit placement
+    top = "GroundLavTop2" if variant == "D" else "GroundLavTop"
     bm = box((.98, .98, .25), (0, 0, .125), "GroundLavSide")
     for f in bm.faces:
         if f.normal.z > .9: f.material_index = PIDX[top]
@@ -176,8 +185,11 @@ def tile(variant):
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z < -.9], context='FACES_ONLY')
     rough_tile(bm, .25)
     parts = [bm]; tile_detail(parts, .255)
+    if variant == "E":  # small shallow pits/dents in random spots (subtle, not holes)
+        for k in range(2):
+            parts.append(ico(rng.uniform(.05, .08), 1, (rng.uniform(-.32, .32), rng.uniform(-.32, .32), .252), (1.4, 1, .12), (0, 0, rng.random() * 6), "GroundLavTop2", jitter=.01))
     if variant == "B":  # worn tile: a chipped inset slab
-        parts.append(box((.36, .30, .02), (.18, -.2, .255), "GroundLavSide", bevel=.01))
+        parts.append(box((.36, .30, .015), (.18, -.2, .252), "GroundLavTop2", bevel=.01))
     return [to_object(f"SM_Env_Tile_Stone_{variant}_01", parts)]
 
 TETRIS = {"1x1": [(0, 0)], "TetrisI": [(0, 0), (0, 1), (0, 2), (0, 3)], "TetrisO": [(0, 0), (1, 0), (0, 1), (1, 1)],
@@ -263,10 +275,10 @@ def tree(variant):
     for ti, (z, rad, hz) in enumerate(cfg["tiers"]):
         cx = ox * (1 + ti * .2)
         # dark inner core of each tier (shadow volume)
-        parts.append(ico(rad * .82, 2, (cx, oy, z), (1, 1, hz / rad * 1.0), (0, 0, rng.random()), "LeafCore", jitter=.03,
+        parts.append(ico(rad * .82, 1, (cx, oy, z), (1, 1, hz / rad * 1.0), (0, 0, rng.random()), "LeafCore", jitter=.03,
                          vc=(.3, 1, 0, rng.random())))
         # tufts over the upper/outer shell (golden-spiral distribution)
-        count = int(55 * rad / .6) + 20
+        count = int(30 * rad / .6) + 10  # v9 WebGL budget: ~half the tufts, larger
         layer_b = (0.0, .5, 1.0)[ti]
         for k in range(count):
             u = (k + .5) / count
@@ -281,7 +293,7 @@ def tree(variant):
             if ti == 2 and zz > .8 and rng.random() < .5: col = "LeafHighlight"
             # lit side (upper-left toward camera, -X -Y) gets the brighter tone
             if col == mid and (nrm.x + nrm.y) < -.6: col = hi
-            sz = rng.uniform(.11, .16) * (1 + rad * .2)
+            sz = rng.uniform(.15, .21) * (1 + rad * .2)
             parts.append(leaf_tuft(pos, nrm + Vector((0, 0, .25)), sz, col, (.6 + .4 * ti / 2, 1, layer_b, rng.random())))
     objs = [to_object(f"SM_Env_Tree_Maple_{variant}_01", parts)]
     o = objs[0]; mz = min(v.co.z for v in o.data.vertices)
@@ -669,7 +681,7 @@ def island():
     parts.append(top)
     global ISLAND_TOP
     ISLAND_TOP = [(v.co.x, v.co.y) for v in top.verts if v.co.z > .4]
-    parts.append(slab(5.4, -2.0, -.42, "StrataB", "StrataB", .1))  # underwater shelf -> shallow depth falloff ring
+    parts.append(cyl(4.8, 2.5, 2.4, 20, (0, 0, -1.65), "StrataB", cap=False))  # v9: sloped underwater skirt -> smooth depth gradient (no flat shelf polygon)
     for (w, z0, z1, c1, c2, j) in [(4.05, .02, .32, "StrataA", "StrataA", .08), (4.2, -.3, .04, "StrataB", "StrataC", .1),
                                     (3.85, -.7, -.28, "StrataC", "StrataA", .1), (3.95, -1.05, -.68, "StrataA", "StrataB", .12),
                                     (3.4, -1.6, -1.03, "StoneDark", "StoneDark", .12)]:
@@ -712,6 +724,16 @@ def prism(poly, z0, z1, top, side):
     for fc in bm.faces:
         for l in fc.loops: l[layer] = (0, 1, rng.random(), 1)
     return bm
+def frustum_rect(w0, h0, w1, h1, ztop, zbot, color):
+    """Open sloped skirt (top rect -> wider bottom rect) so water depth grows smoothly with distance from shore."""
+    bm = bmesh.new()
+    def ring(w, h, z): return [bm.verts.new((x, y, z)) for x, y in [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]]
+    a, b = ring(w0, h0, ztop), ring(w1, h1, zbot)
+    for k in range(4): f = bm.faces.new((a[k], b[k], b[(k + 1) % 4], a[(k + 1) % 4])); f.material_index = PIDX[color]
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for f in bm.faces:
+        if f.normal.z < 0: f.normal_flip()
+    return bm
 BOARD_W, BOARD_H = 16.0, 12.0
 BOARD_TOP = []
 def board_cliff():
@@ -721,12 +743,13 @@ def board_cliff():
     BOARD_TOP = rect_poly(BOARD_W, BOARD_H, .5, .12, .3)
     parts.append(prism(BOARD_TOP, .2, .55, "GrassTop", "StrataC"))
     for (dw, z0, z1, lo, hi, c) in [(0, -.2, .22, -.02, .3, "StrataA"), (.2, -.6, -.18, -.1, .3, "StrataB"), (-.2, -1.0, -.58, -.15, .2, "StrataC"),
-                                    (0, -1.4, -.98, -.2, .25, "StrataA"), (-.6, -1.8, -1.38, -.2, .1, "StoneDark"), (2.2, -2.2, -.45, 0, .5, "StrataB")]:
+                                    (0, -1.4, -.98, -.2, .25, "StrataA"), (-.6, -1.8, -1.38, -.2, .1, "StoneDark")]:
         parts.append(prism(rect_poly(BOARD_W + dw, BOARD_H + dw, .6, lo, hi), z0, z1, c, c))
     for k in range(30):
         side = rng.randrange(4); t = rng.uniform(-.48, .48)
         x, y = [(t * BOARD_W, -BOARD_H / 2 - .15), (BOARD_W / 2 + .15, t * BOARD_H), (t * BOARD_W, BOARD_H / 2 + .15), (-BOARD_W / 2 - .15, t * BOARD_H)][side]
         parts.append(ico(rng.uniform(.2, .4), 1, (x, y, rng.uniform(-1.2, .1)), (1.4, 1, .7), (0, 0, rng.random() * 6), rng.choice(["StoneSide", "StrataC", "StrataB"]), jitter=.05))
+    parts.append(frustum_rect(BOARD_W + .4, BOARD_H + .4, BOARD_W + 7, BOARD_H + 7, -.35, -2.9, "StrataB"))  # v9: sloped skirt
     return [to_object("SM_Env_Board_Cliff_16x12_01", parts)]
 
 def bridge():  # 1 m segment, walk axis = X, deck top z 0.8
@@ -861,7 +884,7 @@ oe.inputs[0].default_value = (0.013, 0.010, 0.04, 1); on.links.new(oe.outputs[0]
 
 ASSETS = [
     ("Environment", "SM_Env_Tile_Stone_A_01", lambda: tile("A")), ("Environment", "SM_Env_Tile_Stone_B_01", lambda: tile("B")),
-    ("Environment", "SM_Env_Tile_Stone_C_01", tile_c), ("Environment", "SM_Env_Tile_Dirt_01", tile_dirt),
+    ("Environment", "SM_Env_Tile_Stone_C_01", tile_c), ("Environment", "SM_Env_Tile_Stone_D_01", lambda: tile("D")), ("Environment", "SM_Env_Tile_Stone_E_01", lambda: tile("E")), ("Environment", "SM_Env_Tile_Dirt_01", tile_dirt),
     ("Environment", "SM_Env_Island_Cliff_4x4_01", island), ("Environment", "SM_Env_Board_Cliff_16x12_01", board_cliff), ("Environment", "SM_Env_Bridge_Plank_01", bridge),
     ("Environment", "SM_Env_Dock_Post_01", dock_post), ("Environment", "SM_Prop_Brazier_01", brazier),
     ("Environment", "SM_Prop_Campfire_01", campfire), ("Environment", "SM_Prop_Lantern_01", lantern),
@@ -908,6 +931,16 @@ def export(name):
     bpy.context.view_layer.objects.active = objs[0]
     path = os.path.join(ART, folder, name + ".fbx")
     rig = name in RIGS
+    if name.startswith("SM_Enemy_"):  # facing check: eyes/face must be on Blender -Y (= Unity +Z forward)
+        eu = pal_uv(PIDX["EnemyEye"]); ys = []
+        for o in objs:
+            if o.type != 'MESH' or not o.data.uv_layers: continue
+            uvl = o.data.uv_layers[0].data
+            for poly in o.data.polygons:
+                u = uvl[poly.loop_indices[0]].uv
+                if abs(u[0] - eu[0]) < 1e-3 and abs(u[1] - eu[1]) < 1e-3: ys.append((o.matrix_world @ poly.center).y)
+        fy = sum(ys) / len(ys) if ys else 0
+        print("VALIDATE facing %s %s (eye y=%.3f, Unity forward +Z)" % (name, "OK" if fy <= .01 else "FAIL", fy))
     bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={'MESH', 'EMPTY', 'ARMATURE'},
                              primary_bone_axis='Y', secondary_bone_axis='X', armature_nodetype='NULL',
                              apply_unit_scale=True, apply_scale_options='FBX_SCALE_ALL', axis_forward='-Z', axis_up='Y',
@@ -1035,10 +1068,12 @@ if DO_RENDER:
             for corner in [(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)]:
                 if not inside(corner, BOARD_TOP): tile_fail += 1
             flat = c in wallcells or c in CORE_CELLS
-            dz = 0 if flat else lr.uniform(-.03, .03); tx = 0 if flat else math.radians(lr.uniform(-1.5, 1.5)); ty = 0 if flat else math.radians(lr.uniform(-1.5, 1.5))
-            if c in PATH: put("SM_Env_Tile_Dirt_01", c[0], c[1], .55 + dz * .5, lr.choice([0, math.pi / 2]), rx=tx * .5, ry=ty * .5)
-            else: put(lr.choice(["SM_Env_Tile_Stone_A_01"] * 4 + ["SM_Env_Tile_Stone_B_01", "SM_Env_Tile_Stone_C_01", "SM_Env_Tile_Stone_C_01"]),
-                      c[0], c[1], .55 + dz, lr.choice([0, math.pi / 2, math.pi, -math.pi / 2]), rx=tx, ry=ty)
+            hsh = cell_hash(x, y)  # seeded per-cell hash: no clustering, same result every build
+            mag = .03 + (hsh >> 4 & 255) / 255 * .03; dz = 0 if flat else (mag if hsh & 1 else -mag)  # +-0.03..0.06, mean 0 -> top 0.80
+            tx = 0 if flat else math.radians(((hsh >> 12 & 255) / 255 - .5) * 3); ty = 0 if flat else math.radians(((hsh >> 20 & 255) / 255 - .5) * 3)
+            rot = (hsh >> 8 & 3) * math.pi / 2
+            if c in PATH: put("SM_Env_Tile_Dirt_01", c[0], c[1], .55 + dz * .5, rot, rx=tx * .5, ry=ty * .5)
+            else: put("SM_Env_Tile_Stone_%s_01" % TILE_VARIANTS[(hsh >> 2) % len(TILE_VARIANTS)], c[0], c[1], .55 + dz, rot, rx=tx, ry=ty)
     assert tile_fail == 0, "tiles overhang board cliff: %d corners" % tile_fail
     print("VALIDATE tiles-on-terrain OK: 192 tiles, all corners inside board cliff top")
     T = 1.4; small = ["SM_Tower_Cannon_1x1_01", "SM_Tower_Gatling_1x1_01", "SM_Tower_Tesla_1x1_01", "SM_Tower_Frost_1x1_01"]
@@ -1083,19 +1118,36 @@ if DO_RENDER:
                 put("SM_Env_Dock_Post_01", ex + d[0] * tt - d[1] * .62 * side, ey + d[1] * tt + d[0] * .62 * side, 0, lr.uniform(0, 6))
         put("SM_Prop_Lantern_01", ex + d[0] * (end_t + .3) - d[1] * .8, ey + d[1] * (end_t + .3) + d[0] * .8, .55, ang)
         print("VALIDATE bridge %s OK: len %.2f m, %d segments, ends on board and island" % (key, Lb, n)); bridge_ok += 1
-        for q in range(8):  # trees on the far side of spawn islands
+        for q in range(2):  # trees on the far side of spawn islands
             a = ang + lr.uniform(-1.6, 1.6); r = lr.uniform(.6, 1.6)
             put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, 6), (lr.uniform(.8, 1.3),) * 3)
     put("SM_Enemy_Boss_01", SPAWNS["W"][0], SPAWNS["W"][1], .55, math.radians(90))
     put("SM_Prop_Campfire_01", SPAWNS["E"][0] + .6, SPAWNS["E"][1] - .9, .55)
     # surrounding islands with dense layered trees
-    isles = [(-12.2, 9.6, 1.3, .2), (12.6, 9.2, 1.2, 1.6), (12.8, -9.8, 1.1, 2.4), (-12.6, -9.4, 1.0, .5)]  # v7: 4 corner framing islands, partly off-screen
-    for (ix, iy, sc, rz) in isles:
+    # v10 composition (Blender +x = screen left, +y = screen bottom/foreground):
+    # TL/TR mid-distance small islands (maples, rocks, little dock), BL dark foreground trees + rocks, BR islet with stone ruin-lighthouse.
+    def islet(ix, iy, sc, rz, ntrees, tscale=(.8, 1.2)):
         put("SM_Env_Island_Cliff_4x4_01", ix, iy, 0, rz, (sc, sc, 1))
-        for k2 in range(int(16 * sc)):
-            a = lr.uniform(0, math.tau); r = (1.0 - lr.random() ** 2) * 1.75 * sc
-            put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, math.tau), (lr.uniform(.8, 1.45),) * 3)
-        put(lr.choice(["SM_Env_RockPile_01", "SM_Env_Stump_01", "SM_Env_Log_01"]), ix - 1.2 * sc, iy - 1.0 * sc, .55, lr.random() * 6)
+        for k2 in range(ntrees):
+            a = lr.uniform(0, math.tau); r = (1.0 - lr.random() ** 2) * 1.5 * sc
+            put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, math.tau), (lr.uniform(*tscale),) * 3)
+        put("SM_Env_RockPile_01", ix - 1.1 * sc, iy - .8 * sc, .55, lr.random() * 6)
+    islet(10.2, -7.4, .75, .3, 3)                                     # TL
+    put("SM_Env_Dock_Post_01", 9.0, -6.0, 0, 0); put("SM_Env_Bridge_Plank_01", 8.7, -6.3, .35, .6, (.55, 1, 1))
+    islet(-10.0, -7.6, .7, 1.9, 3)                                    # TR
+    put("SM_Env_Rock_Small_01", -8.6, -6.4, .0, 1.0, (2.2, 2.2, 2.2))
+    islet(10.6, 8.0, 1.0, 2.2, 3, (1.4, 1.75))                        # BL foreground framing (big trees)
+    put("SM_Env_RockPile_01", 9.0, 7.0, .1, 2.0, (1.6, 1.6, 1.6)); put("SM_Env_Rock_Small_01", 8.4, 8.6, 0, .4, (2.6, 2.6, 2.6))
+    islet(-10.2, 7.6, .7, .9, 1)                                      # BR islet + ruin lighthouse (stacked stones + lantern)
+    for k3, (dx, dy, z) in enumerate([(0, 0, .55), (.04, .03, 1.15), (-.03, .05, 1.75)]):
+        put("SM_Env_Rock_1x1_01", -10.4 + dx, 7.3 + dy, z, .3 * k3, (.75 - .1 * k3, .75 - .1 * k3, 1))
+    put("SM_Prop_Lantern_01", -10.4, 7.35, 2.35, 0, (1.6, 1.6, 1.6))
+    put("SM_Env_Rock_TetrisI_01", -9.4, 8.4, .2, 1.2, (.6, .6, .6), rx=.35)  # toppled ruin wall
+    for k4 in range(9):  # sparse floating leaves + small reefs on open water (kept off the board edges)
+        while True:
+            fx, fy = lr.uniform(-12, 12), lr.uniform(-9, 9)
+            if abs(fx) > 9 or abs(fy) > 7: break
+        put("SM_Env_Leaves_01" if k4 % 3 else "SM_Env_Rock_Small_01", fx, fy, .02 if k4 % 3 else -.05, lr.uniform(0, 6), (1, 1, 1))
     for x, y in [(-8.6, 5.6), (-8.7, -5.6), (8.6, 5.6), (8.7, -5.6), (-6.0, 6.7), (5.8, 6.7), (-5.5, -6.7), (3.5, -6.7)]:
         put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), x, y, .55, lr.uniform(0, 6), (lr.uniform(.9, 1.15),) * 3)
     put("SM_Prop_Brazier_01", 1.5, -1.5, .8); put("SM_Prop_Brazier_01", -1.5, 1.5 + 1, .8)
@@ -1123,7 +1175,22 @@ if DO_RENDER:
             place(lr_tile := random.choice(["SM_Env_Tile_Stone_A_01", "SM_Env_Tile_Stone_B_01", "SM_Env_Tile_Stone_C_01"]), (gx + .5, gy + .5, 0))
     for n, x, y in [("SM_Env_Rock_TetrisT_01", -2.5, 1.5), ("SM_Env_Rock_TetrisO_01", .5, .5), ("SM_Env_Rock_TetrisL_01", 2.5, 1.5), ("SM_Env_Rock_1x1_01", -1.5, -1.5), ("SM_Env_Rock_TetrisS_01", 1.5, -1.5)]:
         place(n, (x, y, .25))
-    shoot("blocks_v7.png", (-2.5, -6.5, 4.2), (0, 0, .4), 42)
+    shoot("blocks_v8.png", (-2.5, -6.5, 4.2), (0, 0, .4), 42)
+    # top-down tile variation (per-cell hash, same rule as the level)
+    clear()
+    for gx in range(-8, 8):
+        for gy in range(-6, 6):
+            hh = cell_hash(gx, gy)
+            o = place("SM_Env_Tile_Stone_%s_01" % TILE_VARIANTS[(hh >> 2) % len(TILE_VARIANTS)], (gx + .5, gy + .5, 0), (hh >> 8 & 3) * math.pi / 2)
+    shoot("tiles_topdown_v8.png", (0, -.3, 30), (0, 0, 0), 36)
+    # enemy facing proof: blue arrow = Unity +Z (Blender -Y) in front of each enemy
+    clear()
+    ens = ["SM_Enemy_Drifter_01", "SM_Enemy_Skimmer_01", "SM_Enemy_Bulwark_01", "SM_Enemy_Splitter_01", "SM_Enemy_Shard_01", "SM_Enemy_Flyer_01", "SM_Enemy_Boss_01"]
+    for k, n in enumerate(ens):
+        x = (k - 3) * 2.4
+        place(n, (x, 0, 0))
+        ar = to_object("Arrow_%d" % k, [box((.07, 1.0, .04), (x, -1.2, .03), "WaterShallow"), box((.34, .14, .04), (x, -1.75, .03), "WaterShallow"), box((.18, .12, .04), (x, -1.88, .03), "WaterShallow")]); scene.collection.objects.unlink(ar); pv.objects.link(ar)
+    shoot("enemy_facing_v8.png", (-3.0, -14.0, 7.0), (0, -.6, .6), 34)
     clear()
     for i, n in enumerate(["SM_Env_Tree_Maple_A_01", "SM_Env_Tree_Maple_B_01", "SM_Env_Tree_Maple_C_01"]):
         place(n, ((i - 1) * 2.4, 0, 0), rotz=i * .8)
@@ -1135,7 +1202,7 @@ if DO_RENDER:
     cols = [("SS_Move", t) for t in (0, .25, .5, .75)] + [("SS_Hit", t) for t in (.25, .5)] + [("SS_Death", t) for t in (.3, .6, 1.0)]
     names = list(RIGS.keys())
     sheet = np.zeros((H * len(names), W * len(cols), 4), dtype=np.float32)
-    tmp = os.path.join(PREVIEW_DIR, "_cell.png")
+    import tempfile; tmp = os.path.join(tempfile.gettempdir(), "ss_cell_%d.png" % os.getpid())  # v9: never collide with a locked preview file
     old_bg = tuple(bg.inputs[0].default_value); bg.inputs[0].default_value = (.80, .78, .86, 1)
     gm = bpy.data.materials.new("Sheet_Ground"); gm.use_nodes = True; gm.node_tree.nodes.clear()
     go_ = gm.node_tree.nodes.new("ShaderNodeOutputMaterial"); ge = gm.node_tree.nodes.new("ShaderNodeEmission")
@@ -1154,7 +1221,7 @@ if DO_RENDER:
             except Exception: pass
             fr = act.frame_range; scene.frame_set(int(round(fr[0] + (fr[1] - fr[0]) * t)))
             cam_d.lens = 50
-            shoot("_cell.png", (-h * 1.6, -h * 2.6, h * 1.3), (0, 0, h * .4), 50)
+            shoot(tmp, (-h * 1.6, -h * 2.6, h * 1.3), (0, 0, h * .4), 50)
             im = bpy.data.images.load(tmp); px = np.array(im.pixels[:], dtype=np.float32).reshape(H, W, 4)
             y0 = (len(names) - 1 - ri) * H
             sheet[y0:y0 + H, ci * W:(ci + 1) * W] = px
