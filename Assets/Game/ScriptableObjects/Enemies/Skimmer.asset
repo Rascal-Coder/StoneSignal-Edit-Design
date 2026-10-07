@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065fe556319f0084397adab15e367e3e, type: 3}
   m_Name: Skimmer
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 1404741473217785171, guid: 4501cc52c54d9074494d6e431b63be97, type: 3}
+  visualPrefab: {fileID: 1666684875884348874, guid: 74cffccd7fc5fb848a1086598b863299, type: 3}
   displayName: Skimmer
   hp: 22
   moveSpeed: 2.3

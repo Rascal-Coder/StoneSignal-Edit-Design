@@ -1,0 +1,328 @@
+﻿blender.exe : C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\A
+rtSource\Stylized\build_stylized_batch1.py:727: DeprecationWarning: 'Material.use_nodes' is expected to be removed in B
+lender 6.0
+所在位置 C:\Users\Admin\AppData\Local\Temp\ps-script-d1ec03e2-f5c3-46f8-a870-2ea9a9a193a9.ps1:120 字符: 198
++ ... ss_dep.zip; & "C:\Program Files\Blender Foundation\Blender 5.2\blende ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\Admin\... in Blender 6.0:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  MAT.use_nodes = True
+C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\ArtSource\Styli
+zed\build_stylized_batch1.py:749: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  OUTLINE.use_nodes = True
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tile_Stone_A_01.fbx'
+export finished in 0.0040 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tile_Stone_A_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tile_Stone_B_01.fbx'
+export finished in 0.0034 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tile_Stone_B_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tile_Stone_C_01.fbx'
+export finished in 0.0033 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tile_Stone_C_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tile_Dirt_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tile_Dirt_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Island_Cliff_4x4_01.fbx'
+export finished in 0.0039 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Island_Cliff_4x4_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Bridge_Plank_01.fbx'
+export finished in 0.0035 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Bridge_Plank_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Dock_Post_01.fbx'
+export finished in 0.0031 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Dock_Post_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Prop_Brazier_01.fbx'
+export finished in 0.0034 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Prop_Brazier_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Prop_Campfire_01.fbx'
+export finished in 0.0036 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Prop_Campfire_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Prop_Lantern_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Prop_Lantern_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_RockPile_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_RockPile_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Stump_01.fbx'
+export finished in 0.0034 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Stump_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Log_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Log_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Leaves_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Leaves_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_FoamRing_01.fbx'
+export finished in 0.0029 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_FoamRing_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Prop_Core_01.fbx'
+export finished in 0.0040 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Prop_Core_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Splitter_01.fbx'
+(bpy.data.armatures['SM_Enemy_Splitter_01_Rig'], 'POSE')
+export finished in 0.0479 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Splitter_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_1x1_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_1x1_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisI_01.fbx'
+export finished in 0.0033 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisI_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisO_01.fbx'
+export finished in 0.0031 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisO_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisT_01.fbx'
+export finished in 0.0033 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisT_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisS_01.fbx'
+export finished in 0.0033 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisS_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisZ_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisZ_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisL_01.fbx'
+export finished in 0.0030 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisL_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_TetrisJ_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_TetrisJ_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tree_Maple_A_01.fbx'
+export finished in 0.0053 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tree_Maple_A_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tree_Maple_B_01.fbx'
+export finished in 0.0058 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tree_Maple_B_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Tree_Maple_C_01.fbx'
+export finished in 0.0056 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Tree_Maple_C_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Rock_Small_01.fbx'
+export finished in 0.0032 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Rock_Small_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Prop_Barrel_01.fbx'
+export finished in 0.0030 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Prop_Barrel_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Prop_Crate_01.fbx'
+export finished in 0.0036 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Prop_Crate_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Environment\\SM_Env_Grass_Tuft_01.fbx'
+export finished in 0.0035 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Environment\SM_Env_Grass_Tuft_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Tower_Cannon_1x1_01.fbx'
+export finished in 0.0044 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Tower_Cannon_1x1_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Tower_Gatling_1x1_01.fbx'
+export finished in 0.0043 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Tower_Gatling_1x1_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Tower_Tesla_1x1_01.fbx'
+export finished in 0.0038 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Tower_Tesla_1x1_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Tower_Frost_1x1_01.fbx'
+export finished in 0.0040 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Tower_Frost_1x1_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Tower_Flamer_1x2_01.fbx'
+export finished in 0.0041 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Tower_Flamer_1x2_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Towers\\SM_Tower_Mortar_2x2_01.fbx'
+export finished in 0.0050 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Towers\SM_Tower_Mortar_2x2_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Drifter_01.fbx'
+(bpy.data.armatures['SM_Enemy_Drifter_01_Rig'], 'POSE')
+export finished in 0.0496 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Drifter_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Skimmer_01.fbx'
+(bpy.data.armatures['SM_Enemy_Skimmer_01_Rig'], 'POSE')
+C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\ArtSource\Styli
+zed\build_stylized_batch1.py:850: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world = bpy.data.worlds.new("World"); scene.world = world; world.use_nodes = True
+C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\ArtSource\Styli
+zed\build_stylized_batch1.py:854: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  wm = bpy.data.materials.new("Preview_Water"); wm.use_nodes = True
+00:04.156  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\level_preview.png'
+00:04.625  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\turrets_lineup.png'
+00:05.062  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\enemies_lineup.png'
+00:05.516  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\blocks_lineup.png'
+00:05.969  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\trees_v2.png'
+C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\ArtSource\Styli
+zed\build_stylized_batch1.py:964: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  gm = bpy.data.materials.new("Sheet_Ground"); gm.use_nodes = True; gm.node_tree.nodes.clear()
+00:06.172  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:06.375  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:06.562  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:06.766  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:06.969  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:07.156  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:07.375  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:07.562  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:07.766  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:07.969  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:08.156  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:08.359  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:08.562  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:08.750  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:08.953  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:09.156  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:09.359  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:09.547  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:09.750  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:09.937  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:10.141  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:10.344  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:10.547  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:10.734  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:10.937  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:11.125  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:11.328  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:11.531  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:11.719  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:11.922  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:12.109  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:12.312  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:12.516  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:12.719  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:12.906  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:13.109  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:13.297  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+export finished in 0.0427 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Skimmer_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Bulwark_01.fbx'
+(bpy.data.armatures['SM_Enemy_Bulwark_01_Rig'], 'POSE')
+export finished in 0.0456 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Bulwark_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Flyer_01.fbx'
+(bpy.data.armatures['SM_Enemy_Flyer_01_Rig'], 'POSE')
+export finished in 0.0481 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Flyer_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Shard_01.fbx'
+export finished in 0.0036 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Shard_01.fbx
+
+FBX export starting... 'C:\\Users\\Admin\\Documents\\Codex\\2026-10-06\\unity-6-unity-emberward-3d-roguelite\\outputs\\StoneSignal-Edit\\Assets\\Game\\Art\\Stylized\\Enemies\\SM_Enemy_Boss_01.fbx'
+(bpy.data.armatures['SM_Enemy_Boss_01_Rig'], 'POSE')
+export finished in 0.0545 sec.
+EXPORTED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Assets\Game\Art\Stylized\Enemies\SM_Enemy_Boss_01.fbx
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\level_preview.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\turrets_lineup.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\enemies_lineup.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\blocks_lineup.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\trees_v2.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png00:13.500  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:13.703  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:13.891  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:14.094  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:14.281  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:14.484  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:14.687  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:14.891  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:15.078  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:15.281  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:15.469  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:15.672  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:15.875  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:16.078  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:16.281  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:16.484  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+00:16.687  render           | Saved: 'C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png'
+
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED C:\Users\Admin\Documents\Codex\2026-10-06\unity-6-unity-emberward-3d-roguelite\outputs\StoneSignal-Edit\Verification\StylizedArt1\_cell.png
+RENDERED anim_contact_sheet.png ['SM_Enemy_Splitter_01', 'SM_Enemy_Drifter_01', 'SM_Enemy_Skimmer_01', 'SM_Enemy_Bulwark_01', 'SM_Enemy_Flyer_01', 'SM_Enemy_Boss_01'] ['SS_Move', 'SS_Move', 'SS_Move', 'SS_Move', 'SS_Hit', 'SS_Hit', 'SS_Death', 'SS_Death', 'SS_Death']
+Info: Saved as "StoneSignal_Stylized_Batch1.blend"
+STYLIZED BATCH1 DONE [["SM_Env_Tile_Stone_A_01", 18], ["SM_Env_Tile_Stone_B_01", 62], ["SM_Env_Tile_Stone_C_01", 62], ["SM_Env_Tile_Dirt_01", 90], ["SM_Env_Island_Cliff_4x4_01", 440], ["SM_Env_Bridge_Plank_01", 436], ["SM_Env_Dock_Post_01", 60], ["SM_Prop_Brazier_01", 224], ["SM_Prop_Campfire_01", 240], ["SM_Prop_Lantern_01", 132], ["SM_Env_RockPile_01", 100], ["SM_Env_Stump_01", 68], ["SM_Env_Log_01", 90], ["SM_Env_Leaves_01", 260], ["SM_Env_FoamRing_01", 64], ["SM_Prop_Core_01", 758], ["SM_Enemy_Splitter_01", 640], ["SM_Env_Rock_1x1_01", 42], ["SM_Env_Rock_TetrisI_01", 102], ["SM_Env_Rock_TetrisO_01", 88], ["SM_Env_Rock_TetrisT_01", 110], ["SM_Env_Rock_TetrisS_01", 110], ["SM_Env_Rock_TetrisZ_01", 110], ["SM_Env_Rock_TetrisL_01", 106], ["SM_Env_Rock_TetrisJ_01", 106], ["SM_Env_Tree_Maple_A_01", 2264], ["SM_Env_Tree_Maple_B_01", 2744], ["SM_Env_Tree_Maple_C_01", 2434], ["SM_Env_Rock_Small_01", 40], ["SM_Prop_Barrel_01", 264], ["SM_Prop_Crate_01", 584], ["SM_Env_Grass_Tuft_01", 36], ["SM_Tower_Cannon_1x1_01", 960], ["SM_Tower_Gatling_1x1_01", 540], ["SM_Tower_Tesla_1x1_01", 652], ["SM_Tower_Frost_1x1_01", 270], ["SM_Tower_Flamer_1x2_01", 540], ["SM_Tower_Mortar_2x2_01", 1122], ["SM_Enemy_Drifter_01", 928], ["SM_Enemy_Skimmer_01", 436], ["SM_Enemy_Bulwark_01", 820], ["SM_Enemy_Flyer_01", 802], ["SM_Enemy_Shard_01", 428], ["SM_Enemy_Boss_01", 1028]]
+Blender 5.2.2 LTS (hash d13f752e3b9c built 2026-09-15 01:37:04)
+
+Blender quit

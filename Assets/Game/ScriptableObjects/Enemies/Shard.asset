@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065fe556319f0084397adab15e367e3e, type: 3}
   m_Name: Shard
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 4561341158629796188, guid: 229f51b2a37d12c42b20fda6cc60784e, type: 3}
+  visualPrefab: {fileID: 3153625131036936703, guid: 3431147bb6ec68e46a14081afa9ba439, type: 3}
   displayName: Shard
   hp: 12
   moveSpeed: 1.8

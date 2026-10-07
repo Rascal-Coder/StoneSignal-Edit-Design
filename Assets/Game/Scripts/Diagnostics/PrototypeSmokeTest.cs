@@ -63,9 +63,10 @@ namespace StoneSignal
         {
             yield return null; yield return null;
             if(session.config.palette.art!=null) {
-                Require(session.config.palette.art.wall!=null && session.config.palette.art.spawnPortal!=null,"Art catalog environment assigned");
+                Require(session.config.palette.art.block!=null && session.config.palette.art.spawnPortal!=null,"Art catalog environment assigned");
+                Require(session.config.palette.art.tile!=null && session.config.palette.art.tilePath!=null && session.config.palette.art.tileGoal!=null,"Board tile, road and goal assigned");
                 foreach(var tower in session.config.towers) Require(tower.visualPrefab!=null && tower.icon!=null,"Tower model and icon "+tower.displayName);
-                Require(session.GetComponentsInChildren<RuinEnvironment>().Length==1,"Floating ruin decoration initialized");
+                Require(session.GetComponentsInChildren<BoardEnvironment>().Length==1,"Board decoration initialized");
             }
             Require(session.Paths.CurrentPath.Count==16 && session.Game.State==GameState.Build,"Initial scene, route and Build state");
             session.Blocks.Refill(5);
@@ -114,6 +115,8 @@ namespace StoneSignal
                 if(wave==0)
                 {
                     Enemy live=session.Enemies.Active[0]; Vector3 before=live.transform.position;
+                    var animator=live.GetComponentInChildren<Animator>();
+                    Require(animator!=null && animator.runtimeAnimatorController!=null && animator.runtimeAnimatorController.animationClips.Length>=2,"Enemy prefab carries locomotion and death animation");
                     Require(session.Validator.ValidatePlacement(new[] { live.NavigationAnchor })!=null,"Live movement edge protected");
                     bool placed=false;
                     for(int x=8;x<13 && !placed;x++) for(int y=0;y<7 && !placed;y++)

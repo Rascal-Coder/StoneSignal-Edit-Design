@@ -12,13 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb2549f3647c84c4a87d98cc79c8ca93, type: 3}
   m_Name: ArtCatalog
   m_EditorClassIdentifier: 
-  tileA: {fileID: 1875399489584741579, guid: d08b43774720b27458529d6537df7ab3, type: 3}
-  tileB: {fileID: 1973710087900989336, guid: 6d32e6267f798ac498d39f1b91a02bc8, type: 3}
-  wall: {fileID: 827150039674737515, guid: ce1a74fa7993deb43907c396d5c15d20, type: 3}
-  cliff: {fileID: 5368564593584043687, guid: 5b6c9bef0064ba8458a15b4f490f0539, type: 3}
-  foliage: {fileID: 7541297169024317774, guid: 83beaa9599c323a4999e05c6d1453dcf, type: 3}
-  ruinPillar: {fileID: 2575967345952809726, guid: 3908b9dd060a83541b7ee1b93c1eb4fa, type: 3}
-  brazier: {fileID: 113816372607258865, guid: cefcc309d621db14588fb648f784e94b, type: 3}
-  spawnPortal: {fileID: 4264166300545026407, guid: fe94e7b1ee843e7449e5cf26986e4658, type: 3}
-  signalCore: {fileID: 7282888382798964424, guid: 862d18fcdb72e0c4b947005181dddc34, type: 3}
+  tile: {fileID: 6188805381568905785, guid: 382fd0b0e32a8404798201d2e8e971a4, type: 3}
+  tilePath: {fileID: 1588820544533228764, guid: 611951ae4e14caa4f8017b690e301d30, type: 3}
+  tileSpawn: {fileID: 3478057286040537386, guid: bc057e2332d14f949ae2b47422e5379d, type: 3}
+  tileGoal: {fileID: 5804933448508606219, guid: 296fa1021bd542e4a87ac1ff5e9741c1, type: 3}
+  block: {fileID: 1352708546648848866, guid: bebeb4632d81e5b469f92888a7271d14, type: 3}
+  spawnPortal: {fileID: 4194413955246952831, guid: 0e71c96e634e1a34aaad343a706b2ed6, type: 3}
+  signalCore: {fileID: 7089216075395479443, guid: f80bc78759b65e44d9f45c68293ea6e2, type: 3}
+  towerBase: {fileID: 1547034742133161897, guid: 63ca9fef6ccd6e24cbef236949a22932, type: 3}
+  towerBodyA: {fileID: 3651849596417564392, guid: 15c8aaa5d8efdd24cbb9db7cbaea2a68, type: 3}
+  towerBodyB: {fileID: 625990332621568406, guid: eef5f85670f6a394181de9490911833d, type: 3}
+  towerBodyC: {fileID: 5507385834563728341, guid: 8228636267681cf4e98d424a4a3f6035, type: 3}
+  towerCrystals: {fileID: 7089216075395479443, guid: f80bc78759b65e44d9f45c68293ea6e2, type: 3}
+  weaponBallista: {fileID: 7559612220920719512, guid: 6d37f0b0fd938e743bd4036e7112a35d, type: 3}
+  weaponTurret: {fileID: 4037940796421785569, guid: 5e2ebc93487baf141945e6fff37689bf, type: 3}
+  weaponCannon: {fileID: 9160260826668130015, guid: 7cca5a74bc9b9704586795c4e765ac6c, type: 3}
+  detailTree: {fileID: 6812879903368109276, guid: fdf301c3491c9c8459e03985354caa87, type: 3}
+  detailTreeLarge: {fileID: 406400604125190599, guid: 097ed16b172ed4648973c218cc48fb49, type: 3}
+  detailRocks: {fileID: 2338418349816443587, guid: 34ac6413730b8934aa255c7f6ac39bcd, type: 3}
+  detailCrystal: {fileID: 5673667818075528174, guid: efc41ba44f8898e42863fdd4015ea070, type: 3}
+  detailDirt: {fileID: 5046714115729109645, guid: c867780bebd5a1e489806e6de5e62028, type: 3}
+  atlas: {fileID: 2100000, guid: a2bf304f4332eb64e8df2694f9b0ec37, type: 2}
   backdrop: {fileID: 2100000, guid: d45a2c1e443d96f4db865de735f3f6fa, type: 2}
+  tileTop: 0.2
+  blockTop: 0.7

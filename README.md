@@ -1,6 +1,6 @@
 # 岩光防线 / StoneSignal
 
-团结引擎 1.10.4 / 2022.3.62t16，URP、C#、原生 UGUI。当前为 **第二阶段：玩法成型版，A–F 已实现**，已接入首轮 Blender 原创低多边形模型、共享 URP 材质和模型图标。
+团结引擎 1.10.4 / 2022.3.62t16，URP、C#、原生 UGUI。当前为 **第二阶段：玩法成型版，A–F 已实现**，视觉层已全量替换为两个 CC0 第三方素材包：Kenney Tower Defense Kit（棋盘、墙块、塔）和 Quaternius Animated Monsters（带骨骼动画的敌人）。
 
 继续开发固定顺序：完整读取 README → DESIGN → BALANCE → CHANGELOG，再检查代码、场景、Packages 和资产，详见 AGENTS.md。ScriptableObject 是基础配置真实数据源，Markdown 不参与运行时加载。
 
@@ -22,6 +22,7 @@
 - D：四座塔；Needle 单体、Pulse 小范围高频、Seismic 重炮 AOE、Chill 减速组合。
 - E：加粗路径、Spawn/Core 标识、红绿预览、选中高亮、范围圈；保留闪白、缩小死亡、粒子、命中反馈和浮动伤害。
 - F：四份文档同步，资产数值及公式见 BALANCE。
+- 美术：棋盘、墙块、四塔、地标、装饰、敌人全部来自 CC0 素材包；敌人带行走与死亡骨骼动画；道路随实时路径动态切换。
 
 ## 职责与检查
 
@@ -29,26 +30,29 @@
 
 `Assets/Game/Settings/GameConfig.asset` 引用形状、塔、波次、奖励与 Palette。`Assets/Game/ScriptableObjects/` 存基础数据；场景由 GameBootstrap 组装，运行时实例化美术 Prefab；缺失模型时保留 Primitive 回退。
 
-编辑器菜单 `StoneSignal > Run stage 2 checks` 验证核心逻辑、资产引用、手牌消耗、奖励、分裂与减速。`Run core checks` 保留第一版检查。`Create or open game scene` 只创建缺失资产，不覆盖已有配置。`Migrate stage 2 asset references` 是显式迁移入口，会重设第二阶段引用与波次组，仅迁移时使用。
+编辑器菜单 `StoneSignal > Run stage 2 checks` 验证核心逻辑、资产引用、手牌消耗、奖励、分裂与减速。`Run core checks` 保留第一版检查。`Create or open game scene` 只创建缺失资产，不覆盖已有配置。`Migrate stage 2 asset references` 是显式迁移入口，仅迁移时使用。
 
-开发构建支持 `-stonesignal-smoke -seed 37 -captureDir <目录>` 自动试玩。第二阶段验证记录在 `Verification/Stage2/`，编译/构建日志在 `stage2-build.log`；最终核心/第二阶段检查及 PC 开发构建通过；自动试玩 43 项通过，截图已检查，详细结果见 CHANGELOG。
+开发构建支持 `-stonesignal-smoke -seed 37 -captureDir <目录>` 自动试玩。第二阶段验证记录在 `Verification/Stage2/`，本次第三方美术验证记录在 `Verification/Art2/`，构建日志在 `art-import.log` / `art-build.log`。
 
 ## 限制与下一步
 
-UI 英文，未做长期平衡与人工手感验收；美术为首轮低多边形模块，无骨骼动画；没有存档、联网、SDK、商店或广告。无限波继续复用第三波，基础 HP 线性成长。奖励可能重复，地图空间有限；额外平台无安全落点时不生成。优先人工试玩前十波，调手牌预算、塔组合和经济。
+UI 英文，未做长期平衡与人工手感验收；没有存档、联网、SDK、商店或广告。无限波继续复用第三波，基础 HP 线性增长。奖励可能重复，地图空间有限；额外平台无安全落点时不生成。优先人工试玩前十波，调手牌预算、塔组合和经济。
 
-## 首轮美术 / Blender MCP
+## 第三方美术 / 导入工具
 
-参照用户提供的遗迹塔防图片，Blender MCP 制作 18 个原创模块：石台 2、墙、悬崖、植被、遗迹柱、火盆、传送门、核心、四塔、五种敌人外观。原模型集合共 9,552 三角形；晶体/金属/石块等 23 种共享 URP 材质，另有背景材质。塔与方块共 9 张透明渲染图标。
+素材来源、下载直链、CC0 依据和实际使用的模型清单见 `ArtSource/REFERENCES.md`。两个原始压缩包和解压内容都保留在 `ArtSource/ThirdParty/`，导入可复现。
 
-- `ArtSource/StoneSignal_Art.blend`：独立 Blender 源文件，保留原先打开的其他项目文件。
-- `ArtSource/create_stonesignal.py` / `art_manifest.json`：可复现的 Blender 建模、FBX/图标输出及材质/面数清单。
-- `Assets/Game/Art/Models`、`Art/Icons`：FBX 与透明 PNG。
-- `Assets/Game/Prefabs/Art`、`Materials/Art`：Unity 模型 Prefab 和 URP 材质。
-- `Assets/Game/Settings/ArtCatalog.asset`：环境美术；塔/敌人的数据资产持有模型引用，塔/Block 持有图标。
+- `Assets/Game/Art/ThirdParty/Kenney`：19 个 FBX + `colormap.png` 图集。
+- `Assets/Game/Art/ThirdParty/Monsters`：Slime / Bat / Skeleton / Dragon 四个带动画的 FBX。
+- `Assets/Game/Materials/Art`：`KenneyAtlas` 图集材质、四种塔色调变体、按怪物 `.mtl` 解析出的纯色材质、底板材质。
+- `Assets/Game/Prefabs/Art`：棋盘件、装饰件、四座塔的组合 Prefab、五个敌人 Prefab。
+- `Assets/Game/Animation/Monsters`：每只怪物一套 `SS_Move` / `SS_Death` 片段和 AnimatorController。
+- `Assets/Game/Settings/ArtCatalog.asset`：环境与塔部件引用，以及 `tileTop` / `blockTop` 实测尺寸。
 
-编辑器菜单 `StoneSignal > Import Blender art pack` 从清单重新导入和接入，并设置等距镜头、暖光、Bloom/ACES；会更新美术材质、Prefab 和场景表现。`Check art pack` 检查单位尺度、引用、URP 和无碰撞器。模型坐标校正放在 Prefab 子节点，逻辑根节点保持单位缩放；墙上塔只抬高视觉/发射位置，不改变射程判定坐标。
+编辑器菜单 `StoneSignal > Import third-party art pack` 从 `ArtSource/ThirdParty/` 重新导入并接入：清空旧导入、复制模型、配置导入器、把 FBX 内嵌材质重映射到 URP 材质、拼装塔、生成动画控制器与图标、写入 ArtCatalog 与数据资产，并设置明亮日照、Neutral 色调映射与 Bloom。每次运行都是全量重建，结果幂等。`Check art pack` 检查单位尺度、引用、URP 材质、无碰撞器和敌人动画契约。
 
-路径增加方向箭头。受击闪白适配模型所有 Renderer，死亡缩小保留。环境装饰不占网格，不使用玩法随机数。数值及波次沿用第二阶段。
+模型坐标校正放在 Prefab 的 Rig 子节点，逻辑根节点保持单位缩放；墙上塔抬高量改为读 `ArtCatalog.blockTop - tileTop`（0.50 Unit），不再硬编码。范围判定仍使用原逻辑位置。
 
-验证：引擎美术引用/尺度检查、第二阶段逻辑检查、PC 开发构建及实际自动试玩 49 项通过。截图在 `Verification/Art/`。第三方参考与授权页见 `ArtSource/REFERENCES.md`。下一步优先人工检查各格预览、墙上建塔和颜色可读性，再增加少量环境变体。
+第一轮 Blender 原创美术已退出运行时：`.blend` 与生成脚本保留在 `ArtSource/` 留档，原 `Import Blender art pack` 工具已删除。
+
+验证：引擎美术引用/尺度/URP 检查、第二阶段逻辑检查、Windows 开发构建通过；带新美术的自动试玩 51 项通过（种子 37，1600×900），含新增的「敌人 Prefab 携带行走与死亡动画」检查，覆盖三波战斗、四塔建造、分裂、奖励、改路与 GameOver。截图在 `Verification/Art2/`。人工手感、性能压力和长期平衡未验收。

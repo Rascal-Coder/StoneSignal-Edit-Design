@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065fe556319f0084397adab15e367e3e, type: 3}
   m_Name: Bulwark
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 3372963039445825158, guid: 0dee4854bb23ff240a94941b459ae11e, type: 3}
+  visualPrefab: {fileID: 4361347593707210677, guid: e044666c1f2132b4a9fd303067c7ef07, type: 3}
   displayName: Bulwark
   hp: 110
   moveSpeed: 0.75

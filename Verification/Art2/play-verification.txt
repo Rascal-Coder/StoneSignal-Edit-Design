@@ -1,0 +1,52 @@
+PASS: Art catalog environment assigned
+PASS: Board tile, road and goal assigned
+PASS: Tower model and icon Needle Beacon
+PASS: Tower model and icon Pulse Beacon
+PASS: Tower model and icon Seismic Beacon
+PASS: Tower model and icon Chill Beacon
+PASS: Board decoration initialized
+PASS: Initial scene, route and Build state
+PASS: Configured 5 / 8 / 12 initial enemies
+PASS: Four towers and thirteen reward assets
+PASS: L cannot seal the last three-cell passage
+PASS: Failed placement is side-effect free
+PASS: Out-of-bounds ghost invalid
+PASS: Rotated L ghost valid
+PASS: Legal L placement creates detour
+PASS: Arrow beacon built
+PASS: Rapid beacon built
+PASS: Tower costs deducted exactly once
+PASS: Protected tower placement does not spend gold
+PASS: Wave starts once from Build
+PASS: Enemy prefab carries locomotion and death animation
+PASS: Live movement edge protected
+PASS: Live wall placement repaths without teleport
+PASS: Wave 1 completed through real combat
+PASS: Wave 1 exact spawn count
+PASS: Wave 1 kills earn gold
+PASS: Three unique reward cards
+PASS: Combat cannot start during Reward
+PASS: Only one reward can be selected
+PASS: Next Build refills blocks
+PASS: Cannon built with earned gold
+PASS: Wave starts once from Build
+PASS: Wave 2 completed through real combat
+PASS: Wave 2 exact spawn count
+PASS: Wave 2 kills earn gold
+PASS: Three unique reward cards
+PASS: Combat cannot start during Reward
+PASS: Only one reward can be selected
+PASS: Next Build refills blocks
+PASS: Chill beacon built for third wave
+PASS: Wave starts once from Build
+PASS: Wave 3 completed through real combat
+PASS: Wave 3 exact spawn count
+PASS: Wave 3 kills earn gold
+PASS: Three unique reward cards
+PASS: Combat cannot start during Reward
+PASS: Only one reward can be selected
+PASS: Next Build refills blocks
+PASS: Three waves survived with automatic tower combat
+PASS: Base exhaustion reaches GameOver
+PASS: GameOver blocks gameplay actions
+CHECKS: 51; RESULT: PASS

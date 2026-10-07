@@ -48,7 +48,7 @@ namespace StoneSignal
             string reason = validator.ValidateTower(cell);
             if (reason != null) { Notice?.Invoke(reason); return false; }
             if (!spend(Cost(Data[index]))) { Notice?.Invoke("Not enough gold"); return false; }
-            float elevation=grid.Get(cell)==CellState.Blocked && palette.art!=null ? .62f : 0;
+            float elevation=grid.Get(cell)==CellState.Blocked && palette.art!=null ? palette.art.blockTop - palette.art.tileTop : 0;
             grid.CommitTower(cell);
             var obj = new GameObject(Data[index].displayName); obj.transform.SetParent(transform); obj.transform.position = grid.ToWorld(cell);
             var tower = obj.AddComponent<Tower>(); tower.Initialize(Data[index],enemies,palette,modifiers,canAttack,missiles,elevation); towers.Add(tower);

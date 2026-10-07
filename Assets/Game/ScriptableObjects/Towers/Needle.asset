@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 748c5553e075d5d40a5411fb592bc497, type: 3}
   m_Name: Needle
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 8894478280040777771, guid: 9ff8c4d794f8b6044acdabe107c4de70, type: 3}
+  visualPrefab: {fileID: 6826785426990125707, guid: 9ff8c4d794f8b6044acdabe107c4de70, type: 3}
   icon: {fileID: 21300000, guid: e396d248d7e65ea4192aa746228e8799, type: 3}
   displayName: Needle Beacon
   role: Focused single target DPS.

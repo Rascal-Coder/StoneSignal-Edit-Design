@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065fe556319f0084397adab15e367e3e, type: 3}
   m_Name: Splitter
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 3560502052360954715, guid: 0f4d29b0cd3bbea4f81a3eaf39eb0b6c, type: 3}
+  visualPrefab: {fileID: 8568733656481870027, guid: ecb42254d1a954f4ab11b820d8635972, type: 3}
   displayName: Splitter
   hp: 42
   moveSpeed: 1.1

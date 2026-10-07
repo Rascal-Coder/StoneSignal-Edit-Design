@@ -19,6 +19,10 @@ namespace StoneSignal
         private MaterialPropertyBlock tint;
         private float flashUntil;
         private Transform healthFill;
+        // Quaternius monsters ship skeletal walk/death clips on the visual prefab.
+        private Animator animator;
+        private float deathHold;
+        private static readonly int DeathTrigger = Animator.StringToHash(EnemyVisualContract.DieTrigger);
         public EnemyData Data { get; private set; }
         public float HP { get; private set; }
         public bool Alive { get; private set; }
@@ -46,6 +50,18 @@ namespace StoneSignal
             healthFill.localScale = Vector3.one;
             hpBar = back.transform;
             path = owner.Paths.FindPath(grid.spawn, grid.goal); node = 0;
+            BindAnimator();
+        }
+        private void BindAnimator()
+        {
+            animator = GetComponentInChildren<Animator>();
+            if (animator == null) return;
+            animator.applyRootMotion = false;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            var controller = animator.runtimeAnimatorController;
+            if (controller != null)
+                foreach (var clip in controller.animationClips)
+                    if (clip != null && clip.name == EnemyVisualContract.DeathClip) deathHold = clip.length;
         }
         public void ResumeFrom(Vector3 position,Vector2Int anchor) {
             transform.position=position; path=owner.Paths.FindPath(anchor,grid.goal); node=0;
@@ -66,7 +82,12 @@ namespace StoneSignal
             path = newPath; node = 0;
             return true;
         }
-        private void Update() { if (Alive && owner.CanMove()) Advance(Time.deltaTime); }
+        private void Update()
+        {
+            bool moving = Alive && owner != null && owner.CanMove();
+            if (animator != null) animator.speed = moving ? 1 : 0;
+            if (moving) Advance(Time.deltaTime);
+        }
         public void Advance(float deltaTime)
         {
             if (!Alive || path == null || path.Count == 0) return;
@@ -103,8 +124,19 @@ namespace StoneSignal
             Alive = false;
             owner.Resolve(this, reason);
             if (hpBar != null) PrimitiveVisual.DestroyObject(hpBar.gameObject);
-            if (Application.isPlaying && reason == EnemyResolution.Killed) StartCoroutine(ShrinkDeath());
+            if (Application.isPlaying && reason == EnemyResolution.Killed) StartCoroutine(DeathRoutine());
             else PrimitiveVisual.DestroyObject(gameObject);
+        }
+        private System.Collections.IEnumerator DeathRoutine()
+        {
+            // Play the authored death clip first, then keep the existing shrink so kill timing stays readable.
+            if (animator != null)
+            {
+                animator.speed = 1;
+                animator.SetTrigger(DeathTrigger);
+                if (deathHold > 0) yield return new WaitForSeconds(deathHold);
+            }
+            yield return StartCoroutine(ShrinkDeath());
         }
         private void LateUpdate()
         {

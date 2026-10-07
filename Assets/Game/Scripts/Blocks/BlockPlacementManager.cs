@@ -71,7 +71,7 @@ namespace StoneSignal
                 foreach(var cell in cells) { Vector2Int slot=cell+Vector2Int.right;
                     if(grid.InBounds(slot) && grid.CanPlace(slot) && ValidateAdditional?.Invoke(new[]{slot})==null) {
                         grid.Commit(new[]{slot},CellState.Blocked);
-                        PrimitiveVisual.Create("Bonus tower platform",PrimitiveType.Cylinder,placedRoot,grid.ToWorld(slot)+Vector3.up*.2f,new Vector3(.9f,.2f,.9f),palette.towerBase); break;
+                        ArtVisual.Wall(palette, placedRoot, grid.ToWorld(slot), grid.cellSize); break;
                     }
                 }
             }

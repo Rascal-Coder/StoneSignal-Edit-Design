@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-10-07 — 第三方 CC0 美术全量替换 + 敌人骨骼动画
+
+用户选定**全量替换**（放弃第一轮 Blender 原创环境）并**引入骨骼动画**。素材为两个 CC0 包：Kenney Tower Defense Kit（`kenney.nl` 直链，5.4 MB）与 Quaternius Animated Monster Pack（OpenGameArt 镜像，1.4 MB）。下载直链、授权依据与实际使用的模型清单写入 `ArtSource/REFERENCES.md`，原始压缩包保留在 `ArtSource/ThirdParty/`。
+
+Added:
+
+- `StoneSignal/Import third-party art pack`：从 `ArtSource/ThirdParty/` 全量重建视觉层——清旧导入、复制 19 个 Kenney FBX 与 4 个怪物 FBX、配置导入器、把 FBX 内嵌材质重映射到 URP/Lit、按包内 `.mtl` 解析怪物颜色、拼装四座塔、生成 AnimatorController、离屏渲染图标、写入 ArtCatalog 与数据资产、配置场景光照与色调映射。幂等。
+- `Packages/manifest.json` 启用 `com.unity.modules.animation`（此前工程未引用动画模块）。
+- 敌人骨骼动画：每只怪物一套 `SS_Move` / `SS_Death` 片段，AnimatorController 默认播循环移动、`Die` 触发器切死亡；`EnemyVisualContract` 固定片段与状态命名，运行时不依赖 FBX 内部的 Blender 动作名。
+- 动态道路：`GridView` 按 `PathfindingManager.PathChanged` 在 `tile`（草地）与 `tile-dirt`（土路）之间局部切换格子，路径每次变化只重建状态改变的格子。
+- `BoardEnvironment`（取代 `RuinEnvironment`）：棋盘外圈草地 + 确定性树/石/晶/土块装饰 + 草甸底板。
+- 塔图标和方块图标改为引擎内离屏渲染（256×256 透明 PNG），方块图标按 `BlockShapeData.cells` 摆四块墙块，缩到 0.86 留缝。
+- `ArtCatalog` 改为 Kenney 结构，并持有实测尺寸 `tileTop` / `blockTop`；新增 `EnemyVisualContract`。
+
+Changed:
+
+- 棋盘、地块、墙块、四塔、Spawn/Core 地标、环境装饰、全部敌人模型换成 Kenney / Quaternius。四座塔改为模块化拼装（底座 0–0.21、中段 0.21–0.81、武器 0.81 起），Needle/Pulse/Seismic 靠武器色调区分，Chill 用紫色晶簇无武器。
+- 敌人映射：Drifter = Slime、Skimmer = Bat、Bulwark = Skeleton、Splitter = Dragon、Shard = 缩小版 Slime；按目标身高统一缩放并水平居中。
+- 视觉风格整体改为明亮日照 + Neutral 色调映射 + 弱 Bloom，背景改为天蓝与草甸绿。
+- 敌人存活时按 `CanMove()` 调节 `Animator.speed`；死亡先播死亡片段再走原有 0.22 秒缩小，击杀时序不变；逃脱不播死亡动画。
+- 墙上建塔视觉抬高由硬编码 0.62 改为 `blockTop - tileTop` = 0.50；L 奖励的额外平台改用同一墙块模型，不再是圆柱。
+- 路径折线抬到路面之上并收窄到 0.07，保留方向箭头；终点与起点文字标签改为深色以适配亮场景。
+- 首轮 Blender 美术退出运行时：删除 `Art/Models`、`Prefabs/Art` 旧 Prefab、`SS_*` 材质和 `ArtIntegration.cs`；`ArtSource/` 下的 `.blend` 与生成脚本保留留档。
+- DESIGN 明确记录本次对「不引入动画」约束的显式修改及其边界（只做移动循环与死亡一次性片段）。
+
+Fixed:
+
+- Kenney 贴图取错：包内 `Models/Textures/variation-a.png` 是配色样板（去掉了中间的绿色带），不是模型贴图，会让整块棋盘变橙。正确贴图是 `Models/FBX format/Textures/colormap.png`，已在工具中改正并写进 DESIGN 备注。
+
+Validation：引擎编译通过；美术引用/尺度/URP/无碰撞器检查通过；第二阶段逻辑检查通过；Windows 开发构建通过；带新美术的自动试玩 51 项全通过（种子 37，1600×900），新增「敌人 Prefab 携带行走与死亡动画」检查，覆盖三波真实战斗、四塔建造、分裂精确计数、三选一奖励、动态改路与 GameOver。程序截图在 `Verification/Art2/`，已目视确认草地/土路、动态绕路、四塔配色、墙块、方块图标、敌人与血条。人工手感、性能压力和长期平衡未验收。
+
 ## 2026-10-06 — 项目文档与协作规则
 
 Added:
@@ -54,3 +85,11 @@ Validation：引擎核心检查、场景配置与第二阶段牌组/奖励/分�
 - 四份文档同步；记录用户提供的三项 CC0 参考资源。既有玩法、经济与波次数值保持。
 
 Validation：引擎编译、美术引用/尺度/URP/无碰撞器检查、第二阶段逻辑检查、Windows 开发构建通过；带美术自动试玩 49 项通过（种子 37，1600×900），覆盖三波、四塔、分裂、奖励、改路与 GameOver。程序截图检查模型、图标、手牌、塔说明、建造区域与路径。人工手感、性能压力和长期平衡未验收。
+
+## Stylized art - skeletal enemies + combat VFX (2026-10-07)
+- Enemies Drifter/Skimmer/Bulwark/Splitter/Flyer/Boss are now skinned rigs (Blender armature) with SS_Move (loop), SS_Hit, SS_Death takes; Shard uses shader vertex wobble (M_Enemy_Shard).
+- AC_Enemy_*.controller: Locomotion (default, speed = MoveSpeed float, default 1), Hit (trigger Hit), Death (AnyState, trigger Die).
+- Toon shaders gained _Dissolve/_DissolveEdge/_DissolveColor and _Wobble/_WobbleFreq.
+- New visual-only runtime scripts in Assets/Game/Scripts/VFX (namespace StoneSignal.VFX): EnemyHitFeedback, DamageNumbers/DamageNumber (TextMeshPro), CameraShake, HitStop, TeslaArc, StylizedVfx. No gameplay values changed; Game.unity/ArtCatalog untouched.
+- 26 VFX prefabs in Assets/Game/VFX/Stylized (+ Resources/StylizedVFX/PF_FX_DamageNumber); showcase scene Assets/Game/Scenes/StylizedVFXShowcase.unity.
+- Added com.unity.textmeshpro 3.0.9 + TMP Essential Resources (Assets/TextMesh Pro).

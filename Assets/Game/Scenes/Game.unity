@@ -22,7 +22,7 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.39, g: 0.51, b: 0.62, a: 1}
+  m_AmbientSkyColor: {r: 0.56, g: 0.62, b: 0.66, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
@@ -186,7 +186,7 @@ GameObject:
   - component: {fileID: 781756590}
   m_Layer: 0
   m_HasEditorInfo: 1
-  m_Name: Ruin atmosphere
+  m_Name: Board atmosphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -208,7 +208,7 @@ MonoBehaviour:
   priority: 1
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: b303e9228dfc08e48b846c3656dc1ad2, type: 2}
+  sharedProfile: {fileID: 11400000, guid: 25f697b79b2c4404c872174213c20cd7, type: 2}
 --- !u!4 &781756591
 Transform:
   m_ObjectHideFlags: 0
@@ -253,8 +253,8 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.84, b: 0.66, a: 1}
-  m_Intensity: 1.5
+  m_Color: {r: 1, g: 0.96, b: 0.88, a: 1}
+  m_Intensity: 1.35
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -398,7 +398,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.015, g: 0.045, b: 0.075, a: 1}
+  m_BackGroundColor: {r: 0.58, g: 0.76, b: 0.87, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -423,7 +423,7 @@ Camera:
   far clip plane: 80
   field of view: 60
   orthographic: 1
-  orthographic size: 8.8
+  orthographic size: 9.2
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -509,8 +509,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1558435730}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.36570472, y: 0.14878319, z: -0.059345707, w: 0.91684335}
-  m_LocalPosition: {x: -3.5, y: 16.9, z: -18}
+  m_LocalRotation: {x: 0.3691325, y: 0.13881999, z: -0.05586581, w: 0.91725093}
+  m_LocalPosition: {x: -3.2, y: 17.4, z: -18.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

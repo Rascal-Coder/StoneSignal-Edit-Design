@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 748c5553e075d5d40a5411fb592bc497, type: 3}
   m_Name: Seismic
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 6235269050869083793, guid: 702a8eb0baa0e2b4eb8ad667658f1b2d, type: 3}
+  visualPrefab: {fileID: 2587311301516743327, guid: 702a8eb0baa0e2b4eb8ad667658f1b2d, type: 3}
   icon: {fileID: 21300000, guid: 75106159361f442498c788de2a53847c, type: 3}
   displayName: Seismic Beacon
   role: Heavy area burst. Pair with Chill.

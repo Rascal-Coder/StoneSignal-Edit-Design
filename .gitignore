@@ -7,3 +7,9 @@
 *.csproj
 *.sln
 *.user
+/Build*/
+/obj/
+*.pidb
+*.suo
+.vs/
+.idea/

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065fe556319f0084397adab15e367e3e, type: 3}
   m_Name: Drifter
   m_EditorClassIdentifier: 
-  visualPrefab: {fileID: 8535360091751001164, guid: 19c09a4a9665ca74c823085fe11d38ee, type: 3}
+  visualPrefab: {fileID: 702628958226842720, guid: a6964564eecec864381c2b39629ded0d, type: 3}
   displayName: Drifter
   hp: 32
   moveSpeed: 1.25
