@@ -29,6 +29,26 @@ public static class StylizedPlacementFX
         return q;
     }
 
+    /// v17.4 landing dust colour: spec FX_Build_Dust #E9C9A0 (light tan), texture is the painted soft puff sheet (light grey).
+    public static readonly Color LandingDustColor = new Color(0xE9 / 255f, 0xC9 / 255f, 0xA0 / 255f, .9f);
+    const string DustTex = StylizedArtIntegration.ArtDir + "FX/Portal/T_Portal_DustPuff_2x2.png";
+
+    /// M_VFX_LandingDust: URP Particles/Unlit, alpha blended, T_Portal_DustPuff_2x2 (2x2 soft puffs), shared by both ghost prefabs.
+    static Material LandingDustMaterial()
+    {
+        const string p = "Assets/Game/Materials/Stylized/M_VFX_LandingDust.mat";
+        var sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(DustTex);
+        if (!tex) throw new System.Exception("LANDING DUST: " + DustTex + " missing");
+        var m = AssetDatabase.LoadAssetAtPath<Material>(p); if (!m) { m = new Material(sh); AssetDatabase.CreateAsset(m, p); }
+        m.shader = sh; m.SetTexture("_BaseMap", tex); m.SetColor("_BaseColor", Color.white);
+        m.SetFloat("_Surface", 1); m.SetFloat("_Blend", 0); m.SetOverrideTag("RenderType", "Transparent");
+        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha); m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha); m.SetFloat("_ZWrite", 0);
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT"); m.DisableKeyword("_BLENDMODE_ADD");
+        m.renderQueue = 3000; m.enableInstancing = false; EditorUtility.SetDirty(m);
+        return m;
+    }
+
     public static void BuildAll()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Game/Materials/Stylized/UI")) AssetDatabase.CreateFolder("Assets/Game/Materials/Stylized", "UI");
@@ -41,18 +61,34 @@ public static class StylizedPlacementFX
         var path = M("M_Path_Flow", 3, new Color(1f, .8f, .4f, .9f), .8f, 10);
         var stone = AssetDatabase.LoadAllAssetsAtPath(StylizedArtIntegration.ArtDir + "Environment/SM_Env_Rock_1x1_01.fbx").OfType<Mesh>().FirstOrDefault();
 
-        // dust puff (cheap: 14 particles, one burst)
+        // v17.4 landing dust: short, soft, light-tan puff ring at the block's base, readable ~0.4 s at gameplay zoom.
+        // One pooled system per ghost prefab, world space, max 12 particles, no emission module: PlacementGhost.PlayDrop queues the
+        // placed cells and emits once per frame along the outer edges of the whole shape (EmitParams). Own material
+        // M_VFX_LandingDust (was M_FX_Snow, shared with snow: white, 0.12-0.26 m, burst at the last cell in ghost-local space).
+        var dustMat = LandingDustMaterial();
         GameObject Dust(Transform parent)
         {
             var ps = new GameObject("FX_DropDust").AddComponent<ParticleSystem>(); ps.transform.SetParent(parent, false);
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            var mn = ps.main; mn.playOnAwake = false; mn.loop = false; mn.duration = .6f; mn.startLifetime = new ParticleSystem.MinMaxCurve(.35f, .6f);
-            mn.startSpeed = new ParticleSystem.MinMaxCurve(.8f, 1.6f); mn.startSize = new ParticleSystem.MinMaxCurve(.12f, .26f); mn.startColor = new Color(.86f, .78f, .68f, .7f); mn.maxParticles = 24;
-            mn.gravityModifier = -.05f;
-            var em = ps.emission; em.rateOverTime = 0; em.SetBursts(new[] { new ParticleSystem.Burst(0, 14) });
-            var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = .45f; sh.rotation = new Vector3(-90, 0, 0);
-            var col = ps.colorOverLifetime; col.enabled = true; var gr = new Gradient(); gr.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) }, new[] { new GradientAlphaKey(.8f, 0), new GradientAlphaKey(0, 1) }); col.color = gr;
-            ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/M_FX_Snow.mat");
+            var mn = ps.main; mn.playOnAwake = false; mn.loop = true; mn.duration = 1f;
+            mn.startLifetime = new ParticleSystem.MinMaxCurve(.42f, .55f); mn.startSpeed = 0;   // speed/direction come from EmitParams
+            mn.startSize = new ParticleSystem.MinMaxCurve(.34f, .5f); mn.startRotation = new ParticleSystem.MinMaxCurve(0, Mathf.PI * 2);
+            mn.startColor = LandingDustColor; mn.maxParticles = PlacementGhost.DustMax;
+            mn.simulationSpace = ParticleSystemSimulationSpace.World; mn.scalingMode = ParticleSystemScalingMode.Shape;
+            mn.gravityModifier = -.06f; mn.stopAction = ParticleSystemStopAction.None; mn.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;
+            var em = ps.emission; em.enabled = false; em.rateOverTime = 0; em.SetBursts(new ParticleSystem.Burst[0]);
+            var sh = ps.shape; sh.enabled = false;
+            var lv = ps.limitVelocityOverLifetime; lv.enabled = true; lv.drag = 3.2f; lv.multiplyDragByParticleSize = false; lv.multiplyDragByParticleVelocity = true;
+            var so = ps.sizeOverLifetime; so.enabled = true; so.size = new ParticleSystem.MinMaxCurve(1, new AnimationCurve(new Keyframe(0, .55f, 0, 3f), new Keyframe(.35f, 1.05f), new Keyframe(1, 1.4f)));
+            var col = ps.colorOverLifetime; col.enabled = true; var gr = new Gradient();
+            gr.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(1f, .96f, .9f), 1) },
+                       new[] { new GradientAlphaKey(.95f, 0), new GradientAlphaKey(.85f, .55f), new GradientAlphaKey(0, 1) });   // holds ~0.25 s, gone by ~0.5 s
+            col.color = gr;
+            var tsa = ps.textureSheetAnimation; tsa.enabled = true; tsa.mode = ParticleSystemAnimationMode.Grid; tsa.numTilesX = 2; tsa.numTilesY = 2;
+            tsa.animation = ParticleSystemAnimationType.WholeSheet; tsa.frameOverTime = new ParticleSystem.MinMaxCurve(0f, .99f);   // random fixed puff per particle
+            var r = ps.GetComponent<ParticleSystemRenderer>(); r.sharedMaterial = dustMat; r.renderMode = ParticleSystemRenderMode.Billboard;
+            r.sortMode = ParticleSystemSortMode.None; r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false;
+            r.minParticleSize = 0; r.maxParticleSize = 2f; r.sortingFudge = -10;   // drawn after the ghost/blocks it sits on
             return ps.gameObject;
         }
 

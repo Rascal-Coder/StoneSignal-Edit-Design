@@ -44,6 +44,9 @@ public static class StylizedVFXBuilder
     }
 
     // ---------- particle helpers
+    /// Container root of every one-shot FX (FX_Explosion_*, FX_Hit_*, FX_Muzzle_*, FX_Enemy_*): the ParticleSystem only drives
+    /// duration/stopAction for its children, emits nothing and its renderer is OFF with no material (v17.4: the texture check
+    /// skips it; Save() re-asserts the rule for any root whose system emits nothing).
     static GameObject Root(string name, float duration)
     {
         var go = new GameObject(name);
@@ -105,6 +108,10 @@ public static class StylizedVFXBuilder
         foreach (var lr in go.GetComponentsInChildren<LineRenderer>()) lr.widthMultiplier *= ScaleFor(go.name);
         foreach (var ps in go.GetComponentsInChildren<ParticleSystem>())
         { var m = ps.main; m.playOnAwake = true; m.scalingMode = ParticleSystemScalingMode.Hierarchy; }
+        // v17.4: a root system that emits nothing never draws -> renderer off (no material needed, nothing for the texture check)
+        var rootPs = go.GetComponent<ParticleSystem>();
+        if (rootPs && !VfxMaterialRules.EmitsByModules(rootPs) && !VfxMaterialRules.IsSubEmitter(rootPs, go))
+        { var rr = go.GetComponent<ParticleSystemRenderer>(); if (rr && !rr.sharedMaterial) rr.enabled = false; }
         string n = go.name;
         PrefabUtility.SaveAsPrefabAsset(go, dir + n + ".prefab");
         UnityEngine.Object.DestroyImmediate(go);

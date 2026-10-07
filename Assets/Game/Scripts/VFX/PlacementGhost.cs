@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace StoneSignal.VFX
@@ -6,6 +7,9 @@ namespace StoneSignal.VFX
     /// Placement preview (visual only, no gameplay). Block: SetCells(cells) builds one translucent stone + soft outline per cell.
     /// Tower: SetModel(prefab) clones the tower renderers with the ghost material. SetValid(true/false) = green / red tint.
     /// PlayDrop(pos) = squash-in + dust puff where the real piece lands.
+    /// v17.4: PlayDrop is called once per placed cell in the same frame; the cells are collected and ONE soft dust ring is emitted
+    /// in LateUpdate around the outer edges of the whole shape (max DustMax particles, world space, pooled system, no Instantiate,
+    /// no material instances).
     public class PlacementGhost : MonoBehaviour
     {
         public GameObject cellTemplate;            // child "Cell" (stone + outline), disabled
@@ -86,12 +90,64 @@ namespace StoneSignal.VFX
             }
         }
 
-        public void PlayDrop(Transform placed) { if (placed) StartCoroutine(Drop(placed)); }
+        public void PlayDrop(Transform placed)
+        {
+            if (!placed) return;
+            if (dust)
+            {
+                if (dustCells.Count == 0) dustWait = dustDelay;   // first cell of this placement
+                dustCells.Add(placed.position);                   // before Drop() lifts it (only x/z are used)
+            }
+            StartCoroutine(Drop(placed));
+        }
+
+        // ---- v17.4 landing dust ring
+        public const int DustMax = 12;
+        [Tooltip("v17.4: outward puff speed (m/s, drag slows it)")] public Vector2 dustSpeed = new Vector2(.7f, 1.15f);
+        [Tooltip("v17.4: puff centre height above the ghost's base (m)")] public float dustLift = .12f;
+        [Tooltip("v17.4: seconds after PlayDrop = when the dropping block touches down (Drop: 0.35 m drop over 0.11 s)")] public float dustDelay = .1f;
+        float dustWait;
+        static readonly HashSet<Vector2Int> dustKeys = new HashSet<Vector2Int>();
+        readonly List<Vector3> dustCells = new List<Vector3>(8);
+        readonly List<Vector3> dustEdges = new List<Vector3>(24);   // xyz = edge midpoint, paired with dustNormals
+        readonly List<Vector3> dustNormals = new List<Vector3>(24);
+        static readonly Vector2Int[] Dirs = { new Vector2Int(1, 0), new Vector2Int(-1, 0), new Vector2Int(0, 1), new Vector2Int(0, -1) };
+
+        void LateUpdate() { if (dustCells.Count > 0 && (dustWait -= Time.deltaTime) <= 0) EmitDust(); }
+        void OnDisable() { dustCells.Clear(); }
+
+        void EmitDust()
+        {
+            float cs = Mathf.Max(.01f, cellSize), y = transform.position.y + dustLift;
+            var keys = dustKeys; keys.Clear(); var origin = dustCells[0];
+            foreach (var c in dustCells) keys.Add(new Vector2Int(Mathf.RoundToInt((c.x - origin.x) / cs), Mathf.RoundToInt((c.z - origin.z) / cs)));
+            dustEdges.Clear(); dustNormals.Clear();
+            foreach (var k in keys)
+                foreach (var d in Dirs)
+                {
+                    if (keys.Contains(k + d)) continue;   // inner edge: no dust between two cells of the same piece
+                    var n = new Vector3(d.x, 0, d.y);
+                    dustEdges.Add(new Vector3(origin.x + k.x * cs, y, origin.z + k.y * cs) + n * cs * .5f); dustNormals.Add(n);
+                }
+            dustCells.Clear();
+            int edges = dustEdges.Count; if (edges == 0 || !dust) return;
+            if (!dust.isPlaying) dust.Play();   // loop on, emission module off: Play() spawns nothing by itself
+            int count = Mathf.Min(DustMax - dust.particleCount, Mathf.Max(edges, 8)); if (count <= 0) return;
+            var ep = new ParticleSystem.EmitParams { applyShapeToPosition = false };
+            for (int i = 0; i < count; i++)
+            {
+                int e = edges <= count ? i % edges : Mathf.FloorToInt(i * edges / (float)count);   // spread evenly round the outline
+                var n = dustNormals[e]; var along = new Vector3(-n.z, 0, n.x);
+                float slide = edges < count && i >= edges ? (i / edges % 2 == 1 ? .3f : -.3f) : Random.Range(-.18f, .18f);
+                ep.position = dustEdges[e] + along * slide * cs + n * Random.Range(-.04f, .06f) * cs;
+                ep.velocity = (n * Random.Range(dustSpeed.x, dustSpeed.y) + along * Random.Range(-.15f, .15f)) + Vector3.up * Random.Range(.12f, .3f);
+                dust.Emit(ep, 1);
+            }
+        }
 
         IEnumerator Drop(Transform t)
         {
             var s0 = t.localScale; var p0 = t.localPosition;
-            if (dust) { dust.transform.position = t.position; dust.Play(); }
             for (float k = 0; k < .28f; k += Time.deltaTime)
             {
                 float u = k / .28f;

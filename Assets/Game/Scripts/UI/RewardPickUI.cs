@@ -41,6 +41,7 @@ namespace StoneSignal.UI
                 c.rt.sizeDelta = size; c.rt.anchoredPosition = new Vector2((i - (n - 1) * .5f) * (size.x + g), -40); c.rt.localScale = Vector3.one; c.rt.localRotation = Quaternion.identity; c.cg.alpha = 1;
                 c.frame.sprite = frames[ri]; c.band.sprite = bands[ri]; c.tier.text = RarityName[ri]; c.tier.color = r == RewardRarity.Legendary ? new Color32(255, 236, 170, 255) : Color.white;
                 c.icon.sprite = c.shadow.sprite = options[i].icon; c.icon.enabled = c.shadow.enabled = options[i].icon; c.title.text = options[i].title; c.desc.text = options[i].desc;
+                if (RewardIconMap.HasBakedShadow(options[i].icon)) c.shadow.enabled = false;   // v17.4 icons bake their own hard shadow
                 foreach (var sp in c.sparkles) sp.gameObject.SetActive(r == RewardRarity.Legendary);
                 c.cg.interactable = c.cg.blocksRaycasts = true;
             }

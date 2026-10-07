@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-10-08 — v17.4 VFX texture check fix, footprint value in the builder, reward-card icons, landing dust
+
+- **VFX TEXTURES FAIL (18) fixed:**
+  - The 18 roots (FX_Explosion_*, FX_Hit_*, FX_Muzzle_*, FX_Enemy_*) are `StylizedVFXBuilder.Root()` containers: emission off, renderer off, no material.
+  - `StylizedVfxTexturesV173.Checks()` now skips disabled renderers and non-emitting container systems.
+  - An emitting renderer (rate/bursts, sub-emitter, or script-driven `Emit()`) with no material still fails, and so does any enabled leaf system with no material.
+  - `StylizedVFXBuilder.Save()` re-asserts "root emits nothing → renderer off".
+  - New shared rules in `Scripts/VFX/VfxMaterialRules.cs`.
+  - `StoneSignal/FXAdditive` and `FXAlpha` are procedural (`SS_FXCore.hlsl`, no texture property). They are whitelisted, not given T_FX_SoftDot.
+- **Footprints:**
+  - `StylizedFxV14.FootprintColor` (#24160C, alpha 0.62) is now the single source for `M_VFX_Footprint._BaseColor`.
+  - The particle start colour is white.
+- **Reward-card icons:**
+  - 15 new `ui_reward_<id>.png` (256 px, chunky toon HUD, baked hard shadow) in `Art/Stylized/UI`.
+  - Mapping in `Scripts/UI/RewardIconMap.cs` and `ArtSource/Stylized/UI/reward_icons_v17_4.json`; painter `reward_icons_v17_4.py`.
+  - `RewardPickUI` hides the soft IconShadow for icons that bake their own.
+  - GameUI hookup is a one-liner, see the doc.
+- **Landing dust:**
+  - `PlacementGhost` collects the cells placed in a frame and emits one soft tan puff ring along the outer edges of the piece at touch-down (max 12, pooled, world space).
+  - New `M_VFX_LandingDust` (T_Portal_DustPuff_2x2, #E9C9A0). It no longer shares `M_FX_Snow`.
+  - The 69→159 DC jump is a `GameplayShot` capture artifact (two `cam.Render()` calls in the sampled frame), not the dust.
+- **Documentation:** `Docs/vfx_icons_dust_v17_4.md`.
+- **Preview:** `reward_icons_v17_4.png`.
+
 ## 2026-10-08 — v17.3 Footprints on the real walk surface, merged core enclosure + smoke/sparks, white-square VFX fix
 
 - **Spawn portal:** not changed. The v17.2 idle look is approved.

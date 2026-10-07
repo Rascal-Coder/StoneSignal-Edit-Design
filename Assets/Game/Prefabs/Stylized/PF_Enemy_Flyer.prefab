@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2272854470012426659}
   - component: {fileID: 2595149169053551968}
-  - component: {fileID: 5118627261830033159}
+  - component: {fileID: 7236620708548178877}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: PF_Enemy_Flyer
@@ -66,7 +66,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4352567312545765382}
-  - {fileID: 1705910308631614419}
+  - {fileID: 3574902453843668514}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2595149169053551968
@@ -87,7 +87,7 @@ MonoBehaviour:
   deathDissolveDelay: 0.35
   deathDissolveDuration: 0.6
   deathVfx: {fileID: 0}
---- !u!114 &5118627261830033159
+--- !u!114 &7236620708548178877
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -101,7 +101,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   headHeight: 1.3010101
   radius: 0.7149764
---- !u!1001 &165674914723555850
+--- !u!1001 &2629150836137547771
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -178,10 +178,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
---- !u!4 &1705910308631614419 stripped
+--- !u!4 &3574902453843668514 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1576264362734156249, guid: e124691e53fa6434a9c74a5aceded711, type: 3}
-  m_PrefabInstance: {fileID: 165674914723555850}
+  m_PrefabInstance: {fileID: 2629150836137547771}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8953679386428529307
 PrefabInstance:

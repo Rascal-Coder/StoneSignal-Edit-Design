@@ -1,0 +1,130 @@
+{
+  "version": "v17.4",
+  "atlas_folder": "Assets/Game/Art/Stylized/UI (HUD.spriteatlas)",
+  "source_px": 256,
+  "baked_shadow": true,
+  "rewards": [
+    {
+      "effect": "AllDamage",
+      "title_cn": "全塔伤害",
+      "sprite": "ui_reward_all_damage",
+      "motif": "sword + burst"
+    },
+    {
+      "effect": "AllAttackSpeed",
+      "title_cn": "全塔攻速",
+      "sprite": "ui_reward_all_attack_speed",
+      "motif": "lightning bolt + two arrows"
+    },
+    {
+      "effect": "AllRange",
+      "title_cn": "全塔射程",
+      "sprite": "ui_reward_all_range",
+      "motif": "needle tower + gold range ring, arrows outward"
+    },
+    {
+      "effect": "ArrowRange",
+      "title_cn": "针弩射程",
+      "sprite": "ui_reward_arrow_range",
+      "motif": "needle tower + orange ring + flying needle bolt"
+    },
+    {
+      "effect": "CannonRadius",
+      "title_cn": "震岩半径",
+      "sprite": "ui_reward_cannon_radius",
+      "motif": "seismic shell blast + red radius ring, arrows outward"
+    },
+    {
+      "effect": "AddBlock",
+      "title_cn": "石牌补给",
+      "sprite": "ui_reward_add_block",
+      "motif": "O tetromino on a card + gold plus"
+    },
+    {
+      "effect": "NextDraw",
+      "title_cn": "下次抽牌 +N",
+      "sprite": "ui_reward_next_draw",
+      "motif": "card deck (draw-pile back) + up arrow + gold plus"
+    },
+    {
+      "effect": "PathSlow",
+      "title_cn": "路径减速",
+      "sprite": "ui_reward_path_slow",
+      "motif": "snail with an ice shell (cyan = slow)"
+    },
+    {
+      "effect": "BonusSlot",
+      "title_cn": "扶壁",
+      "sprite": "ui_reward_bonus_slot",
+      "motif": "L piece + gold extra tower slot + plus"
+    },
+    {
+      "effect": "KillGold",
+      "title_cn": "击杀金币",
+      "sprite": "ui_reward_kill_gold",
+      "motif": "coin stack + skull"
+    },
+    {
+      "effect": "WaveGold",
+      "title_cn": "每波金币",
+      "sprite": "ui_reward_wave_gold",
+      "motif": "coin stack + red wave pennant"
+    },
+    {
+      "effect": "NextWaveGold",
+      "title_cn": "下波金币",
+      "sprite": "ui_reward_next_wave_gold",
+      "motif": "coin stack + coin + >> (next wave)"
+    },
+    {
+      "effect": "TowerDiscount",
+      "title_cn": "塔价折扣",
+      "sprite": "ui_reward_tower_discount",
+      "motif": "coin with a red % price tag"
+    },
+    {
+      "effect": "BaseHP",
+      "title_cn": "核心加固",
+      "sprite": "ui_reward_base_hp",
+      "motif": "gold-rim shield over the blue core crystal + green repair plus"
+    },
+    {
+      "effect": "WaveHeal",
+      "title_cn": "每波回血",
+      "sprite": "ui_reward_wave_heal",
+      "motif": "core crystal + green cross + green loop arrow"
+    }
+  ],
+  "runes": [
+    {
+      "rune": 0,
+      "title_cn": "锋·赤符文",
+      "sprite": "ui_rune_blade"
+    },
+    {
+      "rune": 1,
+      "title_cn": "疾·苍符文",
+      "sprite": "ui_rune_swift"
+    },
+    {
+      "rune": 2,
+      "title_cn": "望·金符文",
+      "sprite": "ui_rune_sight"
+    },
+    {
+      "rune": 3,
+      "title_cn": "霜·紫符文",
+      "sprite": "ui_rune_frost"
+    },
+    {
+      "rune": 4,
+      "title_cn": "丰·绿符文",
+      "sprite": "ui_rune_bounty"
+    },
+    {
+      "rune": 5,
+      "title_cn": "共鸣·白符文",
+      "sprite": "ui_rune_resonance"
+    }
+  ]
+}

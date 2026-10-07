@@ -107,21 +107,30 @@ public static class StylizedFxV14
         m.RecalculateBounds(); EditorUtility.SetDirty(m); return m;
     }
 
+    /// v17.4 footprint tint: #24160C (dark warm brown, not black), opacity 0.62 (= the suggested #24160C a=0.85 on top of the old
+    /// 0.73-ish particle alpha, folded into one number). Effective luminance step: ~-30 on dark bridge planks (v17.3: -22), ~-85 on
+    /// light island sand (dev #1E120A x 0.7: -99, the "black stamp" look).
+    public static readonly Color FootprintColor = new Color(0x24 / 255f, 0x16 / 255f, 0x0C / 255f, .62f);
+
     static void BuildEnemyGround()
     {
         // global dust system (one PS, Emit only, cap 64)
         var sysGo = new GameObject("PF_VFX_EnemyGroundSystem"); var sys = sysGo.AddComponent<EnemyGroundFxSystem>();
         // v17.2 footprints: painted paw print (T_FX_Footprint), heading-aligned, 1.5 s (hold 55% then fade). v17.3: #3A2414, alpha 0.7, larger
+        // v17.4: THIS builder is the single source of truth for the print colour/opacity (BatchImport rewrites M_VFX_Footprint):
+        //   FootprintColor below = #24160C, opacity 0.62 in _BaseColor.a; particle start colour is plain white (alpha 1), so the
+        //   material shows exactly what the game draws. Tuned on footprint_tuned/ (dev's #1E120A x 0.7 read as near-black stamps on
+        //   the light island sand; #3A2414 x 0.7 was too weak on the dark +x bridge planks). Edit here, not in the .mat.
         const string fpTex = StylizedArtIntegration.ArtDir + "FX/Ground/T_FX_Footprint.png";
         var fti = (TextureImporter)AssetImporter.GetAtPath(fpTex);
         if (fti) { fti.sRGBTexture = true; fti.alphaIsTransparency = true; fti.wrapMode = TextureWrapMode.Clamp; fti.mipmapEnabled = true; fti.maxTextureSize = 128; fti.SaveAndReimport(); }
-        // v17.3: SS_GroundPrint (queue 2995 after opaque, ZTest LEqual, depth offset), colour from the material (#3A2414), alpha 0.7 from the particle
+        // v17.3: SS_GroundPrint (queue 2995 after opaque, ZTest LEqual, depth offset). v17.4: colour AND opacity from the material only
         var psh = Shader.Find("StoneSignal/SS_GroundPrint"); if (!psh) throw new System.Exception("SS_GroundPrint shader missing");
         var fpm = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "M_VFX_Footprint.mat"); if (!fpm) { fpm = new Material(psh); AssetDatabase.CreateAsset(fpm, MatDir + "M_VFX_Footprint.mat"); }
         fpm.shader = psh; fpm.shaderKeywords = new string[0];
-        fpm.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(fpTex)); fpm.SetColor("_BaseColor", new Color(0x3A / 255f, 0x24 / 255f, 0x14 / 255f, 1f));
+        fpm.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(fpTex)); fpm.SetColor("_BaseColor", FootprintColor);
         fpm.renderQueue = 2995; fpm.enableInstancing = false; EditorUtility.SetDirty(fpm);
-        var dust = EmitPS(sysGo.transform, "Dust", fpm, 1.5f, .40f, new Color(1f, 1f, 1f, .7f), EnemyGroundFxSystem.MaxFootprints);
+        var dust = EmitPS(sysGo.transform, "Dust", fpm, 1.5f, .40f, Color.white, EnemyGroundFxSystem.MaxFootprints);   // v17.4: opacity lives in FootprintColor.a
         dust.GetComponent<ParticleSystemRenderer>().renderMode = ParticleSystemRenderMode.HorizontalBillboard;
         var so = dust.sizeOverLifetime; so.enabled = false;
         { var col = dust.colorOverLifetime; col.enabled = true; var g2 = new Gradient();

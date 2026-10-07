@@ -17,6 +17,11 @@ using UnityEngine.Rendering;
 /// so every prefab that uses them is fixed without rebuilding it. Checks(): fails BatchImport loudly if any particle renderer
 /// in the stylized prefabs has no material, or a texture-sampling particle material (URP Particles/*, SS_GroundPrint) has a
 /// null _BaseMap or an opaque surface.
+/// v17.4: Checks() only judges renderers that can draw (VfxMaterialRules): disabled renderers and non-emitting container
+/// systems (StylizedVFXBuilder.Root: emission off, renderer off, no material - FX_Explosion_*/FX_Hit_*/FX_Muzzle_*/FX_Enemy_*)
+/// are skipped; an enabled renderer whose system emits (rate/bursts, sub-emitter, or a system a script field references for
+/// Emit()) with a null material still FAILS, and so does any enabled leaf system without a material. StoneSignal/FXAdditive +
+/// FXAlpha are procedural (SS_FXCore.hlsl, no texture property) and are whitelisted explicitly, never given T_FX_SoftDot.
 public static class StylizedVfxTexturesV173
 {
     const string MatDir = "Assets/Game/Materials/Stylized/";
@@ -48,19 +53,55 @@ public static class StylizedVfxTexturesV173
         m.renderQueue = 3000; EditorUtility.SetDirty(m);
     }
 
-    static bool SamplesBaseMap(Material m) => m.shader != null && (m.shader.name.StartsWith("Universal Render Pipeline/Particles") || m.shader.name == "StoneSignal/SS_GroundPrint");
+    static bool SamplesBaseMap(Material m) => StoneSignal.VFX.VfxMaterialRules.SamplesBaseMap(m);
+
+    /// v17.4: particle systems that a MonoBehaviour in the same prefab references (EnemyGroundFxSystem.dust, PlacementGhost.dust,
+    /// SpawnPortal.dust ...): these are driven by ParticleSystem.Emit()/Play() from code, so "emission module off" does not mean idle.
+    static HashSet<ParticleSystem> ScriptReferenced(GameObject root)
+    {
+        var set = new HashSet<ParticleSystem>();
+        foreach (var mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (!mb) continue; var it = new SerializedObject(mb).GetIterator();
+            while (it.Next(true))
+            {
+                if (it.propertyType != SerializedPropertyType.ObjectReference || !it.objectReferenceValue) continue;
+                var o = it.objectReferenceValue; var ps = o as ParticleSystem;
+                if (!ps && o is GameObject g) ps = g.GetComponent<ParticleSystem>();
+                if (!ps && o is Component c && !(o is Transform)) ps = c.GetComponent<ParticleSystem>();
+                if (ps) set.Add(ps);
+            }
+        }
+        return set;
+    }
+
+    /// v17.4: can this renderer put pixels on screen? Disabled -> no. A container system (has child systems, nothing in its own
+    /// emission module, not a sub-emitter, not referenced by a script) -> no. Leaf systems always count (they may be Emit()-driven
+    /// by name lookup), so a leaf without a material still fails.
+    static bool CanDraw(ParticleSystemRenderer r, GameObject root, HashSet<ParticleSystem> scripted)
+    {
+        if (!r.enabled) return false;
+        var ps = r.GetComponent<ParticleSystem>(); if (!ps) return true;
+        if (StoneSignal.VFX.VfxMaterialRules.EmitsByModules(ps) || scripted.Contains(ps) || StoneSignal.VFX.VfxMaterialRules.IsSubEmitter(ps, root)) return true;
+        bool container = ps.GetComponentsInChildren<ParticleSystem>(true).Length > 1;
+        return !container;
+    }
 
     public static void Checks()
     {
-        var errs = new List<string>(); int renderers = 0;
+        var errs = new List<string>(); int renderers = 0, idle = 0, procedural = 0;
         foreach (var guid in AssetDatabase.FindAssets("t:Prefab", PrefabDirs.Where(AssetDatabase.IsValidFolder).ToArray()))
         {
             string path = AssetDatabase.GUIDToAssetPath(guid); var go = AssetDatabase.LoadAssetAtPath<GameObject>(path); if (!go) continue;
+            HashSet<ParticleSystem> scripted = null;
             foreach (var r in go.GetComponentsInChildren<ParticleSystemRenderer>(true))
             {
                 renderers++; var m = r.sharedMaterial; string where = System.IO.Path.GetFileNameWithoutExtension(path) + "/" + r.name;
-                if (!m) { errs.Add(where + ": no material (renders Unity's default particle)"); continue; }
-                if (!SamplesBaseMap(m)) continue;   // procedural FXAlpha/FXAdditive shapes need no texture
+                if (scripted == null) scripted = ScriptReferenced(go);
+                if (!CanDraw(r, go, scripted)) { idle++; continue; }   // v17.4: disabled / non-emitting container root draws nothing
+                if (!m) { errs.Add(where + ": emitting particle renderer has no material (renders Unity's default particle)"); continue; }
+                if (StoneSignal.VFX.VfxMaterialRules.IsProcedural(m)) { procedural++; continue; }   // FXAlpha/FXAdditive: procedural shape, no texture
+                if (!SamplesBaseMap(m)) continue;   // other custom shaders: not judged here
                 if (!m.GetTexture("_BaseMap")) errs.Add(where + ": " + m.name + " has a NULL _BaseMap (white squares)");
                 if (m.shader.name.StartsWith("Universal Render Pipeline/Particles") && m.GetFloat("_Surface") < .5f) errs.Add(where + ": " + m.name + " is opaque (_Surface 0)");
                 var ps = r.GetComponent<ParticleSystem>(); var tex = m.GetTexture("_BaseMap");
@@ -77,6 +118,6 @@ public static class StylizedVfxTexturesV173
             if (m && SamplesBaseMap(m) && !m.GetTexture("_BaseMap")) errs.Add("material " + m.name + " (" + m.shader.name + ") has a NULL _BaseMap");
         }
         if (errs.Count > 0) throw new System.Exception("VFX TEXTURES FAIL (" + errs.Count + ")\n" + string.Join("\n", errs));
-        Debug.Log("VFX TEXTURES v17.3 PASS (" + renderers + " particle renderers, no null main textures)");
+        Debug.Log("VFX TEXTURES v17.4 PASS (" + renderers + " particle renderers: " + idle + " idle containers/disabled skipped, " + procedural + " procedural FXAlpha/FXAdditive, no null main textures)");
     }
 }

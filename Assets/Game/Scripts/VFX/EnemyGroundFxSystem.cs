@@ -8,6 +8,8 @@ namespace StoneSignal.VFX
     /// rotated to the walk heading (horizontal billboard).
     /// v17.3: darker + more opaque (#3A2414 via M_VFX_Footprint _BaseColor, alpha 0.7), slightly larger, SS_GroundPrint shader
     /// (queue 2995 after opaque, ZTest LEqual, small depth offset); heights resolved by EnemyGroundFx from StoneSignal.WalkSurface.
+    /// v17.4: colour + opacity come ONLY from M_VFX_Footprint _BaseColor, written by StylizedFxV14.FootprintColor (#24160C, a 0.62);
+    /// the particle start colour is white. Change the value in the builder (BatchImport overwrites the material).
     public class EnemyGroundFxSystem : MonoBehaviour
     {
         public static EnemyGroundFxSystem Instance { get; private set; }
