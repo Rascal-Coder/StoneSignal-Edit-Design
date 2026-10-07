@@ -212,3 +212,11 @@ Changed:
 - ui_badge_size_1x2/2x2 cream pills with dark-red text (+ blank), ui_badge_hotkey 32px; ui_card_blueprint 128x128; ui_icon_block_T/L/J/S/Z/O/I at uniform 22px cells. Existing guids preserved.
 - BL foreground islet pushed further out of hand UI zone.
 
+
+## Stylized art v14 (2026-10-07)
+- Front (N) spawn island: trees -> stump/log, lantern removed (block-card UI zone clear).
+- Towers: no visible base mesh; SM_Tower_X_Base kept as empty pivot, heads/barrels/muzzles lowered onto wall top.
+- New PF_VFX_CoinDrop + CoinDropFx (pooled coins, bounce, sparkle, fly-to-UI trail, pickup flash, counter punch).
+- New PF_VFX_EnemyGround + EnemyGroundFx (blob shadow + distance-emitted dust, 2 s fade), added as child GroundFx to all PF_Enemy_*.
+- Editor: StylizedFxV14.cs (builder, previews, checks) called from BatchImport.
+

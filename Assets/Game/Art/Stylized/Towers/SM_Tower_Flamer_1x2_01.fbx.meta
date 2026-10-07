@@ -45,8 +45,8 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    totalVerticesCount: 940
-    totalTrianglesCount: 540
+    totalVerticesCount: 372
+    totalTrianglesCount: 200
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
@@ -152,19 +152,11 @@ ModelImporter:
       reserveDetailLevel: 0
     selectedVGMeshes:
     - index: 0
-      meshName: SM_Tower_Flamer_1x2_01_Base
-      lodLevel: 0
-      meshGeometryBuffer: 0
-    - index: 1
       meshName: SM_Tower_Flamer_1x2_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0
     supportVGMeshes:
     - index: 0
-      meshName: SM_Tower_Flamer_1x2_01_Base
-      lodLevel: 0
-      meshGeometryBuffer: 0
-    - index: 1
       meshName: SM_Tower_Flamer_1x2_01_Head
       lodLevel: 0
       meshGeometryBuffer: 0

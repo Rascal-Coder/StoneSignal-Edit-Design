@@ -355,7 +355,10 @@ def plinth(fx, fy, h=.16):
 def turret(name, base, head, pivot, barrel=None, bpivot=None, muzzle=None):
     """Hierarchy (Unity): <SM>_Base (static) and <SM>_Head (yaw pivot, centred) > <SM>_Barrel (pitch pivot) > <SM>_Muzzle (empty).
     Blender keeps Head parented to Base for export convenience; StylizedArtIntegration re-parents Base/Head as siblings."""
-    b = to_object(name + "_Base", base)
+    # v14: no visible base mesh - towers sit directly on the wall-block top. _Base stays as an empty pivot (API),
+    # head/barrel/muzzle are lowered so the lowest head vertex rests on z=0 (wall top).
+    b = bpy.data.objects.new(name + "_Base", None); b.empty_display_size = .2
+    bpy.context.scene.collection.objects.link(b)
     objs = [b]; last = b
     if head:
         h = to_object(name + "_Head", head, origin=tuple(pivot)); h.parent = b; objs.append(h); last = h
@@ -366,6 +369,13 @@ def turret(name, base, head, pivot, barrel=None, bpivot=None, muzzle=None):
         m = bpy.data.objects.new(name + "_Muzzle", None); m.empty_display_size = .1
         bpy.context.scene.collection.objects.link(m); m.location = muzzle
         m.parent = b; m.matrix_parent_inverse = b.matrix_world.inverted(); objs.append(m)
+    meshes = [o for o in objs if o.type == "MESH"]
+    if meshes:
+        bpy.context.view_layer.update()
+        zmin = min((o.matrix_world @ v.co).z for o in meshes for v in o.data.vertices)
+        for o in objs[1:]:
+            if o.parent == b: o.location.z -= zmin
+        print("VALIDATE-NB %s head lowered %.3f" % (name, zmin))
     return objs
 
 def cannon():
@@ -961,7 +971,8 @@ with open(os.path.join(SRC, "stylized_manifest.json"), "w", encoding="utf-8") as
 def place(name, loc, rotz=0.0, scale=1.0, outline=0.0):
     folder, objs = built[name]
     root = objs[0]
-    inst = root.copy(); inst.data = root.data.copy() if outline else root.data
+    inst = root.copy()
+    if root.data is not None: inst.data = root.data.copy() if outline else root.data
     inst.location = Vector(loc) + root.location; inst.rotation_euler = (0, 0, rotz); inst.scale = (scale,) * 3
     pv.objects.link(inst)
     kids = []
@@ -1116,11 +1127,16 @@ if DO_RENDER:
         for side in (-1, 1):
             for tt in (start_t + .1, end_t - .1):
                 put("SM_Env_Dock_Post_01", ex + d[0] * tt - d[1] * .62 * side, ey + d[1] * tt + d[0] * .62 * side, 0, lr.uniform(0, 6))
-        put("SM_Prop_Lantern_01", ex + d[0] * (end_t + .3) - d[1] * .8, ey + d[1] * (end_t + .3) + d[0] * .8, .55, ang)
+        if key != "N":  # v14: front (N) spawn island sits under the block-card UI zone -> nothing tall there
+            put("SM_Prop_Lantern_01", ex + d[0] * (end_t + .3) - d[1] * .8, ey + d[1] * (end_t + .3) + d[0] * .8, .55, ang)
         print("VALIDATE bridge %s OK: len %.2f m, %d segments, ends on board and island" % (key, Lb, n)); bridge_ok += 1
         for q in range(2):  # trees on the far side of spawn islands
             a = ang + lr.uniform(-1.6, 1.6); r = lr.uniform(.6, 1.6)
-            put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), ix + math.cos(a) * r, iy + math.sin(a) * r, .55, lr.uniform(0, 6), (lr.uniform(.8, 1.3),) * 3)
+            tv, tr_, ts = lr.choice("ABC"), lr.uniform(0, 6), lr.uniform(.8, 1.3)
+            if key == "N":  # low props only (stump / log) under the block-card zone
+                put("SM_Env_Stump_01" if q == 0 else "SM_Env_Log_01", ix + math.cos(a) * r, iy + math.sin(a) * r, .55, tr_)
+            else:
+                put("SM_Env_Tree_Maple_%s_01" % tv, ix + math.cos(a) * r, iy + math.sin(a) * r, .55, tr_, (ts,) * 3)
     put("SM_Enemy_Boss_01", SPAWNS["W"][0], SPAWNS["W"][1], .55, math.radians(90))
     put("SM_Prop_Campfire_01", SPAWNS["E"][0] + .6, SPAWNS["E"][1] - .9, .55)
     # surrounding islands with dense layered trees
@@ -1134,8 +1150,8 @@ if DO_RENDER:
         put("SM_Env_RockPile_01", ix - 1.1 * sc, iy - .8 * sc, .55, lr.random() * 6)
     islet(10.2, -7.4, .75, .3, 3)                                     # TL
     put("SM_Env_Dock_Post_01", 9.0, -6.0, 0, 0); put("SM_Env_Bridge_Plank_01", 8.7, -6.3, .35, .6, (.55, 1, 1))
-    islet(-11.8, -4.6, .7, 1.9, 3)                                    # right-mid (kept below the top-right speed buttons)
-    put("SM_Env_Rock_Small_01", -10.4, -3.6, .0, 1.0, (2.2, 2.2, 2.2))
+    islet(-14.6, 5.0, .65, 1.9, 2)                                    # v15: right edge between W spawn and BR ruin (out of top-right HUD zone)
+    put("SM_Env_Rock_Small_01", -13.4, 4.2, .0, 1.0, (2.0, 2.0, 2.0))
     islet(15.2, 10.8, .8, 2.2, 2, (.85, 1.0))                          # BL foreground framing, pushed out of the card-hand UI zone
     put("SM_Env_RockPile_01", 13.6, 9.8, .1, 2.0, (1.2, 1.2, 1.2))
     islet(-10.2, 7.6, .7, .9, 1)                                      # BR islet + ruin lighthouse (stacked stones + lantern)
@@ -1148,7 +1164,7 @@ if DO_RENDER:
             fx, fy = lr.uniform(-12, 12), lr.uniform(-9, 9)
             if abs(fx) > 9 or abs(fy) > 7: break
         put("SM_Env_Leaves_01" if k4 % 3 else "SM_Env_Rock_Small_01", fx, fy, .02 if k4 % 3 else -.05, lr.uniform(0, 6), (1, 1, 1))
-    for x, y in [(-8.7, -5.6), (8.7, -5.6), (-5.5, -6.7), (3.5, -6.7)]:  # v12: only far-side edge trees (front ones occluded the board/UI)
+    for x, y in [(8.7, -5.6), (-5.5, -6.7), (3.5, -6.7)]:  # v12: only far-side edge trees (front ones occluded the board/UI)
         put("SM_Env_Tree_Maple_%s_01" % lr.choice("ABC"), x, y, .55, lr.uniform(0, 6), (lr.uniform(.9, 1.15),) * 3)
     put("SM_Prop_Brazier_01", 1.5, -1.5, .8); put("SM_Prop_Brazier_01", -1.5, 1.5 + 1, .8)
     with open(os.path.join(SRC, "level_layout.json"), "w") as f:

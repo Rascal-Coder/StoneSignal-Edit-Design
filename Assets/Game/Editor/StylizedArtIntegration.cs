@@ -324,7 +324,7 @@ public static class StylizedArtIntegration
         cam.fieldOfView = 32;
         cam.transform.position = new Vector3(9f, 21f, 25f); cam.transform.LookAt(new Vector3(0, .5f, .5f));
         EditorSceneManager.SaveScene(scene, ScenePath);
-        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v12.png"))) File.Delete(old);
+        foreach (var old in Directory.GetFiles(PreviewDir, "unity_demo*.png").Concat(Directory.GetFiles(PreviewDir, "level_*_v15.png"))) File.Delete(old);
         Capture(cam, PreviewDir + "unity_demo.png");
         var ls = light.shadows; light.shadows = LightShadows.None;
         Capture(cam, PreviewDir + "unity_demo_noshadow.png");
@@ -335,9 +335,9 @@ public static class StylizedArtIntegration
         var wide = (cam.transform.position, cam.transform.rotation, cam.fieldOfView);
         cam.orthographic = true; cam.orthographicSize = GameCamOrthoV10; cam.transform.rotation = gRot; cam.transform.position = GameCamTargetV10 - fwd * 30f;  // v10 framing
         cam.farClipPlane = 200;
-        Capture(cam, PreviewDir + "level_gamecam_v12.png"); Capture(cam, PreviewDir + "level_compose_v12.png");
+        Capture(cam, PreviewDir + "level_gamecam_v15.png"); Capture(cam, PreviewDir + "level_compose_v15.png");
         cam.orthographic = false; cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
-        Capture(cam, PreviewDir + "level_wide_v12.png");
+        Capture(cam, PreviewDir + "level_wide_v15.png");
         cam.transform.position = new Vector3(3.2f, 3.4f, -5.2f); cam.transform.LookAt(new Vector3(-.3f, .2f, -8.6f)); cam.fieldOfView = 40;
         Capture(cam, PreviewDir + "shore_closeup_v12.png");
         cam.transform.SetPositionAndRotation(wide.Item1, wide.Item2); cam.fieldOfView = wide.Item3;
@@ -582,7 +582,9 @@ public static class StylizedArtIntegration
             BuildLevelDressing();
             StylizedPlacementFX.BuildAll();
             StylizedVFXBuilder.BuildAll();
+            StylizedFxV14.BuildAll();
             Checks();
+            StylizedFxV14.Checks();
             StylizedVFXBuilder.Checks();
             ThirdPartyArtIntegration.Checks();   // existing runtime art untouched
             Stage2Validation.Run();              // gameplay logic still passes

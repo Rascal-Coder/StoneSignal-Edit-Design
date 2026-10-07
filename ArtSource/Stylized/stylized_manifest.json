@@ -461,11 +461,11 @@
     {
       "name": "SM_Tower_Cannon_1x1_01",
       "folder": "Towers",
-      "tris": 960,
+      "tris": 508,
       "size_xyz_m": [
-        0.92,
-        0.98,
-        0.61
+        0.62,
+        0.79,
+        0.531
       ],
       "objects": [
         "SM_Tower_Cannon_1x1_01_Base",
@@ -477,11 +477,11 @@
     {
       "name": "SM_Tower_Gatling_1x1_01",
       "folder": "Towers",
-      "tris": 540,
+      "tris": 344,
       "size_xyz_m": [
-        0.92,
-        1.09,
-        0.46
+        0.42,
+        0.86,
+        0.35
       ],
       "objects": [
         "SM_Tower_Gatling_1x1_01_Base",
@@ -492,10 +492,10 @@
     {
       "name": "SM_Tower_Tesla_1x1_01",
       "folder": "Towers",
-      "tris": 652,
+      "tris": 488,
       "size_xyz_m": [
-        0.92,
-        0.92,
+        0.4,
+        0.4,
         0.95
       ],
       "objects": [
@@ -507,10 +507,10 @@
     {
       "name": "SM_Tower_Frost_1x1_01",
       "folder": "Towers",
-      "tris": 270,
+      "tris": 114,
       "size_xyz_m": [
-        0.92,
-        0.92,
+        0.441,
+        0.61,
         0.56
       ],
       "objects": [
@@ -522,11 +522,11 @@
     {
       "name": "SM_Tower_Flamer_1x2_01",
       "folder": "Towers",
-      "tris": 540,
+      "tris": 200,
       "size_xyz_m": [
-        0.92,
-        1.82,
-        0.76
+        0.42,
+        0.93,
+        0.4
       ],
       "objects": [
         "SM_Tower_Flamer_1x2_01_Base",
@@ -537,10 +537,10 @@
     {
       "name": "SM_Tower_Mortar_2x2_01",
       "folder": "Towers",
-      "tris": 1122,
+      "tris": 430,
       "size_xyz_m": [
-        1.82,
-        1.82,
+        1.16,
+        1.197,
         0.925
       ],
       "objects": [
