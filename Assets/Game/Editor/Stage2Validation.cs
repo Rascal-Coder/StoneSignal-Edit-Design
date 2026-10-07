@@ -10,7 +10,7 @@ public static class Stage2Validation {
   AssetDatabase.Refresh();
   var config=AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/Game/Settings/GameConfig.asset");
   config.towers=new[]{Load<TowerData>("Towers","Needle"),Load<TowerData>("Towers","Pulse"),Load<TowerData>("Towers","Seismic"),Load<TowerData>("Towers","Chill")};
-  string[] names={"AllDamage","AllAttackSpeed","AllRange","BaseHP","CannonRadius","AddBlock","NextDraw","PathSlow","BonusSlot","KillGold","WaveGold","TowerDiscount","WaveHeal"};
+  string[] names={"AllDamage","AllAttackSpeed","AllRange","BaseHP","CannonRadius","AddBlock","NextDraw","PathSlow","BonusSlot","KillGold","WaveGold","TowerDiscount","WaveHeal","ExtraDraw"};
   config.rewards=Array.ConvertAll(names,n=>Load<RewardData>("Rewards",n));
   var normal=Load<EnemyData>("Enemies","Drifter"); var fast=Load<EnemyData>("Enemies","Skimmer"); fast.kind=EnemyKind.Fast;
   var tank=Load<EnemyData>("Enemies","Bulwark"); var splitter=Load<EnemyData>("Enemies","Splitter"); splitter.splitChild=Load<EnemyData>("Enemies","Shard");
@@ -28,6 +28,7 @@ public static class Stage2Validation {
  [MenuItem("StoneSignal/Run stage 2 checks")]
  public static void Run() {
   var config=AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/Game/Settings/GameConfig.asset");
+  PrototypeBuild.EnsureRewardPool(); // v18: ExtraDraw (免广告再抽) in the pool before the 14-reward checks
   EditorSceneManager.OpenScene("Assets/Game/Scenes/Game.unity");
   PrototypeBuild.Checks();
   CheckGameplay(config);
@@ -44,14 +45,14 @@ public static class Stage2Validation {
    var enemies=root.AddComponent<EnemyManager>();enemies.Initialize(grid,paths,palette,()=>true);
    var mods=new RunModifiers();var economy=root.AddComponent<RunEconomy>();economy.Initialize(config,enemies,mods);
    foreach(var reward in config.rewards) if(reward.effect!=RewardEffect.AddBlock) reward.Apply(mods,economy);
-   PrototypeChecks.Require(Mathf.Approximately(mods.AllRange,1.15f) && Mathf.Approximately(mods.AttackSpeed,1.12f) && mods.WaveGold==30 && mods.WaveHeal==2 && mods.NextDraw==1,"New reward effects");
+   PrototypeChecks.Require(Mathf.Approximately(mods.AllRange,1.15f) && Mathf.Approximately(mods.AttackSpeed,1.12f) && mods.WaveGold==30 && mods.WaveHeal==2 && mods.NextDraw==1 && mods.ExtraDraw==1,"New reward effects (ExtraDraw = 1 pending free 2nd draw)");
    PrototypeChecks.Require(Mathf.Approximately(mods.EnemySpeed,.92f) && Mathf.Approximately(mods.KillGold,1.2f) && Mathf.Approximately(mods.TowerCost,.9f) && mods.BonusSlotShape!=null,"Path/economy/platform reward data");
    var blocks=root.AddComponent<BlockPlacementManager>();blocks.Initialize(grid,null,palette,config.blocks,()=>true);blocks.Modifiers=mods;blocks.ValidateAdditional=cells=>{
        var simulated=new System.Collections.Generic.HashSet<Vector2Int>(cells);
        return paths.FindPath(grid.spawn,grid.goal,simulated).Count==0 ? "No route" : null;
    };
-   Load<RewardData>("Rewards","AddBlock").Apply(mods,economy,blocks);
-   PrototypeChecks.Require(blocks.Deck.Cards.Count==6 && mods.ExtraDraw==0,"AddBlock adds one O wall card (no draw-size / free-draw side effect)");
+   int extraBefore=mods.ExtraDraw; Load<RewardData>("Rewards","AddBlock").Apply(mods,economy,blocks);
+   PrototypeChecks.Require(blocks.Deck.Cards.Count==6 && mods.ExtraDraw==extraBefore,"AddBlock adds one O wall card (no draw-size / free-draw side effect)");
    blocks.Refill(5);for(int i=0;i<blocks.Hand.Cards.Count;i++) if(blocks.Hand.Cards[i]==mods.BonusSlotShape) {blocks.SelectCard(i);break;}
    if(blocks.CurrentShape!=mods.BonusSlotShape) {blocks.Deck.Add(mods.BonusSlotShape);blocks.Refill(7);for(int i=0;i<blocks.Hand.Cards.Count;i++) if(blocks.Hand.Cards[i]==mods.BonusSlotShape){blocks.SelectCard(i);break;}}
    PrototypeChecks.Require(blocks.CommitPlacement(new Vector2Int(5,0)) && grid.Get(new Vector2Int(6,1))==CellState.Blocked,"L reward adds validated adjacent platform");

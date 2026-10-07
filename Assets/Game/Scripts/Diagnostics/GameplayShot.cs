@@ -35,6 +35,7 @@ namespace StoneSignal
         {
             yield return new WaitForSecondsRealtime(1f);
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots3") >= 0) { yield return CnShots3(); Debug.Log("CN SHOTS3 DONE " + path); Application.Quit(0); yield break; }
             var grid = s.grid; s.Economy.AddGold(900);
             // wall clusters (deterministic pattern) that leave every route open
             for (int y = 1; y < grid.height - 1; y++) for (int x = 1; x < grid.width - 1; x++)
@@ -219,6 +220,96 @@ namespace StoneSignal
             yield return Shot("defeat"); sb.Append(TextAudit("defeat"));
             sb.Append(CnAtlas());
             File.WriteAllText(Path.Combine(dir, "cn_shots_" + res + ".txt"), sb.ToString());
+        }
+        /// -cnshots3 (玩法策划 decisions after 4b10d0b): notice toast rules + placement (clearance from core / route arrows), draw pile with the
+        /// ExtraDraw free 2nd draw and its carry-over, ExtraDraw reward card (精良), drag hand fade at the bottom-left corner cell (+ DC).
+        IEnumerator CnShots3()
+        {
+            var ui = FindObjectOfType<GameUI>(); var pic = PlacementInputController.Instance; var cam = s.viewCamera; var grid = s.grid;
+            string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height;
+            var sb = new System.Text.StringBuilder("cn shots v3 " + res + " aspect " + ((float)Screen.width / Mathf.Max(1, Screen.height)).ToString("F3") + "\n" + CnAtlas());
+            IEnumerator Shot(string name) { for (int f = 0; f < 6; f++) yield return null; yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, name + "_" + res + ".png")); }
+            IEnumerator Wait(float sec) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < sec) yield return null; }
+            string Pile() { var dp = FindObjectOfType<StoneSignal.VFX.DrawPileUI>(); return dp == null ? "no DrawPileUI" : "state=" + dp.State + " label='" + (dp.statusLabel ? dp.statusLabel.text : "-") + "' icon=" + (dp.statusIcon && dp.statusIcon.gameObject.activeSelf && dp.statusIcon.sprite ? dp.statusIcon.sprite.name : "hidden") + " interactable=" + (dp.button && dp.button.interactable) + " | used=" + s.Draws.Used + " freeSecond=" + s.Draws.FreeSecond + " pendingExtraDraw=" + s.Modifiers.ExtraDraw + " offer=" + s.DrawOffer; }
+            var hand = s.Blocks.Hand; void Trim() { while (hand.Cards.Count > 1) { hand.Select(0); hand.Consume(); } s.Blocks.NotifyChanged(); }
+            // ---- 1. notice toast rules (1.5 s, one at a time, same text not re-shown within 1 s) and placement
+            if (ui != null)
+            {
+                const string A = "Cell occupied / protected", B = "No tower selected";
+                ui.DebugNotice(A); float t0 = Time.unscaledTime; yield return null; string s0 = ui.NoticeShown;
+                while (Time.unscaledTime - t0 < .5f) yield return null; ui.DebugNotice(A); float tRe = Time.unscaledTime - t0; // same text at ~0.5 s
+                while (Time.unscaledTime - t0 < 1.4f) yield return null; string s14 = ui.NoticeShown; float t14 = Time.unscaledTime - t0;
+                while (Time.unscaledTime - t0 < 1.6f) yield return null; string s16 = ui.NoticeShown; float t16 = Time.unscaledTime - t0;
+                ui.DebugNotice(A); yield return null; string sAgain = ui.NoticeShown; float tAgain = Time.unscaledTime - t0;
+                ui.DebugNotice(B); yield return null; string sB = ui.NoticeShown;
+                sb.Append("toast rules: shown '" + s0 + "'; same text re-sent at " + tRe.ToString("F2") + " s (ignored); at " + t14.ToString("F2") + " s '" + s14 + "'; at " + t16.ToString("F2") + " s '" + s16 + "' (expected empty: 1.5 s, not extended); same text again at " + tAgain.ToString("F2") + " s -> '" + sAgain + "'; new text -> '" + sB + "' (replaces)\n");
+                sb.Append("toast rules PASS=" + (s0 == "这里不能放" && s14 == "这里不能放" && s16 == "" && sAgain == "这里不能放" && sB == "先选一座塔") + "\n");
+                yield return Wait(1.7f);
+                ui.DebugNotice(A); yield return Shot("toast"); sb.Append("toast placement: " + ui.NoticeDebug + "\n");
+                yield return Wait(1.7f);
+            }
+            // ---- 2. draw pile: ExtraDraw free 2nd draw, then carry-over (ExtraDraw while the 2nd draw is already used)
+            Trim(); s.Modifiers.ExtraDraw = 1; s.BeginIntermission(); Trim();
+            bool e1 = s.Draw(); Trim();
+            yield return Shot("drawpile_extradraw_2nd_free"); sb.Append("draw pile, ExtraDraw wave, after the 1st draw (ok=" + e1 + "): " + Pile() + "\n");
+            bool e2 = s.Draw(); Trim(); bool now = s.GrantExtraDraw(); s.Blocks.NotifyChanged();
+            yield return Shot("drawpile_carry_used"); sb.Append("draw pile, 2nd draw used (free ok=" + e2 + "), ExtraDraw granted now -> applied this wave=" + now + ": " + Pile() + "\n");
+            s.BeginIntermission(); Trim(); bool c1 = s.Draw(); Trim();
+            yield return Shot("drawpile_carry_next_2nd_free"); sb.Append("draw pile, next wave (carried charge) after the 1st draw (ok=" + c1 + "): " + Pile() + "\n");
+            s.Modifiers.ExtraDraw = 0; s.BeginIntermission(); Trim();
+            // ---- 3. ExtraDraw reward card (精良)
+            var C = StoneSignal.UI.RewardRarity.Common; var R = StoneSignal.UI.RewardRarity.Rare;
+            if (ui != null && ui.DebugShowRewardPick(new[] { C, R, C }, new[] { RewardEffect.AddBlock, RewardEffect.ExtraDraw, RewardEffect.TowerDiscount }))
+            { yield return Wait(.9f); sb.Append(TextAudit("reward cards ExtraDraw")); yield return Shot("reward_extradraw"); ui.PickUi.gameObject.SetActive(false); }
+            else sb.Append("reward pick UI unavailable\n");
+            sb.Append("reward pool: " + s.config.rewards.Length + " rewards; ExtraDraw rarity=" + GameUI.RarityOf(RewardEffect.ExtraDraw) + "\n");
+            // ---- 4. drag hand fade: block card dragged so the ghost sits on the bottom-left board corner (under the block row)
+            if (pic != null)
+            {
+                Vector2 Pt(Vector2Int c) => cam.WorldToScreenPoint(grid.ToWorld(c) + Vector3.up * grid.tileTop);
+                Vector2Int corner = Vector2Int.zero; float bestSum = float.MaxValue;
+                for (int x = 0; x < grid.width; x++) for (int y = 0; y < grid.height; y++) { var c = new Vector2Int(x, y); var p = Pt(c); if (p.x + p.y < bestSum) { bestSum = p.x + p.y; corner = c; } }
+                Trim(); s.Blocks.DrawCards(2); s.Blocks.NotifyChanged(); yield return null;
+                RectTransform Card() { foreach (var r in pic.HandRects) if (r && r.name.StartsWith("Block card")) return r; return null; }
+                var card = Card(); var k4 = new Vector3[4]; card.GetWorldCorners(k4); Vector2 start = (k4[0] + k4[2]) * .5f;
+                bool force = PointerInput.ForceTouch; PointerInput.ForceTouch = true;
+                for (int f = 0; f < 6; f++) yield return null; long dIdle = draws.LastValue;
+                PointerInput.Inject(start, true, true, false); pic.CardDown(false, 0, start); yield return null;
+                Vector2 tp = Pt(corner); float cellPx = (Pt(corner + Vector2Int.right) - tp).magnitude; Vector2? finger = null; float window = 0;
+                foreach (float dx in new[] { 0f, .2f, -.2f, .35f, -.35f })
+                {
+                    int top = -1;
+                    for (int y = Mathf.RoundToInt(tp.y); y >= 1 && !finger.HasValue; y--)
+                    {
+                        var f = new Vector2(tp.x + dx * cellPx, y);
+                        bool hit = !pic.InCancelZone(f) && grid.RaycastCell(cam.ScreenPointToRay(pic.AimFor(f)), out var c, out _) && c == corner;
+                        if (hit && top < 0) top = y;
+                        if ((!hit || y == 1) && top >= 0) { finger = new Vector2(f.x, (top + y) * .5f); window = top - y; }
+                    }
+                    if (finger.HasValue) break;
+                }
+                sb.Append("drag fade: corner cell " + corner + " at " + tp.ToString("F0") + " cellPx=" + cellPx.ToString("F0") + " finger=" + (finger.HasValue ? finger.Value.ToString("F0") + " window " + window.ToString("F0") + " px" : "NOT FOUND") + " start(card)=" + start.ToString("F0") + "\n");
+                Vector2 fp = finger ?? new Vector2(tp.x, tp.y - pic.DragOffset * pic.CanvasScale);
+                for (int i = 1; i <= 8; i++) { PointerInput.Inject(Vector2.Lerp(start, fp, i / 8f), false, true, false); yield return null; }
+                float tf = Time.realtimeSinceStartup; string ramp = "";
+                while (Time.realtimeSinceStartup - tf < .3f) { ramp += (Time.realtimeSinceStartup - tf).ToString("F2") + ":" + ui.HandAlpha.ToString("F2") + " "; yield return null; }
+                yield return Clean(); long dFade = draws.LastValue;
+                sb.Append("drag fade: state=" + pic.Machine.State + " HandFade=" + pic.HandFade + " GhostOverHand=" + pic.GhostOverHand + " fingerOverHand=" + pic.IsOverHand(fp) + " preview anchor=" + s.Blocks.PreviewAnchor + " shown=" + s.Blocks.PreviewShown + " valid=" + s.Blocks.PreviewValid + "\n  alpha ramp (s:alpha) " + ramp + "\n  card alphas " + ui.HandAlphas + "\n");
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "drag_fade_corner_" + res + ".png"));
+                // draw calls of the fade itself: same frame content with the card alphas forced back to 1 for a few frames
+                var groups = new List<(CanvasGroup g, float a)>(); foreach (var g in FindObjectsOfType<CanvasGroup>()) if (g.transform.parent != null && (g.transform.parent.name == "Tower hand" || g.transform.parent.name == "Block hand")) groups.Add((g, g.alpha));
+                yield return Clean(); long dFade2 = draws.LastValue, bFade = batches.LastValue;
+                foreach (var g in groups) g.g.alpha = 1f; for (int f = 0; f < 4; f++) yield return null; long dOpaque = draws.LastValue, bOpaque = batches.LastValue;
+                foreach (var g in groups) g.g.alpha = g.a; yield return null;
+                sb.Append("drag fade DC: idle hand (before drag) " + dIdle + " | dragging, cards faded " + dFade + "/" + dFade2 + " (batches " + bFade + ") | same frame, alphas forced to 1: " + dOpaque + " (batches " + bOpaque + ") -> fade delta " + (dFade2 - dOpaque) + " DC\n");
+                // leave + release over the card's lower half (cancel), cards restore
+                card = Card(); if (card != null) { card.GetWorldCorners(k4); var low = new Vector2((k4[0].x + k4[2].x) * .5f, Mathf.Lerp(k4[0].y, k4[1].y, .25f)); PointerInput.Inject(low, false, true, false); yield return null; PointerInput.Inject(low, false, false, true); yield return null; yield return null; }
+                PointerInput.ClearInjection(); PointerInput.ForceTouch = force;
+                yield return Wait(.3f);
+                sb.Append("after release: state=" + pic.Machine.State + " HandFade=" + pic.HandFade + " alpha=" + ui.HandAlpha.ToString("F2") + " card alphas " + ui.HandAlphas + "\n");
+                yield return Shot("drag_fade_released");
+            }
+            File.WriteAllText(Path.Combine(dir, "cn3_" + res + ".txt"), sb.ToString());
         }
         IEnumerator RewardShots()
         {
@@ -508,13 +599,26 @@ namespace StoneSignal
                            " centroid=" + cen.ToString("F2") + " spread=" + rMax.ToString("F2") + " colour0=#" + ColorUtility.ToHtmlStringRGBA(c0) + " | wall=" + at.ToString("F2") + " ghost=" + pg.transform.position.ToString("F2") +
                            " centroid->wall=" + (n > 0 ? Vector2.Distance(new Vector2(cen.x, cen.z), new Vector2(at.x, at.z)).ToString("F2") : "-") + " centroid->ghost=" + (n > 0 ? Vector2.Distance(new Vector2(cen.x, cen.z), new Vector2(pg.transform.position.x, pg.transform.position.z)).ToString("F2") : "-");
                 }
-                foreach (var t in new[] { .06f, .16f, .32f })
+                // v17.5b (art-requested): capture at REAL time since landing = the dust emit frame (PlacementGhost.dustDelay after the commit).
+                // Measured on the rendered frame: oldest dust particle age (timeScale 1 -> sim time = real time) and wall clock since the land
+                // frame. Frames are grabbed into memory and PNG-encoded afterwards so the capture cost does not push the next sample late.
+                float commitT = Time.time, landWall = -1f; var grabs = new List<(Texture2D tex, string file)>();
+                float Age() { if (pg == null || pg.dust == null) return -1f; int n = pg.dust.GetParticles(parts); float a = -1f; for (int i = 0; i < n; i++) a = Mathf.Max(a, parts[i].startLifetime - parts[i].remainingLifetime); return a; }
+                foreach (var t in new[] { .1f, .25f, .4f })
                 {
-                    while (Time.realtimeSinceStartup - t0 < t) yield return null;
-                    yield return Clean(); long d = draws.LastValue; string di = DustInfo(); yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "vfx_landing_dust_t" + Mathf.RoundToInt(t * 100).ToString("00") + ".png"));
-                    info += "landing dust t=" + t + " (actual " + (Time.realtimeSinceStartup - t0).ToString("F2") + ") committed=" + ok + " drawCalls=" + d + di + "\n";
-                    if (t < .1f && pg != null) { pg.transform.position += new Vector3(3f * s.grid.cellSize, 0, 0); info += "  (ghost moved 3 cells +x)\n"; }
+                    float age = -1f;
+                    while (true)
+                    {
+                        yield return new WaitForEndOfFrame(); age = Age();
+                        if (age >= 0 && landWall < 0) { landWall = Time.realtimeSinceStartup - age; info += "landing dust: emitted " + (Time.time - commitT - age).ToString("F3") + " s after the commit (dustDelay " + (pg != null ? pg.dustDelay.ToString("F2") : "-") + ", block drop-in touches down at 0.112 s)\n"; }
+                        if (age >= t - .008f || Time.time - commitT > 2f) break;
+                    }
+                    long d = draws.LastValue; string di = DustInfo(); string file = "vfx_landing_dust_land" + Mathf.RoundToInt(t * 100).ToString("000") + ".png";
+                    grabs.Add((Grab(), file));
+                    info += "landing dust target " + t.ToString("F2") + " s after land: ACTUAL particle age " + age.ToString("F3") + " s, wall clock since land frame " + (Time.realtimeSinceStartup - landWall).ToString("F3") + " s, since commit " + (Time.time - commitT).ToString("F3") + " s (since block touchdown " + (Time.time - commitT - .112f).ToString("F3") + " s), frame dt " + Time.deltaTime.ToString("F3") + " -> " + file + " committed=" + ok + " drawCalls=" + d + di + "\n";
                 }
+                foreach (var g in grabs) { File.WriteAllBytes(Path.Combine(dir, g.file), g.tex.EncodeToPNG()); Destroy(g.tex); }
+                if (pg != null && pg.dust != null) { var mn = pg.dust.main; info += "landing dust system: startColor=#" + ColorUtility.ToHtmlStringRGBA(mn.startColor.color) + " startSize=" + mn.startSize.constantMin.ToString("F2") + "-" + mn.startSize.constantMax.ToString("F2") + " maxParticles=" + mn.maxParticles + " dustDelay=" + pg.dustDelay.ToString("F2") + "\n"; }
                 float tw = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - tw < .8f) yield return null; yield return Clean();
                 info += "landing dust: drawCalls 1.1 s+ after commit (walls merged)=" + draws.LastValue + "\n";
             }
@@ -700,6 +804,33 @@ namespace StoneSignal
             sb.Append("(c) hit +1 frame t=" + Time.time.ToString("F2") + ":" + Status() + "\n");
             for (int f = 0; f < 3; f++) yield return null; sb.Append("    hit +4 frames:" + Status() + "\n");
             float th = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - th < .3f) yield return null; sb.Append("    hit +0.3 s:" + Status() + "\n");
+            // (e) v17.5b Toggle fix (art-requested): Broken -> core HIT (PlayHit emits 3 sparks, isPlaying stays true ~0.8 s) -> Critical
+            //     within 0.8 s, through REAL escapes (RunEconomy lowers HP -> SetHealth01, then GameBootstrap's PlayHit), then 3 frames.
+            {
+                var leak = s.config.waves[0].groups[0].enemy; int dmg = Mathf.Max(1, leak.damageToBase);
+                int hc = Mathf.CeilToInt(fx.criticalBelow * maxHp) - 1, hbMax = Mathf.CeilToInt(fx.brokenBelow * maxHp) - 1;
+                bool real = hc + dmg <= hbMax && hc >= 1;
+                Zoom(.3f); SetHp(real ? (hc + 2 * dmg) / (float)maxHp : .3f); yield return Hold(1f);
+                sb.Append("(e) repro Broken->hit->Critical (" + (real ? "real escapes, " + leak.name + " damageToBase=" + dmg : "scripted PlayHit (damage " + dmg + " too big for a 2-step repro)") + "): start hp " + s.Economy.HP + "/" + maxHp + " stage=" + fx.Current + " " + Sp() + "\n");
+                if (real) s.Enemies.Spawn(leak).Advance(100); else { SetHp(.3f); fx.PlayHit(); }
+                yield return null; sb.Append("    hit 1: hp " + s.Economy.HP + " stage=" + fx.Current + " " + Sp() + "\n");
+                float th1 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - th1 < .25f) yield return null;
+                sb.Append("    +0.25 s (still inside the 0.8 s spark life): " + Sp() + "\n");
+                if (real) s.Enemies.Spawn(leak).Advance(100); else SetHp(.1f);
+                sb.Append("    hit 2 -> hp " + s.Economy.HP + " stage=" + fx.Current + " right after: " + Sp() + "\n");
+                yield return null; sb.Append("    +1 frame: " + Sp() + "\n");
+                float th2 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - th2 < .35f) yield return null;
+                sb.Append("    +0.35 s: " + Sp() + "\n");
+                for (int k = 0; k < 3; k++)
+                {
+                    yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "core_critical_repro_frame" + k + ".png"));
+                    sb.Append("(e) critical repro frame " + Time.frameCount + " t=" + Time.time.ToString("F3") + ": " + Sp() + "\n");
+                    yield return null;
+                }
+                float th3 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - th3 < 1.2f) yield return null;
+                sb.Append("    +1.5 s in Critical (sparks keep emitting): " + Sp() + "\n");
+                Zoom(.25f);
+            }
             // Critical: 3 consecutive frames
             SetHp(.1f); yield return Hold(.5f);
             for (int k = 0; k < 3; k++)
@@ -785,6 +916,21 @@ namespace StoneSignal
         // frame (e.g. vfx landing dust 69 -> 159). LastValue reports the previous frame, and the end-of-frame renders can be booked on the NEXT
         // frame's counters (measured: capFrame+1 still read 163 once) -> read only from capFrame+4 on (two clean frames in between).
         IEnumerator Clean() { while (Time.frameCount < capFrame + 4) yield return null; }
+        /// Capture into memory (no PNG encode): the caller encodes later (timing-critical sequences).
+        Texture2D Grab()
+        {
+            capFrame = Time.frameCount;
+            var cam = s.viewCamera; int W = Screen.width, H = Screen.height; var rt = new RenderTexture(W, H, 24) { antiAliasing = 4 };
+            var hidden = new List<Canvas>(); if (captureNoUi) foreach (var c in FindObjectsOfType<Canvas>()) if (c.enabled) { c.enabled = false; hidden.Add(c); }
+            var canvases = captureNoUi ? new Canvas[0] : FindObjectsOfType<Canvas>(); var modes = new RenderMode[canvases.Length];
+            for (int i = 0; i < canvases.Length; i++) { modes[i] = canvases[i].renderMode; canvases[i].renderMode = RenderMode.ScreenSpaceCamera; canvases[i].worldCamera = cam; canvases[i].planeDistance = cam.nearClipPlane + .3f - Mathf.Clamp(canvases[i].sortingOrder, 0, 20) * .01f; }
+            cam.targetTexture = rt; Canvas.ForceUpdateCanvases(); cam.Render();
+            RenderTexture.active = rt; var tex = new Texture2D(W, H, TextureFormat.RGB24, false); tex.ReadPixels(new Rect(0, 0, W, H), 0, 0); tex.Apply(false);
+            cam.targetTexture = null; RenderTexture.active = null; rt.Release(); Destroy(rt);
+            for (int i = 0; i < canvases.Length; i++) canvases[i].renderMode = modes[i];
+            foreach (var c in hidden) c.enabled = true;
+            return tex;
+        }
         void Capture(string path)
         {
             capFrame = Time.frameCount;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace StoneSignal
 {
-    public enum RewardEffect { AllDamage, AllAttackSpeed, ArrowRange, BaseHP, NextWaveGold, CannonRadius, AllRange, AddBlock, NextDraw, PathSlow, BonusSlot, KillGold, WaveGold, TowerDiscount, WaveHeal }
+    public enum RewardEffect { AllDamage, AllAttackSpeed, ArrowRange, BaseHP, NextWaveGold, CannonRadius, AllRange, AddBlock, NextDraw, PathSlow, BonusSlot, KillGold, WaveGold, TowerDiscount, WaveHeal, ExtraDraw }
     [CreateAssetMenu(menuName = "StoneSignal/Reward")]
     public sealed class RewardData : ScriptableObject
     {
@@ -19,6 +19,7 @@ namespace StoneSignal
                 case RewardEffect.AllRange: modifiers.AllRange *= 1+amount; break;
                 case RewardEffect.AddBlock: if(blocks!=null) blocks.Deck.Add(blockShape); break; // v18: card only (was also ExtraDraw += amount: hidden free 2nd draw; draw stays 3 cards)
                 case RewardEffect.NextDraw: modifiers.NextDraw += Mathf.RoundToInt(amount); break;
+                case RewardEffect.ExtraDraw: modifiers.ExtraDraw += Mathf.Max(1, Mathf.RoundToInt(amount)); break; // 免广告再抽 (玩法策划 v18, rarity 精良): pending free 2nd draw, taken by the next Build intermission whose 2nd draw is still open
                 case RewardEffect.PathSlow: modifiers.EnemySpeed *= 1-amount; break;
                 case RewardEffect.BonusSlot: modifiers.BonusSlotShape = blockShape; break;
                 case RewardEffect.KillGold: modifiers.KillGold *= 1+amount; break;

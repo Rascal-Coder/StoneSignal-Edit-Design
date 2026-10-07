@@ -44,6 +44,25 @@ namespace StoneSignal
             AdServices.Current.ShowRewarded("draw", ok => { if (ok && Draws.Consume(true)) { granted = true; Blocks.DrawCards(CardsPerDraw, TakeNextDrawRune()); } DrawsChanged?.Invoke(); });
             return granted;
         }
+        /// Ads usable right now (IAdService present and ready). When false, the 2nd draw exists only as a FREE draw from ExtraDraw (免广告再抽).
+        public bool AdAvailable => AdServices.Current != null && AdServices.Current.IsReady;
+        /// What the DRAW pile offers now: an ad draw while ads are unavailable is no offer at all (pile shows 已用完, not interactable).
+        public DrawRules.Offer DrawOffer { get { var o = Draws.Next; return o == DrawRules.Offer.Ad && !AdAvailable ? DrawRules.Offer.None : o; } }
+        /// New Build intermission: draws reset; one pending ExtraDraw charge (if any) makes its 2nd draw free. Extra charges stay
+        /// pending (carry over), they are no longer zeroed.
+        public void BeginIntermission()
+        {
+            bool free = Modifiers.ExtraDraw > 0; if (free) Modifiers.ExtraDraw--;
+            Draws.BeginIntermission(free); DrawsChanged?.Invoke();
+        }
+        /// ExtraDraw obtained during Build: applies to this wave if its 2nd draw is still open, else carries over to the next wave.
+        /// (Reward picks happen between waves, so RewardData.Apply just adds a pending charge that the next Build takes.)
+        public bool GrantExtraDraw()
+        {
+            bool now = Game.State == GameState.Build && Draws.GrantFreeSecond();
+            if (!now) Modifiers.ExtraDraw++;
+            DrawsChanged?.Invoke(); return now;
+        }
         private T Service<T>(string label) where T : Component
         {
             var obj = new GameObject(label); obj.transform.SetParent(transform); return obj.AddComponent<T>();
@@ -87,7 +106,7 @@ namespace StoneSignal
             { var pic = Service<PlacementInputController>("Placement input"); pic.Initialize(Towers, Blocks, grid, config.palette != null ? config.palette.art : null); }
             var spawner = Service<EnemySpawner>("Enemy spawner"); spawner.Initialize(Enemies);
             Waves = Service<WaveManager>("Waves"); Waves.Initialize(Game,config,Enemies,spawner,Modifiers);
-            Game.StateChanged += state => { if(state==GameState.Combat) Economy.AddGold(Modifiers.WaveGold); if(state==GameState.Build) { Draws.BeginIntermission(Modifiers.ExtraDraw > 0); Modifiers.ExtraDraw = 0; DrawsChanged?.Invoke(); } }; // ExtraDraw reward: this wave's 2nd draw needs no ad
+            Game.StateChanged += state => { if(state==GameState.Combat) Economy.AddGold(Modifiers.WaveGold); if(state==GameState.Build) BeginIntermission(); }; // ExtraDraw reward: this wave's 2nd draw needs no ad
             Waves.Completed += () => Economy.Heal(Modifiers.WaveHeal);
             Enemies.SpeedMultiplier = () => Modifiers.EnemySpeed;
             Blocks.Modifiers = Modifiers;

@@ -17,7 +17,7 @@ namespace StoneSignal.UI
         public const string CoreDark = "核心失守", Restart = "重新开始";               // 玩法策划 v18 (was "核心熄灭了")
         public static string DrawStatus(StoneSignal.VFX.DrawPileState s) =>
             s == StoneSignal.VFX.DrawPileState.Free ? "免费" : s == StoneSignal.VFX.DrawPileState.Ad ? "再抽" : s == StoneSignal.VFX.DrawPileState.Full ? "已满" : "已用完"; // Ad: + video badge (DrawPileUI.adIcon)
-        /// ExtraDraw effect (free 2nd draw; RunModifiers.ExtraDraw / DrawRules.FreeSecond). No reward card grants it at the moment.
+        /// ExtraDraw reward 免广告再抽 (rarity 精良): free 2nd draw (RunModifiers.ExtraDraw pending charge -> DrawRules.FreeSecond).
         public const string ExtraDrawTitle = "免广告再抽", ExtraDrawDesc = "本波第 2 次抽牌无需看广告";
         /// Old reward panel (no RewardPickUI): note under a rune option.
         public const string RuneOptionNote = "镶嵌后，放在该格上的塔获得效果";
@@ -46,6 +46,7 @@ namespace StoneSignal.UI
                 case RewardEffect.ArrowRange: return "针弩射程";        // INVENTED (not in GDD 8.1)
                 case RewardEffect.AddBlock: return "墙牌补给";          // 玩法策划 v18
                 case RewardEffect.NextDraw: return "符文保底";          // 玩法策划 v18 (effect: next draw contains a rune)
+                case RewardEffect.ExtraDraw: return ExtraDrawTitle;     // 玩法策划 v18: 免广告再抽
                 case RewardEffect.PathSlow: return "路径减速";
                 case RewardEffect.BonusSlot: return "扶壁";              // GDD 8.1: BonusSlot renamed 扶壁
                 case RewardEffect.KillGold: return "击杀金币";
@@ -68,6 +69,7 @@ namespace StoneSignal.UI
                 case RewardEffect.ArrowRange: return "针弩射程 +" + P(r) + "%";
                 case RewardEffect.AddBlock: return "牌组加入 1 张 " + Shape(r) + " 形墙牌";
                 case RewardEffect.NextDraw: return "下次抽牌至少 1 张带符文";
+                case RewardEffect.ExtraDraw: return ExtraDrawDesc;
                 case RewardEffect.PathSlow: return "路径上的敌人移速 -" + P(r) + "%";
                 case RewardEffect.BonusSlot: return Shape(r) + " 形墙额外提供 1 个相邻塔位";
                 case RewardEffect.KillGold: return "本局击杀金币 +" + P(r) + "%";

@@ -96,6 +96,9 @@ namespace StoneSignal
         public bool FreeSecond { get; private set; }
         public Offer Next => Used == 0 ? Offer.Free : Used == 1 ? (FreeSecond ? Offer.Free : Offer.Ad) : Offer.None;
         public void BeginIntermission(bool freeSecond = false) { Used = 0; FreeSecond = freeSecond; }
+        /// ExtraDraw granted DURING an intermission: true = this intermission's 2nd draw becomes free (still open: not used, not
+        /// already free); false = the 2nd draw is already used / already free -> the caller keeps the charge for the next wave.
+        public bool GrantFreeSecond() { if (Used >= 2 || FreeSecond) return false; FreeSecond = true; return true; }
         /// Consumes the next offer; ad offers only after the ad reported success.
         public bool Consume(bool adWatched)
         {

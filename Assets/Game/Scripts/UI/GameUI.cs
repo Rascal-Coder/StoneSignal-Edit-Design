@@ -33,6 +33,21 @@ namespace StoneSignal
         private GameObject rewardPanel, overPanel;
         private readonly TextMeshProUGUI[] rewardNames = new TextMeshProUGUI[3], rewardDescriptions = new TextMeshProUGUI[3], rewardEffects = new TextMeshProUGUI[3];
         private float noticeUntil; private string notice; private bool handDirty = true; private RectTransform noticePill;
+        // notice toast (玩法策划 v18): 1.5 s, one at a time (a new text replaces the old one), the same text is not re-shown within 1 s of
+        // its last show; re-placed per notice in the free top slot farthest from the core and the path arrows (routes change with walls).
+        private const float NoticeSeconds = 1.5f, NoticeRepeatGap = 1f, NoticeClearance = 48f;
+        private float noticeShownAt = -10f; private bool noticeDirty; private string noticeInfo = "";
+        // slot: anchor (0 = top-centre, 1 = top-right, 2 = top-left), x, y from the top edge (reference px, inside the safe area)
+        private static readonly Vector3[] NoticeSlots = { new Vector3(0, 0, 132), new Vector3(0, 0, 212), new Vector3(1, -24, 132), new Vector3(2, 24, 216) };
+        public string NoticeDebug => noticeInfo; public RectTransform NoticeRect => noticePill;
+        public string NoticeShown => noticePill != null && noticePill.gameObject.activeSelf && hint != null ? hint.text : "";
+        // drag hand fade (玩法策划 v18): CanvasGroup alpha per hand card (no extra draw calls), 1 -> .35 over .15 s while the drag finger or
+        // the ghost is over the hand; the dragged card stays opaque; restores on leaving / release.
+        private const float HandFadeAlpha = .35f, HandFadeSeconds = .15f;
+        private float handAlpha = 1f, handAlphaApplied = -1f; private int fadeKey = -1, fadeKeyApplied = -2; private bool lastAdAvailable = true;
+        private readonly List<(CanvasGroup cg, bool tower, int index)> handCards = new List<(CanvasGroup, bool, int)>();
+        public float HandAlpha => handAlpha;
+        public string HandAlphas { get { var o = ""; foreach (var h in handCards) if (h.cg) o += (h.tower ? "T" : "B") + h.index + "=" + h.cg.alpha.ToString("F2") + " "; return o; } }
         private int speedIndex = 1; private bool paused;
         private const string DefaultHint = ""; // placement hint removed (玩法策划 v18); the label only shows notices
 
@@ -116,7 +131,7 @@ namespace StoneSignal
             hpNumber.text = session.Economy.HP.ToString();
             hpSmall.text = session.Economy.HP + "/" + session.Economy.MaxHP;
             wave.text = Loc.Wave(Mathf.Min(session.Waves.WaveIndex + 1, Mathf.Max(1, session.config.waves.Length)), session.config.waves.Length);
-            var offer = session.Draws.Next;
+            var offer = session.DrawOffer; lastAdAvailable = session.AdAvailable; // ads unavailable: the ad draw is no offer (已用完); ExtraDraw makes the 2nd draw FREE
             var st = session.Blocks.Hand.IsFull ? StoneSignal.VFX.DrawPileState.Full : offer == DrawRules.Offer.Free ? StoneSignal.VFX.DrawPileState.Free : offer == DrawRules.Offer.Ad ? StoneSignal.VFX.DrawPileState.Ad : StoneSignal.VFX.DrawPileState.Used;
             if (drawPile.State != st) drawPile.SetState(st);
             { var dl = Loc.DrawStatus(st); if (drawPile.statusLabel != null && drawPile.statusLabel.text != dl) drawPile.statusLabel.text = dl; } // art DrawPileUI writes English; label text is ours
@@ -132,7 +147,7 @@ namespace StoneSignal
         private void RebuildHands()
         {
             handDirty = false;
-            foreach (var g in built) Destroy(g); built.Clear();
+            foreach (var g in built) Destroy(g); built.Clear(); handCards.Clear(); handAlphaApplied = -1f;
             var pic = PlacementInputController.Instance; if (pic != null) { pic.HandRects.Clear(); pic.HandRects.Add(handCount); } // touch "over the hand" = these rects
             bool build = session.Game.State == GameState.Build;
             var towers = session.config.towers;
@@ -170,7 +185,7 @@ namespace StoneSignal
                     if (badgeSprite == null) { var t = Txt(badge, size.x + "x" + size.y, 22, Ink); Full(t.rectTransform); }
                 }
                 if (selected) Outline(face, Gold, 5);
-                built.Add(card.gameObject); if (pic != null) pic.HandRects.Add(card);
+                built.Add(card.gameObject); if (pic != null) pic.HandRects.Add(card); handCards.Add((card.gameObject.AddComponent<CanvasGroup>(), true, i));
             }
             // ---- block hand: ui_card_blueprint 128x128 (9-slice 24) + ui_icon_block_X 128x128 overlay (uniform, never per-shape scaling),
             // spacing 140, bottom-centre anchor; nudged right only if it would overlap the tower hand.
@@ -225,7 +240,7 @@ namespace StoneSignal
                     var n = Txt(badge, "\u00D7" + grp.count, 26, Ink); Full(n.rectTransform); n.fontStyle = FontStyles.Bold; n.outlineWidth = .25f; n.outlineColor = Navy;
                 }
                 if (selected) Outline(card, Gold, 4);
-                built.Add(holder.gameObject); if (pic != null) pic.HandRects.Add(holder);
+                built.Add(holder.gameObject); if (pic != null) pic.HandRects.Add(holder); handCards.Add((holder.gameObject.AddComponent<CanvasGroup>(), false, idx));
             }
         }
         // ui_icon_block_<T|L|J|S|Z|O|I>: resolved from the shape asset/display name (e.g. "Block_T", "T piece").
@@ -253,17 +268,68 @@ namespace StoneSignal
         }
         private void CycleTarget() { session.Enemies.Targeting = (TargetMode)(((int)session.Enemies.Targeting + 1) % Enum.GetValues(typeof(TargetMode)).Length); Refresh(); }
         private void OnState(GameState state) { handDirty = true; noticeUntil = 0; Refresh(); } // a stale placement notice never carries into reward / game over
-        private void ShowNotice(string message) { notice = Loc.Notice(message); noticeUntil = Time.unscaledTime + 2.4f; }
+        private void ShowNotice(string message)
+        {
+            var text = Loc.Notice(message); if (string.IsNullOrEmpty(text)) return; float now = Time.unscaledTime;
+            if (text == notice && now - noticeShownAt < NoticeRepeatGap) return; // same text within 1 s of its last show: not re-shown
+            notice = text; noticeShownAt = now; noticeUntil = now + NoticeSeconds; noticeDirty = true;   // replaces any toast on screen
+        }
+        /// Diagnostics: route a raw notice through the toast rules (same path as BlockPlacementManager / TowerManager notices).
+        public void DebugNotice(string message) => ShowNotice(message);
+        /// Picks the toast slot with the most clearance from the core and the route arrows (first slot with >= 48 ref px wins).
+        private void PlaceNotice()
+        {
+            var cam = session.viewCamera != null ? session.viewCamera : Camera.main; var grid = session.grid;
+            var cv = noticePill.GetComponentInParent<Canvas>(); float k = cv != null && cv.scaleFactor > 0 ? cv.scaleFactor : 1f;
+            var pts = new List<Vector3>(); // x, y = screen point, z = radius (px)
+            if (cam != null && grid != null)
+            {
+                float CellPx(Vector3 wp) => ((Vector2)cam.WorldToScreenPoint(wp + Vector3.right * grid.cellSize) - (Vector2)cam.WorldToScreenPoint(wp)).magnitude;
+                var core = grid.CoreCenter + Vector3.up * .8f; Vector2 cs = cam.WorldToScreenPoint(core); pts.Add(new Vector3(cs.x, cs.y, CellPx(core) * 1.3f));
+                if (session.Paths != null) foreach (var path in session.Paths.CurrentPaths)
+                {
+                    if (path == null) continue;
+                    foreach (var c in path) { var w = grid.ToWorld(c) + Vector3.up * .9f; Vector2 sp = cam.WorldToScreenPoint(w); pts.Add(new Vector3(sp.x, sp.y, CellPx(w) * .5f)); }
+                    if (path.Count > 0 && grid.TryPortalPoint(path[0], out var portal)) for (int i = 0; i <= 4; i++) { var w = Vector3.Lerp(portal, grid.ToWorld(path[0]), i / 4f); w.y = .9f; Vector2 sp = cam.WorldToScreenPoint(w); pts.Add(new Vector3(sp.x, sp.y, CellPx(w) * .5f)); }
+                }
+            }
+            var corners = new Vector3[4]; int best = 0; float bestClear = float.MinValue; string log = "";
+            for (int si = 0; si < NoticeSlots.Length; si++)
+            {
+                var sl = NoticeSlots[si]; float w = noticePill.sizeDelta.x, h = noticePill.sizeDelta.y;
+                if (sl.x == 0) TC(noticePill, sl.y, sl.z, w, h); else if (sl.x == 1) TR(noticePill, sl.y, sl.z, w, h); else TL(noticePill, sl.y, sl.z, w, h);
+                noticePill.GetWorldCorners(corners); var r = Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
+                float clear = float.MaxValue;
+                foreach (var q in pts) { float dx = Mathf.Max(0, Mathf.Max(r.xMin - q.x, q.x - r.xMax)), dy = Mathf.Max(0, Mathf.Max(r.yMin - q.y, q.y - r.yMax)); clear = Mathf.Min(clear, Mathf.Sqrt(dx * dx + dy * dy) - q.z); }
+                log += " slot" + si + "=" + clear.ToString("F0") + "px";
+                if (clear >= NoticeClearance * k && bestClear < NoticeClearance * k) { best = si; bestClear = clear; } // first slot with enough room
+                else if (bestClear < NoticeClearance * k && clear > bestClear) { best = si; bestClear = clear; }
+            }
+            var b = NoticeSlots[best]; if (b.x == 0) TC(noticePill, b.y, b.z, noticePill.sizeDelta.x, noticePill.sizeDelta.y); else if (b.x == 1) TR(noticePill, b.y, b.z, noticePill.sizeDelta.x, noticePill.sizeDelta.y); else TL(noticePill, b.y, b.z, noticePill.sizeDelta.x, noticePill.sizeDelta.y);
+            noticePill.GetWorldCorners(corners);
+            noticeInfo = "notice '" + notice + "' slot" + best + " clearance=" + bestClear.ToString("F0") + "px (scale " + k.ToString("F2") + ", need " + (NoticeClearance * k).ToString("F0") + ") rect=" + Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y) + " |" + log + " | obstacles=" + pts.Count;
+        }
         private void Update()
         {
             if (session == null) return;
             if (hint != null)
             {
                 bool on = Time.unscaledTime < noticeUntil && !string.IsNullOrEmpty(notice) && (session.Game.State == GameState.Build || session.Game.State == GameState.Combat);
-                if (on && hint.text != notice) { hint.text = notice; noticePill.sizeDelta = new Vector2(Mathf.Clamp(hint.GetPreferredValues(notice).x + 72, 240, 900), noticePill.sizeDelta.y); } // pill hugs the text
+                if (on && (hint.text != notice || noticeDirty)) { hint.text = notice; noticePill.sizeDelta = new Vector2(Mathf.Clamp(hint.GetPreferredValues(notice).x + 72, 240, 900), noticePill.sizeDelta.y); PlaceNotice(); noticeDirty = false; } // pill hugs the text
                 else if (!on) hint.text = DefaultHint;
                 if (noticePill != null && noticePill.gameObject.activeSelf != on) noticePill.gameObject.SetActive(on);
             }
+            {   // drag hand fade
+                var pic = PlacementInputController.Instance; bool fade = pic != null && pic.HandFade;
+                handAlpha = Mathf.MoveTowards(handAlpha, fade ? HandFadeAlpha : 1f, Time.unscaledDeltaTime * (1f - HandFadeAlpha) / HandFadeSeconds);
+                if (fade) fadeKey = (pic.Machine.Tower ? 1000 : 0) + Mathf.Max(0, pic.Machine.Card); else if (handAlpha >= 1f) fadeKey = -1; // the dragged card stays opaque until the others are back
+                if (handAlpha != handAlphaApplied || fadeKey != fadeKeyApplied)
+                {
+                    handAlphaApplied = handAlpha; fadeKeyApplied = fadeKey;
+                    foreach (var h in handCards) if (h.cg != null) h.cg.alpha = fadeKey >= 0 && h.tower == (fadeKey >= 1000) && h.index == fadeKey % 1000 ? 1f : handAlpha;
+                }
+            }
+            if (session.Draws.Next == DrawRules.Offer.Ad && session.AdAvailable != lastAdAvailable) Refresh(); // ad readiness changed (SDK loaded / failed)
             if (Input.GetKeyDown(KeyCode.Space) && session.Game.State == GameState.Build) session.Waves.StartWave();
         }
 
@@ -296,6 +362,9 @@ namespace StoneSignal
             debugRarity = rar; debugEffects = effects; try { return ShowRewardPick(); } finally { debugRarity = null; debugEffects = null; }
         }
         private StoneSignal.UI.RewardRarity[] debugRarity; private RewardEffect[] debugEffects;
+        /// Reward card tier: 免广告再抽 (ExtraDraw) is 精良 (Rare, 玩法策划 v18); the other wave rewards stay Common for now.
+        public static StoneSignal.UI.RewardRarity RarityOf(RewardEffect e) => e == RewardEffect.ExtraDraw ? StoneSignal.UI.RewardRarity.Rare : StoneSignal.UI.RewardRarity.Common;
+        public static StoneSignal.UI.RewardRarity RarityOf(RewardData r) => r != null ? RarityOf(r.effect) : StoneSignal.UI.RewardRarity.Common;
         private bool ShowRewardPick()
         {
             if (!ArtSteps.On(5) || art == null || art.UiSprite("ui9_reward_frame_common") == null) return false;
@@ -329,7 +398,8 @@ namespace StoneSignal
                 for (int i = 0; i < dopts.Length; i++)
                 {
                     int ri = (int)debugRarity[i];
-                    if (debugRarity[i] == StoneSignal.UI.RewardRarity.Rare) { dopts[i] = RuneOption(i % RuneRules.Names.Length); continue; }
+                    bool own = debugEffects != null && i < debugEffects.Length && RarityOf(debugEffects[i]) == debugRarity[i] && debugRarity[i] != StoneSignal.UI.RewardRarity.Common;
+                    if (debugRarity[i] == StoneSignal.UI.RewardRarity.Rare && !own) { dopts[i] = RuneOption(i % RuneRules.Names.Length); continue; } // forced Rare = a rune option unless the effect itself is Rare (ExtraDraw)
                     RewardData pick = null;
                     if (debugEffects != null && i < debugEffects.Length) foreach (var r in session.config.rewards) if (pick == null && r != null && r.effect == debugEffects[i] && !used.Contains(r)) pick = r;
                     if (pick == null) foreach (var e in pref[ri]) foreach (var r in session.config.rewards) if (pick == null && r != null && r.effect == e && !used.Contains(r)) pick = r;
@@ -344,7 +414,7 @@ namespace StoneSignal
             {
                 int rune = session.Rewards.RuneChoices.Count > i ? session.Rewards.RuneChoices[i] : RuneRules.NoRune;
                 if (rune != RuneRules.NoRune) { opts[i] = RuneOption(rune); rar[i] = StoneSignal.UI.RewardRarity.Rare; }
-                else { opts[i] = RewardOption(session.Rewards.Choices[i]); rar[i] = StoneSignal.UI.RewardRarity.Common; } // rarity placeholder until gameplay assigns tiers
+                else { opts[i] = RewardOption(session.Rewards.Choices[i]); rar[i] = RarityOf(session.Rewards.Choices[i]); } // ExtraDraw = 精良; others Common until gameplay assigns tiers
             }
             pickUi.gameObject.SetActive(true); picking = false; pickUi.Show(opts, rar); FitRewardText(); if (pickGlow != null) pickGlow.Begin(rar); Refresh();
             return true;
@@ -369,6 +439,7 @@ namespace StoneSignal
                 case RewardEffect.AddBlock: return r.blockShape != null ? BlockIcon(r.blockShape) : S("ui_icon_block_O");
                 case RewardEffect.BonusSlot: return r.blockShape != null ? BlockIcon(r.blockShape) : S("ui_icon_block_L");
                 case RewardEffect.NextDraw: return S("ui_draw_pile");
+                case RewardEffect.ExtraDraw: return S("ui_draw_pile") ?? S("ui_icon_free"); // no art icon yet (RewardIconMap has none for ExtraDraw)
                 case RewardEffect.BaseHP: case RewardEffect.WaveHeal: return art != null ? art.uiOrbCore : null;
                 default: return S("ui_coin_gold"); // KillGold, WaveGold, NextWaveGold, TowerDiscount
             }

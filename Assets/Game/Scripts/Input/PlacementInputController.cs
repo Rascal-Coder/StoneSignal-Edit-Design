@@ -130,6 +130,24 @@ namespace StoneSignal
         public bool InCancelZone(Vector2 finger) { foreach (var r in HandScreenRects()) if (r.Contains(finger) && finger.y < r.center.y) return true; return false; }
         /// Diagnostics (drag report): the controller's own hand test and a hard cancel of any gesture in progress.
         public bool IsOverHand(Vector2 pos) => OverHand(pos);
+        /// 玩法策划 v18 hand fade: true while a card drag is in progress (Dragging, or Direction with the finger still down) and the finger
+        /// OR the ghost is over the hand area; GameUI then fades the other hand cards (CanvasGroup alpha) and keeps the dragged one opaque.
+        public bool HandFade { get; private set; }
+        public bool GhostOverHand { get; private set; }
+        /// Ghost footprint in screen space: any ghost cell centre inside a hand rect grown by a quarter cell.
+        bool GhostInHand(Vector2Int anchor)
+        {
+            List<Vector2Int> cells;
+            if (Machine.Tower) { if (towers.SelectedIndex < 0) return false; cells = grid.Footprint(towers.OriginFor(anchor, towers.Rotation), TowerManager.SizeOf(towers.Data[towers.SelectedIndex], towers.Rotation)); }
+            else cells = blocks.CellsAt(anchor);
+            var rects = HandScreenRects();
+            foreach (var c in cells)
+            {
+                Vector2 p = CellScreen(c), q = CellScreen(c + Vector2Int.right); float pad = (q - p).magnitude * .25f;
+                foreach (var r in rects) if (p.x >= r.xMin - pad && p.x <= r.xMax + pad && p.y >= r.yMin - pad && p.y <= r.yMax + pad) return true;
+            }
+            return false;
+        }
         public void CancelPlacement() { Machine.Reset(); if (towers != null) Cancel(); Drive(); }
         /// Anchor under a screen point: the visible cell (wall top / tile top, GridManager.RaycastCell). Symmetric multi-cell towers
         /// (2x2) return the footprint origin centred on the aim point and kept on the board, as the desktop hover does.
@@ -215,7 +233,7 @@ namespace StoneSignal
             Drive();
             var p = PointerInput.Read(); float now = Time.unscaledTime;
             bool touch = PointerInput.TouchMode;
-            if (p.Count > 1 && Machine.State != PlacementState.Idle) return; // ignore multi-touch during placement
+            if (p.Count > 1 && Machine.State != PlacementState.Idle) return; // ignore multi-touch during placement (fade state kept)
             var st = Machine.State;
             Vector2 aim = AimFor(p.Position); // cell is picked above the finger (ghost raised; lifted over the hand cards)
             // machine "over the hand" = cancel zone (lower half of a card) while dragging. Not in Direction: there the swipe is
@@ -225,15 +243,21 @@ namespace StoneSignal
             bool fingerDriven = st == PlacementState.Pressed || st == PlacementState.Dragging || (st == PlacementState.Direction && Machine.Held);
             if (fingerDriven)
             {
+                Vector2Int? ghost = null;
                 if (p.Held && !p.Up)
                 {
                     var c = st == PlacementState.Direction ? (Vector2Int?)null : CellAt(aim);
                     bool ok = c.HasValue && AnchorValid(c.Value);
                     Handle(Machine.Move(p.Position, overHand, c, ok, now), p.Position);
+                    ghost = Machine.State == PlacementState.Direction ? Machine.Cell : Machine.State == PlacementState.Dragging && !overHand ? c : null; // ghost hidden in the cancel zone
                 }
                 if (p.Up || !p.Held) Handle(Machine.Up(p.Position, overHand), p.Position);
+                bool drag = p.Held && !p.Up && (Machine.State == PlacementState.Dragging || (Machine.State == PlacementState.Direction && Machine.Held));
+                GhostOverHand = drag && ghost.HasValue && GhostInHand(ghost.Value);
+                HandFade = drag && (OverHand(p.Position) || GhostOverHand);
                 Drive(); return;
             }
+            HandFade = GhostOverHand = false;
             // board touches: tap-tap (Armed) and released Direction. Touch mode only; desktop uses the managers' hover/click.
             bool armedOrDir = st == PlacementState.Armed || st == PlacementState.Direction;
             if (armedOrDir && (touch || st == PlacementState.Direction))

@@ -66,6 +66,17 @@ namespace StoneSignal.EditorTools
                 bool a = d.Consume(false) && d.Next == DrawRules.Offer.Free && d.Consume(false) && d.Next == DrawRules.Offer.None;
                 d.BeginIntermission(); d.Consume(false); return a && d.Next == DrawRules.Offer.Ad;
             });
+            Case("ExtraDraw granted mid-intermission: 2nd draw still open -> free now; 2nd draw used / already free -> carried over", () =>
+            {
+                var d = new DrawRules(); d.BeginIntermission(); d.Consume(false);
+                bool open = d.Next == DrawRules.Offer.Ad && d.GrantFreeSecond() && d.Next == DrawRules.Offer.Free && !d.GrantFreeSecond();
+                d.Consume(false); bool used = d.Next == DrawRules.Offer.None && !d.GrantFreeSecond();
+                return open && used;
+            });
+            Case("2nd draw without ad or ExtraDraw: not consumable (ads unavailable -> no 2nd draw)", () =>
+            {
+                var d = new DrawRules(); d.BeginIntermission(); d.Consume(false); return !d.Consume(false) && d.Used == 1 && d.Next == DrawRules.Offer.Ad;
+            });
             Case("NextDraw: drawn cards contain at least one rune", () =>
             {
                 var t = ScriptableObject.CreateInstance<BlockShapeData>(); t.cells = new[] { Vector2Int.zero };

@@ -76,7 +76,7 @@ namespace StoneSignal
             session.Blocks.Refill(5);
             for(int i=0;i<5;i++) if(session.Blocks.Hand.Cards[i].displayName=="L") session.Blocks.SelectCard(i);
             Require(session.config.waves[0].Total==5 && session.config.waves[1].Total==8 && session.config.waves[2].Total==12,"Configured 5 / 8 / 12 initial enemies");
-            Require(session.config.towers.Length==4 && session.config.rewards.Length==13,"Four towers and thirteen reward assets");
+            Require(session.config.towers.Length==4 && session.config.rewards.Length==14,"Four towers and fourteen reward assets (incl. ExtraDraw)");
             // Sealing the core: every empty ring cell around the core at once must be rejected.
             var ring=new List<Vector2Int>();
             foreach(var c in grid.CoreCells) foreach(var d in new[]{Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right})
@@ -159,12 +159,14 @@ namespace StoneSignal
                 int handBefore=session.Blocks.Remaining;
                 Require(session.Game.State==GameState.Build && session.Draws.Next==DrawRules.Offer.Free,"Intermission offers one FREE draw");
                 Require(session.Draw() && session.Blocks.Remaining==System.Math.Min(BlockHandManager.MaxCards,handBefore+GameBootstrap.CardsPerDraw),"Free DRAW adds blocks");
-                Require(session.Draws.Next==DrawRules.Offer.Ad && session.Draw() && session.Blocks.Remaining==BlockHandManager.MaxCards && session.Draws.Next==DrawRules.Offer.None && Time.timeScale>0,"2nd DRAW via placeholder ad (hand reaches cap 7); ad pause released");
+                bool freeSecond=session.Draws.FreeSecond; // ExtraDraw picked as this wave's reward: the 2nd draw is free instead of an ad
+                Require(session.Draws.Next==(freeSecond?DrawRules.Offer.Free:DrawRules.Offer.Ad) && session.Draw() && session.Blocks.Remaining==BlockHandManager.MaxCards && session.Draws.Next==DrawRules.Offer.None && Time.timeScale>0,"2nd DRAW via "+(freeSecond?"ExtraDraw (free)":"placeholder ad")+" (hand reaches cap 7); ad pause released");
                 Require(!session.Draw(),"No 3rd DRAW");
             }
             Require(killed>0 && session.Economy.HP>0,"Three waves survived with automatic tower combat");
             Require(session.Enemies.StuckEvents==0,"No ENEMY STUCK events (guard is only a fallback)");
             yield return TouchDragCheck();
+            AdsAndExtraDrawCheck();
             yield return Capture("05-next-build");
             int hp=session.Economy.HP;
             EnemyData leak=session.config.waves[0].groups[0].enemy;
@@ -231,6 +233,25 @@ namespace StoneSignal
             // adaptive offset: upper half of a card lifts the aim above the card (no cancel), far from the hand it is DragOffset again
             float baseOff=pic.DragOffset*pic.CanvasScale;
             Require(pic.InCancelZone(cardLow) && !pic.InCancelZone(cardHigh) && pic.OffsetFor(cardHigh)>baseOff+1 && Mathf.Abs(pic.OffsetFor(finger)-baseOff)<.5f && Mathf.Abs(pic.OffsetFor(cardHigh+Vector2.up*.5f)-pic.OffsetFor(cardHigh))<2f,"Adaptive drag offset: lift over the hand card, base offset away from it, continuous");
+        }
+        sealed class NoAds : IAdService { public bool IsReady => false; public void ShowRewarded(string placement, System.Action<bool> completed) => completed?.Invoke(false); }
+        // 玩法策划 v18: ads unavailable -> the 2nd draw exists only via ExtraDraw (免广告再抽); ExtraDraw while the 2nd draw is used carries over.
+        private void AdsAndExtraDrawCheck()
+        {
+            var ads=AdServices.Current; AdServices.Current=new NoAds(); var hand=session.Blocks.Hand;
+            try
+            {
+                session.Modifiers.ExtraDraw=0; session.BeginIntermission(); while(hand.Cards.Count>1) hand.Consume();
+                bool first=session.Draw(); int n=hand.Cards.Count; while(hand.Cards.Count>1) hand.Consume(); n=hand.Cards.Count;
+                Require(first && session.Draws.Next==DrawRules.Offer.Ad && session.DrawOffer==DrawRules.Offer.None && !session.Draw() && hand.Cards.Count==n,"Ads unavailable: free 1st draw only, the ad 2nd draw is not offered (pile shows used)");
+                bool now=session.GrantExtraDraw();
+                Require(now && session.DrawOffer==DrawRules.Offer.Free && session.Draw() && session.Draws.Next==DrawRules.Offer.None,"Ads unavailable: ExtraDraw during Build makes this wave's 2nd draw free");
+                while(hand.Cards.Count>1) hand.Consume();
+                bool carried=!session.GrantExtraDraw() && session.Modifiers.ExtraDraw==1 && session.DrawOffer==DrawRules.Offer.None;
+                session.BeginIntermission(); bool f1=session.Draw(); while(hand.Cards.Count>1) hand.Consume();
+                Require(carried && f1 && session.Modifiers.ExtraDraw==0 && session.Draws.FreeSecond && session.DrawOffer==DrawRules.Offer.Free && session.Draw(),"ExtraDraw after the 2nd draw was used carries over: next wave's 2nd draw is free (no ad)");
+            }
+            finally { AdServices.Current=ads; session.Modifiers.ExtraDraw=0; session.BeginIntermission(); }
         }
         private void Finish()
         {

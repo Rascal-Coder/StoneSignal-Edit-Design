@@ -83,9 +83,9 @@ public static class PrototypeBuild
         waves[0]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave01.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=5}});
         waves[1]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave02.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=5},new EnemyGroup{enemy=fast,count=3}});
         waves[2]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave03.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=6},new EnemyGroup{enemy=fast,count=2},new EnemyGroup{enemy=tank,count=2},new EnemyGroup{enemy=splitter,count=2}});
-        RewardEffect[] effects={RewardEffect.AllDamage,RewardEffect.AllAttackSpeed,RewardEffect.AllRange,RewardEffect.BaseHP,RewardEffect.CannonRadius,RewardEffect.AddBlock,RewardEffect.NextDraw,RewardEffect.PathSlow,RewardEffect.BonusSlot,RewardEffect.KillGold,RewardEffect.WaveGold,RewardEffect.TowerDiscount,RewardEffect.WaveHeal};
-        float[] amounts={.1f,.12f,.15f,10,.2f,1,1,.08f,1,.2f,30,.1f,2};
-        string[] descriptions={"All tower damage +10%","All fire rate +12%","All range +15%","Core HP +10","Seismic blast radius +20%","Add 1 O wall card to the deck","Next draw has at least 1 rune card","Path enemy speed -8%","L gains safe adjacent platform","Kill gold +20%","Wave start gold +30","Tower costs -10%","End wave heal +2"};
+        RewardEffect[] effects={RewardEffect.AllDamage,RewardEffect.AllAttackSpeed,RewardEffect.AllRange,RewardEffect.BaseHP,RewardEffect.CannonRadius,RewardEffect.AddBlock,RewardEffect.NextDraw,RewardEffect.PathSlow,RewardEffect.BonusSlot,RewardEffect.KillGold,RewardEffect.WaveGold,RewardEffect.TowerDiscount,RewardEffect.WaveHeal,RewardEffect.ExtraDraw};
+        float[] amounts={.1f,.12f,.15f,10,.2f,1,1,.08f,1,.2f,30,.1f,2,1};
+        string[] descriptions={"All tower damage +10%","All fire rate +12%","All range +15%","Core HP +10","Seismic blast radius +20%","Add 1 O wall card to the deck","Next draw has at least 1 rune card","Path enemy speed -8%","L gains safe adjacent platform","Kill gold +20%","Wave start gold +30","Tower costs -10%","End wave heal +2","2nd draw of the wave needs no ad"};
         var rewards=new RewardData[effects.Length];
         for(int i=0;i<effects.Length;i++) { int index=i; rewards[i]=Asset<RewardData>(Root+"ScriptableObjects/Rewards/"+effects[i]+".asset",r=>{r.displayName=effects[index].ToString();r.description=descriptions[index];r.effectText=descriptions[index];r.effect=effects[index];r.amount=amounts[index];if(r.effect==RewardEffect.AddBlock)r.blockShape=blocks[1];if(r.effect==RewardEffect.BonusSlot)r.blockShape=blocks[2];}); }
         var config=Asset<GameConfig>(Root+"Settings/GameConfig.asset",c=>{c.blocks=blocks;c.towers=towers;c.waves=waves;c.rewards=rewards;c.palette=palette;});
@@ -106,6 +106,7 @@ public static class PrototypeBuild
         PlayerSettings.companyName="Independent Prototype"; PlayerSettings.productName="StoneSignal"; PlayerSettings.defaultScreenWidth=1600; PlayerSettings.defaultScreenHeight=900; PlayerSettings.fullScreenMode=FullScreenMode.Windowed; PlayerSettings.resizableWindow=true;
         PlayerSettings.colorSpace=ColorSpace.Linear;
         AssetDatabase.SaveAssets();
+        EnsureRewardPool();
         // Reopen after first-time asset imports so saved GUID references are resolved.
         EditorSceneManager.OpenScene(ScenePath);
         ValidateScene();
@@ -113,6 +114,16 @@ public static class PrototypeBuild
     }
     [MenuItem("StoneSignal/Run core checks")]
     public static void Checks() { PrototypeChecks.RewardChecks(); ValidateScene(); }
+    /// v18 玩法策划: 免广告再抽 (ExtraDraw, rarity 精良) joins the reward pool. Existing projects: creates Rewards/ExtraDraw.asset if missing
+    /// and appends it to GameConfig.rewards (14 rewards). Called before the stage-2 checks and after Create().
+    public static void EnsureRewardPool()
+    {
+        var config=AssetDatabase.LoadAssetAtPath<GameConfig>(Root+"Settings/GameConfig.asset"); if(config==null) return;
+        var extra=Asset<RewardData>(Root+"ScriptableObjects/Rewards/ExtraDraw.asset",r=>{r.displayName="Ad-free Draw";r.description="2nd draw of the wave needs no ad";r.effectText="FREE 2ND DRAW";r.effect=RewardEffect.ExtraDraw;r.amount=1;});
+        if(Array.IndexOf(config.rewards,extra)>=0) return;
+        var list=new System.Collections.Generic.List<RewardData>(config.rewards){extra}; config.rewards=list.ToArray();
+        EditorUtility.SetDirty(config); AssetDatabase.SaveAssets(); Debug.Log("REWARD POOL: ExtraDraw added ("+config.rewards.Length+" rewards)");
+    }
     private static void ValidateScene()
     {
         var bootstrap=UnityEngine.Object.FindObjectOfType<GameBootstrap>();
@@ -121,7 +132,7 @@ public static class PrototypeBuild
         PrototypeChecks.Require(bootstrap.grid!=null,"Scene grid reference");
         PrototypeChecks.Require(bootstrap.viewCamera!=null,"Scene camera reference");
         var config=bootstrap.config;
-        PrototypeChecks.Require(config.blocks.Length==5 && config.towers.Length==4 && config.rewards.Length==13 && config.waves.Length==3,"All configuration assets");
+        PrototypeChecks.Require(config.blocks.Length==5 && config.towers.Length==4 && config.rewards.Length==14 && config.waves.Length==3,"All configuration assets");
         foreach(var wave in config.waves) foreach(var group in wave.groups) PrototypeChecks.Require(group.enemy!=null && group.count>0,"Wave enemy reference");
         foreach(GameObject root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
             foreach(Transform child in root.GetComponentsInChildren<Transform>(true)) PrototypeChecks.Require(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject)==0,"No missing scene scripts");
