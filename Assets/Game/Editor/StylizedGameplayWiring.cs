@@ -86,7 +86,9 @@ namespace StoneSignal.EditorTools
             layout.surroundings = list.ToArray();
             // Data-driven dressing slot: art agent ships PF_Env_LevelDressing_16x12; until then keep cliff + water + bridges.
             layout.levelDressing = AssetDatabase.LoadAssetAtPath<GameObject>(P + "PF_Env_LevelDressing_16x12.prefab");
-            layout.levelDressingOffset = new Vector3(0, DemoToGameY, 0); layout.levelDressingReplacesCliff = true;
+            // v8: the dressing is authored at Game world origin (= board centre) and already contains BoardCliff + EntryBridges.
+            layout.levelDressingOffset = Vector3.zero; layout.levelDressingReplacesCliff = true;
+            if (layout.levelDressing != null) layout.surroundings = new BoardSurroundItem[0];
             if (layout.levelDressing == null) Debug.Log("Level dressing: PF_Env_LevelDressing_16x12 not found, using cliff fallback");
             layout.waterMaterial = layout.levelDressing != null ? null : AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Materials/Stylized/M_Env_Water_Flat.mat");
             layout.waterY = DemoToGameY; layout.waterSize = 120;
@@ -113,7 +115,7 @@ namespace StoneSignal.EditorTools
                 var planks = layout.surroundings == null ? new BoardSurroundItem[0] : layout.surroundings.Where(s => s.prefab && s.prefab.name.Contains("Bridge")).ToArray();
                 // Segments per bridge by side of the board (Unity x/z relative to the board centre).
                 int w = planks.Count(s => s.position.x > layout.width * .5f), e = planks.Count(s => s.position.x < -layout.width * .5f), n = planks.Count(s => s.position.z < -layout.height * .5f);
-                if (w != 4 || e != 4 || n != 3) problems++;
+                if (layout.levelDressing == null && (w != 4 || e != 4 || n != 3)) problems++; // dressing ships its own bridges
                 if (layout.levelDressing == null && layout.waterMaterial == null) problems++;
                 lens += " surroundings=" + (layout.surroundings?.Length ?? 0) + " bridgeSegments=W" + w + "/E" + e + "/N" + n + " dressing=" + (layout.levelDressing ? layout.levelDressing.name : "none(cliff)");
                 return "layout " + layout.width + "x" + layout.height + " spawns=" + grid.Spawns.Count + " core=" + grid.CoreCells.Count + " routes=" + lens + " layoutProblems=" + problems;
@@ -121,6 +123,7 @@ namespace StoneSignal.EditorTools
             finally { UnityEngine.Object.DestroyImmediate(go); }
         }
 
+        static BoardLayoutData layout0() => Load<BoardLayoutData>(LayoutPath);
         static T Load<T>(string path) where T : UnityEngine.Object
         {
             var a = AssetDatabase.LoadAssetAtPath<T>(path);
@@ -162,6 +165,15 @@ namespace StoneSignal.EditorTools
             art.boardCliffOffsetY = DemoToGameY; // cliff pivot -0.55; its top (0.55 demo / 0 game) is the ground plane under tile pivots
             art.entryBridge = Pf("PF_Env_Bridge_Plank");
             art.entryBridgePlanks = 4; art.entryBridgeOffsetY = -CliffTop;
+            // v8 optional assets (null-safe until the art import has run).
+            GameObject Opt(string n) => AssetDatabase.LoadAssetAtPath<GameObject>(P + n + ".prefab");
+            if (Opt("PF_Env_LevelDressing_16x12") != null) { art.boardCliff = null; art.entryBridge = null; } // dressing owns cliff + bridges
+            var variants = "AABCDE".Select(c => Opt("PF_Env_Tile_Stone_" + c)).ToArray();
+            art.tileVariants = variants.All(v => v != null) ? variants : new GameObject[0];
+            art.tileUndulation = true;
+            art.pathFlowSegment = Opt("PF_Path_FlowSegment"); art.pathFlowY = .82f + DemoToGameY;
+            art.placeGhostBlock = Opt("PF_UI_PlaceGhost_Block"); art.placeGhostTower = Opt("PF_UI_PlaceGhost_Tower");
+            art.slotHighlight = Opt("PF_UI_SlotHighlight");
             EditorUtility.SetDirty(art);
             WireLayout();
             AssetDatabase.SaveAssets();
@@ -214,7 +226,8 @@ namespace StoneSignal.EditorTools
             var lay = CheckLayout(); log.Append(lay + "; ");
             if (!lay.EndsWith("layoutProblems=0")) problems++;
             var artCheck = Load<ArtCatalog>("Assets/Game/Settings/ArtCatalog.asset");
-            if (!artCheck.boardCliff || !artCheck.entryBridge || !artCheck.coreHitVfx) problems++;
+            if ((layout0().levelDressing == null && (!artCheck.boardCliff || !artCheck.entryBridge)) || !artCheck.coreHitVfx) problems++;
+            log.Append("v8 tiles=" + (artCheck.tileVariants?.Length ?? 0) + " flow=" + (artCheck.pathFlowSegment ? "y" : "n") + " ghosts=" + (artCheck.placeGhostBlock && artCheck.placeGhostTower ? "y" : "n") + " slot=" + (artCheck.slotHighlight ? "y" : "n") + "; ");
             foreach (var n in new[] { "Needle", "Pulse", "Seismic", "Chill" })
             {
                 var t = Load<TowerData>(D + "Towers/" + n + ".asset");

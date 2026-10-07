@@ -39,7 +39,7 @@ namespace StoneSignal
         }
         public void SelectCard(int index) { if (Hand.Select(index)) { rotation=0; RebuildGhost(); Changed?.Invoke(); } }
         public void SetToolActive(bool active) { toolActive = active; SetGhostVisible(false); Changed?.Invoke(); }
-        public void Rotate() { rotation = (rotation + 1) % 4; Changed?.Invoke(); }
+        public void Rotate() { rotation = (rotation + 1) % 4; if (artGhost != null) RebuildGhost(); Changed?.Invoke(); }
         public List<Vector2Int> CellsAt(Vector2Int anchor)
         {
             var result = new List<Vector2Int>();
@@ -66,7 +66,10 @@ namespace StoneSignal
             List<Vector2Int> cells = CellsAt(anchor);
             grid.Commit(cells, CurrentShape.placedState);
             foreach (Vector2Int p in cells)
-                ArtVisual.Wall(palette, placedRoot, grid.ToWorld(p), grid.cellSize);
+            {
+                var wall = ArtVisual.Wall(palette, placedRoot, grid.ToWorld(p), grid.cellSize);
+                if (artGhost != null && wall != null) artGhost.PlayDrop(wall.transform);
+            }
             if (Modifiers != null && Modifiers.BonusSlotShape == CurrentShape) {
                 foreach(var cell in cells) { Vector2Int slot=cell+Vector2Int.right;
                     if(grid.InBounds(slot) && grid.CanPlace(slot) && ValidateAdditional?.Invoke(new[]{slot})==null) {
@@ -87,6 +90,13 @@ namespace StoneSignal
             PreviewValid = reason == null;
             Status = PreviewValid ? "Route clear - left click to place" : reason;
             List<Vector2Int> cells = CellsAt(anchor);
+            if (artGhost != null)
+            {
+                // v8 ghost: cells are laid out relative to the anchor cell centre.
+                artGhost.transform.position = grid.ToWorld(anchor) + Vector3.up * (palette.art != null ? palette.art.tileTop : 0);
+                artGhost.SetValid(PreviewValid); ShowArtCells(true);
+                return;
+            }
             for (int i = 0; i < ghost.Count; i++)
             {
                 ghost[i].transform.position = grid.ToWorld(cells[i]) + Vector3.up * .34f;
@@ -111,10 +121,27 @@ namespace StoneSignal
             foreach (GameObject obj in ghost) if (obj != null) Destroy(obj);
             ghost.Clear();
             if (CurrentShape == null) return;
+            if (palette.art != null && palette.art.placeGhostBlock != null)
+            {
+                if (artGhost == null)
+                {
+                    var g = ArtVisual.Create(palette.art.placeGhostBlock, transform, Vector3.zero);
+                    artGhost = g.GetComponent<StoneSignal.VFX.PlacementGhost>(); if (artGhost == null) Destroy(g);
+                }
+                if (artGhost != null)
+                {
+                    var shape = new List<Vector2Int>(CurrentShape.Rotated(rotation));
+                    artGhost.cellSize = grid.cellSize; artGhost.SetCells(shape.ToArray());
+                    SetGhostVisible(false); return;
+                }
+            }
             foreach (Vector2Int unused in CurrentShape.cells)
                 ghost.Add(PrimitiveVisual.Create("Block ghost", PrimitiveType.Cube, transform, Vector3.zero, new Vector3(.89f, .64f, .89f) * grid.cellSize, palette.valid));
             SetGhostVisible(false);
         }
-        private void SetGhostVisible(bool visible) { foreach (GameObject obj in ghost) if (obj != null) obj.SetActive(visible); }
+        private void SetGhostVisible(bool visible) { foreach (GameObject obj in ghost) if (obj != null) obj.SetActive(visible); if (artGhost != null && !visible) ShowArtCells(false); }
+        // Keep the ghost object active so PlayDrop's coroutine survives; only its cell renderers hide.
+        private void ShowArtCells(bool on) { var c = artGhost.transform.Find("Cells"); if (c != null) c.gameObject.SetActive(on); }
+        private StoneSignal.VFX.PlacementGhost artGhost;
     }
 }

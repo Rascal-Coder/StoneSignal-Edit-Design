@@ -35,6 +35,44 @@ namespace StoneSignal
             rangeView = new GameObject("Range preview").AddComponent<LineRenderer>(); rangeView.transform.SetParent(transform);
             rangeView.sharedMaterial = palette.path; rangeView.startWidth = rangeView.endWidth = .035f; rangeView.loop = true; rangeView.positionCount = 48;
             HideGhost();
+            grid.Changed += () => slotsDirty = true;
+        }
+        // ---- v8 presentation: art ghost (PF_UI_PlaceGhost_Tower), range ring, pooled slot highlights. ----
+        private StoneSignal.VFX.PlacementGhost artGhost; private StoneSignal.VFX.RangeRing artRing; private int artGhostIndex = -1;
+        private readonly List<GameObject> slots = new List<GameObject>(); private bool slotsDirty = true; private int slotsFor = -2;
+        private ArtCatalog Art => palette != null ? palette.art : null;
+        private bool ShowArtGhost(TowerData data, Vector3 centre, int rotation, bool ok, float range)
+        {
+            if (Art == null || Art.placeGhostTower == null || data.visualPrefab == null) return false;
+            if (artGhost == null)
+            {
+                var g = ArtVisual.Create(Art.placeGhostTower, transform, centre);
+                artGhost = g.GetComponent<StoneSignal.VFX.PlacementGhost>(); artRing = g.GetComponentInChildren<StoneSignal.VFX.RangeRing>(true);
+                if (artGhost == null) { Destroy(g); return false; }
+            }
+            if (artGhostIndex != SelectedIndex) { artGhost.SetModel(data.visualPrefab); artGhostIndex = SelectedIndex; }
+            artGhost.gameObject.SetActive(true);
+            artGhost.transform.position = centre + Vector3.up * Art.blockTop;
+            artGhost.transform.rotation = Quaternion.Euler(0, 90 * rotation, 0);
+            artGhost.SetValid(ok);
+            if (artRing != null) { artRing.SetRadius(range); artRing.transform.position = centre + Vector3.up * (Art.tileTop + .02f); }
+            return true;
+        }
+        private void RefreshSlots(bool show)
+        {
+            if (Art == null || Art.slotHighlight == null) return;
+            int key = show ? SelectedIndex : -1;
+            if (!slotsDirty && key == slotsFor) return;
+            slotsDirty = false; slotsFor = key; int used = 0;
+            if (show)
+                for (int y = 0; y < grid.height; y++) for (int x = 0; x < grid.width; x++)
+                {
+                    var c = new Vector2Int(x, y);
+                    if (grid.Get(c) != CellState.Blocked) continue; // free wall top
+                    if (used == slots.Count) slots.Add(ArtVisual.Create(Art.slotHighlight, transform, Vector3.zero));
+                    var s = slots[used++]; s.SetActive(true); s.transform.position = grid.ToWorld(c) + Vector3.up * (Art.blockTop + .01f);
+                }
+            for (int i = used; i < slots.Count; i++) slots[i].SetActive(false);
         }
         public int Cost(TowerData data) => Mathf.Max(1,Mathf.RoundToInt(data.cost*modifiers.TowerCost));
         public void Select(int index)
@@ -90,6 +128,7 @@ namespace StoneSignal
             if (Input.GetKeyDown(KeyCode.Alpha3)) Select(2);
             if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
             if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)) Select(-1);
+            RefreshSlots(SelectedIndex >= 0 && canBuild());
             if (SelectedIndex < 0 || !canBuild() || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) { HideGhost(); return; }
             Camera camera = Camera.main;
             var plane = new Plane(Vector3.up,grid.transform.position);
@@ -104,11 +143,17 @@ namespace StoneSignal
             Vector3 centre = grid.FootprintCenter(cell, size);
             if (reason == null && balance() < Cost(Data[SelectedIndex])) reason = "Not enough gold";
             Status = reason ?? "Left click to build";
+            float range = modifiers.Range(Data[SelectedIndex]);
+            if (ShowArtGhost(data, centre, data.footprintRotates ? Rotation : 0, reason == null, range))
+            {
+                ghost.SetActive(false); rangeView.gameObject.SetActive(false);
+                if (Input.GetMouseButtonDown(0)) TryBuild(cell,SelectedIndex);
+                return;
+            }
             ghost.SetActive(true); rangeView.gameObject.SetActive(true);
             ghost.transform.position = centre + Vector3.up * .45f;
             ghost.transform.localScale = new Vector3(.85f * size.x * grid.cellSize, .45f, .85f * size.y * grid.cellSize);
             ghost.GetComponent<Renderer>().sharedMaterial = reason == null ? palette.valid : palette.invalid;
-            float range = modifiers.Range(Data[SelectedIndex]);
             for (int i = 0; i < 48; i++)
             {
                 float angle = i * Mathf.PI * 2 / 48;
@@ -116,6 +161,6 @@ namespace StoneSignal
             }
             if (Input.GetMouseButtonDown(0)) TryBuild(cell,SelectedIndex);
         }
-        private void HideGhost() { if (ghost != null) ghost.SetActive(false); if (rangeView != null) rangeView.gameObject.SetActive(false); }
+        private void HideGhost() { if (ghost != null) ghost.SetActive(false); if (rangeView != null) rangeView.gameObject.SetActive(false); if (artGhost != null) artGhost.gameObject.SetActive(false); }
     }
 }

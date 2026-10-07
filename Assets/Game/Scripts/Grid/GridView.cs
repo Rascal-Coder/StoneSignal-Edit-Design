@@ -54,6 +54,7 @@ namespace StoneSignal
                 foreach (var s in grid.Spawns) PrimitiveVisual.Create("Spawn gate", PrimitiveType.Cylinder, transform, grid.ToWorld(s) + Vector3.up * .35f, new Vector3(.7f, .35f, .7f), palette.spawn);
             }
             var labels = new List<(string, Vector3)>();
+            if (art == null) {
             foreach (var s in grid.Spawns) labels.Add(("SPAWN", grid.ToWorld(s)));
             labels.Add(("CORE", grid.CoreCenter));
             foreach (var (name, at) in labels)
@@ -67,6 +68,7 @@ namespace StoneSignal
                 text.anchor = TextAnchor.MiddleCenter;
                 text.color = art != null ? new Color(.13f, .2f, .12f) : new Color(1, .94f, .77f);
             }
+            } // stylized board: no debug SPAWN/CORE labels
             routeMaterial = palette.path; routeWidth = art != null ? .07f : .11f;
             var directions = new GameObject("Route direction chevrons", typeof(MeshFilter), typeof(MeshRenderer));
             directions.transform.SetParent(transform, false);
@@ -80,6 +82,7 @@ namespace StoneSignal
         // The route decides which cells render as dirt road, so the board always matches the live path.
         private void OnPathChanged()
         {
+            if (art != null && art.pathFlowSegment != null) { DrawFlow(); return; } // v8: flow replaces dirt road + debug lines
             if (art != null) RefreshRoad();
             DrawPath();
         }
@@ -102,7 +105,36 @@ namespace StoneSignal
         {
             if (prefab == null) return;
             if (ground.TryGetValue(cell, out var existing) && existing != null) PrimitiveVisual.DestroyObject(existing);
-            ground[cell] = ArtVisual.Create(prefab, groundRoot, grid.ToWorld(cell), grid.cellSize);
+            long h = BoardArt.GameCellHash(cell, grid.width, grid.height);
+            // v8: stone tiles pick a variant by cell hash; dirt (legacy road) keeps its prefab.
+            if (prefab == art.tile && art.tileVariants != null && art.tileVariants.Length > 0)
+            {
+                var v = art.tileVariants[BoardArt.Variant(h, art.tileVariants.Length)]; if (v != null) prefab = v;
+            }
+            var go = ArtVisual.Create(prefab, groundRoot, grid.ToWorld(cell), grid.cellSize);
+            if (art.tileUndulation && art.tileVariants != null && art.tileVariants.Length > 0)
+            {
+                go.transform.rotation = Quaternion.Euler(0, BoardArt.Yaw(h), 0);
+                if (!grid.IsCore(cell) && grid.Get(cell) != CellState.Blocked && grid.Get(cell) != CellState.TowerSlot)
+                    go.transform.position += Vector3.up * BoardArt.HeightOffset(h); // visual only; gameplay heights unchanged
+            }
+            ground[cell] = go;
+        }
+        // v8 route: pooled flow segments along each current path, ordered spawn -> core.
+        private readonly List<GameObject> flow = new List<GameObject>();
+        private void DrawFlow()
+        {
+            int used = 0;
+            foreach (var path in pathfinding.CurrentPaths)
+                for (int i = 0; i < path.Count - 1; i++)
+                {
+                    Vector3 a = grid.ToWorld(path[i]), b = grid.ToWorld(path[i + 1]);
+                    if (used == flow.Count) { var s = ArtVisual.Create(art.pathFlowSegment, transform, a); s.name = "Route flow"; flow.Add(s); }
+                    var seg = flow[used++]; seg.SetActive(true);
+                    seg.transform.position = (a + b) * .5f + Vector3.up * art.pathFlowY;
+                    seg.transform.rotation = Quaternion.LookRotation(b - a);
+                }
+            for (int i = used; i < flow.Count; i++) flow[i].SetActive(false);
         }
         private void DrawPath()
         {

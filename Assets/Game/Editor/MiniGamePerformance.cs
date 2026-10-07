@@ -33,7 +33,7 @@ namespace StoneSignal.EditorTools
             var so = new SerializedObject(mini);
             Set(so, "m_MainLightShadowmapResolution", 1024); Set(so, "m_AdditionalLightShadowsSupported", 0);
             Set(so, "m_SoftShadowsSupported", 0); Set(so, "m_AdditionalLightsPerObjectLimit", 2);
-            Set(so, "m_RequireDepthTexture", 0); Set(so, "m_RequireOpaqueTexture", 0);
+            Set(so, "m_RequireDepthTexture", 1) /* v8 water/edge FX need opaque depth; URP copy-depth pass is cheap */; Set(so, "m_RequireOpaqueTexture", 0);
             so.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(mini);
             log.Append("URP: SRP batcher on; mini-game asset shadows 1024/18m/1 cascade/hard, MSAA off, HDR off; ");
 
