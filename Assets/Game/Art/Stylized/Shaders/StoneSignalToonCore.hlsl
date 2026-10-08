@@ -18,6 +18,8 @@ CBUFFER_START(UnityPerMaterial)
     half _VColorEmission;                // v17.3 vertex R emission (core enclosure crack/rune glow; only with _WindStrength 0); v17.5 lerp, peak ~1.0
     half4 _DissolveColor;
     float _OutlineWidthPx, _OutlineZOffset;
+    half _OutlineFromBase, _OutlineDarken, _OutlineTint;   // v19: outline colour = lerp(baseCol * _OutlineDarken, _OutlineColor, _OutlineTint) when _OutlineFromBase = 1
+    half _OutlineFacingFade;                               // v19: 0..1, shrink the hull where the smoothed normal faces the camera (kills whiskers)
 #if !defined(UNITY_INSTANCING_ENABLED)
     half4 _HiColor; half _HiAmount;      // v15 placement wall highlight (per renderer via MPB, WallHighlight)
     half4 _RuneColor; half _RuneIdx;     // v15 rune inlay: glyph index into 4x2 _RuneAtlas (-1 = none), per renderer via MPB (RuneInlay)
@@ -190,8 +192,10 @@ half4 ToonFrag(Varyings i) : SV_Target
     return half4(c, 1);
 }
 
-// ---- Outline (spec 4.6.3): smoothed normal from UV3, constant screen-space pixel width
-struct OutlineVaryings { float4 positionCS : SV_POSITION; half fog : TEXCOORD0; float3 positionOS : TEXCOORD1; float wsY : TEXCOORD2; UNITY_VERTEX_INPUT_INSTANCE_ID };
+// ---- Outline (spec 4.6.3, v19): inverted hull, smoothed normal from UV3 (tangent space, built on the importer's own
+// normal-only tangent frame - see StylizedModelPostprocessor.Bake v19), constant screen-space pixel width (px @1080p),
+// colour derived from the palette base colour (not a single navy for everything).
+struct OutlineVaryings { float4 positionCS : SV_POSITION; half fog : TEXCOORD0; float3 positionOS : TEXCOORD1; float wsY : TEXCOORD2; float2 uv : TEXCOORD3; UNITY_VERTEX_INPUT_INSTANCE_ID };
 OutlineVaryings OutlineVert(Attributes i)
 {
     OutlineVaryings o = (OutlineVaryings)0;
@@ -199,27 +203,46 @@ OutlineVaryings OutlineVert(Attributes i)
     UNITY_TRANSFER_INSTANCE_ID(i, o);
     float3 nWS = TransformObjectToWorldNormal(i.normalOS);
     float3 tWS = TransformObjectToWorldDir(i.tangentOS.xyz);
-    float3 bWS = cross(nWS, tWS) * i.tangentOS.w;
+    float3 bWS = cross(nWS, tWS) * (i.tangentOS.w < 0 ? -1.0 : 1.0);
     float3 smoothWS = dot(i.uv3.xyz, i.uv3.xyz) > 1e-4 ? normalize(i.uv3.x * tWS + i.uv3.y * bWS + i.uv3.z * nWS) : nWS;
-    float width = i.uv3.w > 0 ? i.uv3.w : 1;
+    bool baked = dot(i.uv3.xyz, i.uv3.xyz) > 1e-4;
+    float width = baked ? i.uv3.w : 1;                      // v19: baked w 0 = no hull (tiny parts), 1 = full; unbaked mesh -> 1
     float3 ws = SS_World(i.positionOS, i.color);
     float4 posCS = TransformWorldToHClip(ws);
-    float3 nCS = mul((float3x3)GetWorldToHClipMatrix(), smoothWS);
-    float2 dir = normalize(nCS.xy + 1e-6);
-    dir.x *= _ScreenParams.y / _ScreenParams.x;
+    // Push direction in view space (ortho game camera: exact). Length of the projected normal says how much the
+    // normal faces the camera; normalize() of a near-zero vector is what produced the whiskers - fade instead.
+    float3 nVS = mul((float3x3)UNITY_MATRIX_V, smoothWS);
+    float plen = length(nVS.xy);
+    float2 dirVS = nVS.xy / max(plen, 1e-4);
+    float facing = lerp(1, smoothstep(0.08, 0.35, plen), _OutlineFacingFade);
+    float2 pix = mul((float2x2)UNITY_MATRIX_P, dirVS) * _ScreenParams.xy;   // direction in pixel units (aspect-correct, any projection)
+    float2 dir = pix / max(length(pix), 1e-6);
     float g = _OutlineGlobalScale > 0 ? _OutlineGlobalScale : 1;
-    float px = _OutlineWidthPx * width * g * (_ScreenParams.y / 1080.0);
-    posCS.xy += dir * px * 2.0 / _ScreenParams.y * posCS.w;
+    float px = _OutlineWidthPx * width * facing * g * (_ScreenParams.y / 1080.0);
+    posCS.xy += dir * px * 2.0 / _ScreenParams.xy * posCS.w;                // px pixels in NDC, constant on screen
 #if UNITY_REVERSED_Z
     posCS.z -= _OutlineZOffset * posCS.w;
 #else
     posCS.z += _OutlineZOffset * posCS.w;
 #endif
     o.positionCS = posCS; o.positionOS = i.positionOS.xyz; o.wsY = ws.y;
+    o.uv = TRANSFORM_TEX(i.uv, _BaseMap);
     o.fog = ComputeFogFactor(posCS.z);
     return o;
 }
-half4 OutlineFrag(OutlineVaryings i) : SV_Target { UNITY_SETUP_INSTANCE_ID(i); SS_GroundClipTest(i.wsY); SS_DissolveClip(i.positionOS); return half4(MixFog(_OutlineColor.rgb, i.fog), 1); }
+half4 OutlineFrag(OutlineVaryings i) : SV_Target
+{
+    UNITY_SETUP_INSTANCE_ID(i);
+    SS_GroundClipTest(i.wsY); SS_DissolveClip(i.positionOS);
+    half3 c = _OutlineColor.rgb;
+    if (_OutlineFromBase > 0.5)
+    {
+        half3 baseCol = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb * _BaseColor.rgb;   // Point-sampled palette cell
+        c = lerp(baseCol * _OutlineDarken, _OutlineColor.rgb, _OutlineTint);
+    }
+    c = lerp(c, _FlashColor.rgb * 0.6, _HitFlash * 0.5);     // hit flash reads on the silhouette too, but stays darker than the body
+    return half4(MixFog(c, i.fog), 1);
+}
 
 // ---- Shadow caster / depth
 float3 _LightDirection;

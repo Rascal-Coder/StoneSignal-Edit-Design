@@ -47,7 +47,11 @@ Material:
     - _HitFlash: 0
     - _LayerTint: 0
     - _Mottle: 0
-    - _OutlineWidthPx: 3
+    - _OutlineDarken: 0.3
+    - _OutlineFacingFade: 1
+    - _OutlineFromBase: 1
+    - _OutlineTint: 0.45
+    - _OutlineWidthPx: 2
     - _OutlineZOffset: 0.0004
     - _RimIntensity: 0.45
     - _RimLitBias: 0.3

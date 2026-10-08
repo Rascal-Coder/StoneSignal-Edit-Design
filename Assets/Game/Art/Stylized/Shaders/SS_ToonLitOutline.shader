@@ -43,6 +43,10 @@ Shader "StoneSignal/ToonLitOutline"
         _OutlineColor ("Outline Color", Color) = (0.118,0.102,0.227,1)
         _OutlineWidthPx ("Outline Width (px @1080p)", Range(0,6)) = 3
         _OutlineZOffset ("Outline Z Offset", Range(0,0.002)) = 0.0004
+        [ToggleUI] _OutlineFromBase ("Outline Colour From Palette (v19)", Float) = 1
+        _OutlineDarken ("Outline Base Darken (v19)", Range(0,1)) = 0.34
+        _OutlineTint ("Outline Tint toward Outline Color (v19)", Range(0,1)) = 0.35
+        _OutlineFacingFade ("Outline Facing Fade (v19, anti-whisker)", Range(0,1)) = 1
     }
     SubShader
     {
