@@ -17,7 +17,7 @@ namespace StoneSignal.UI
                 case RewardEffect.AllAttackSpeed: return "ui_reward_all_attack_speed";  // 全塔攻速: bolt + arrows
                 case RewardEffect.AllRange: return "ui_reward_all_range";               // 全塔射程: needle tower + gold ring, arrows out
                 case RewardEffect.ArrowRange: return "ui_reward_arrow_range";           // 针弩射程: needle tower + orange ring + needle bolt
-                case RewardEffect.CannonRadius: return "ui_reward_cannon_radius";       // 震岩半径: seismic shell blast + red ring
+                case RewardEffect.CannonRadius: return "ui_reward_cannon_radius";       // 岩甲兽范围: seismic shell blast + red ring
                 case RewardEffect.AddBlock: return "ui_reward_add_block";               // 墙牌补给: O tetromino card + plus
                 case RewardEffect.NextDraw: return "ui_reward_next_draw";               // 符文保底 (v17.6b): blueprint wall card + socketed neutral rune hex + gold shield check
                 case RewardEffect.PathSlow: return "ui_reward_path_slow";               // 路径减速: snail with an ice shell (cyan = slow)

@@ -21,8 +21,8 @@ namespace StoneSignal.VFX
 
         public static Color ColorFor(DamageKind k) => k switch
         {
-            DamageKind.Fire => new Color(1f, .55f, .2f), DamageKind.Ice => new Color(.55f, .9f, 1f),
-            DamageKind.Lightning => new Color(.8f, .68f, 1f), DamageKind.Explosive => new Color(1f, .7f, .35f),
+            DamageKind.Fire => new Color(1f, .42f, .32f) /* v19 coral red #FF6B52 (no tower deals Fire yet) */, DamageKind.Ice => new Color(.55f, .9f, 1f),
+            DamageKind.Lightning => new Color(.93f, 1f, .55f) /* v19 lemon-white #EDFF8C (雷铃兽 / Pulse) */, DamageKind.Explosive => new Color(1f, .7f, .35f),
             DamageKind.Heal => new Color(.5f, 1f, .55f), _ => Color.white
         };
 

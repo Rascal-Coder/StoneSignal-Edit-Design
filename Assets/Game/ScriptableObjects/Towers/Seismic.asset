@@ -15,7 +15,7 @@ MonoBehaviour:
   visualPrefab: {fileID: 3591868079714275055, guid: 4e1219d8bb777c744869ff5e82d152ae, type: 3}
   icon: {fileID: 21300000, guid: 7ba2b1f3b905c3443b987cd229305159, type: 3}
   displayName: Seismic Beacon
-  role: Heavy area burst. Pair with Chill.
+  role: 'Rock Armor Beast: lobs lava rocks for a heavy area blast.'
   slowFraction: 0
   slowDuration: 0
   kind: 2

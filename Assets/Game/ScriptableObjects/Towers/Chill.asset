@@ -15,7 +15,7 @@ MonoBehaviour:
   visualPrefab: {fileID: 4160976574681048535, guid: b0ad786496d0bbf4ca4e5985879ccf85, type: 3}
   icon: {fileID: 21300000, guid: df828bd151a01914d827c25453d5e445, type: 3}
   displayName: Chill Beacon
-  role: Slow 35% for 2s. Combine with Seismic.
+  role: 'Frost Dragonling: breathes ice crystals that slow enemies.'
   slowFraction: 0.35
   slowDuration: 2
   kind: 3

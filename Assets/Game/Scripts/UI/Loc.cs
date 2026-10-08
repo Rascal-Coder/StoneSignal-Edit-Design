@@ -28,7 +28,11 @@ namespace StoneSignal.UI
 
         // ---- towers / enemies / runes (GDD 3.4, 6, 8.3.1)
         static readonly Dictionary<string, string> Towers = new Dictionary<string, string>
-        { { "Needle", "针弩" }, { "Pulse", "脉冲炮" }, { "Seismic", "震岩炮" }, { "Chill", "寒晶" } };
+        { { "Needle", "针角犀" }, { "Pulse", "雷铃兽" }, { "Seismic", "岩甲兽" }, { "Chill", "霜宝龙" } };   // v19 monster towers (玩法策划 2026-10-08; asset / internal names unchanged)
+        /// v19 tower blurbs (玩法策划 2026-10-08): single source for codex / tooltip text. Keys = TowerData asset names.
+        static readonly Dictionary<string, string> TowerBlurbs = new Dictionary<string, string>
+        { { "Needle", "角尖射出光针，重创单个敌人，偶尔暴击" }, { "Pulse", "快速放出电弧，清理成群小怪" }, { "Chill", "吐出冰晶，减速敌人" }, { "Seismic", "抛出熔岩石，大范围重爆" } };
+        public static string TowerBlurb(TowerData d) { if (d == null) return ""; foreach (var kv in TowerBlurbs) if (d.name.StartsWith(kv.Key) || (d.displayName ?? "").StartsWith(kv.Key)) return kv.Value; return d.role; }
         static readonly Dictionary<string, string> Enemies = new Dictionary<string, string>
         { { "Drifter", "漂石史莱姆" }, { "Bulwark", "骨垒卫" }, { "Splitter", "裂鳞龙" }, { "Shard", "碎晶" } };
         public static string Tower(TowerData d) { if (d == null) return ""; foreach (var kv in Towers) if (d.name.StartsWith(kv.Key) || (d.displayName ?? "").StartsWith(kv.Key)) return kv.Value; return d.displayName; }
@@ -46,8 +50,8 @@ namespace StoneSignal.UI
                 case RewardEffect.AllDamage: return "全塔伤害";
                 case RewardEffect.AllAttackSpeed: return "全塔攻速";
                 case RewardEffect.AllRange: return "全塔射程";
-                case RewardEffect.CannonRadius: return "震岩半径";
-                case RewardEffect.ArrowRange: return "针弩射程";        // INVENTED (not in GDD 8.1)
+                case RewardEffect.CannonRadius: return "岩甲兽范围";     // v19 (玩法策划)
+                case RewardEffect.ArrowRange: return "针弩射程";        // INVENTED (not in GDD 8.1); not in the live reward pool, not granted
                 case RewardEffect.AddBlock: return "墙牌补给";          // 玩法策划 v18
                 case RewardEffect.NextDraw: return "符文保底";          // 玩法策划 v18 (effect: next draw contains a rune)
                 case RewardEffect.ExtraDraw: return ExtraDrawTitle;     // 玩法策划 v18: 免广告再抽
@@ -69,7 +73,7 @@ namespace StoneSignal.UI
                 case RewardEffect.AllDamage: return "所有塔伤害 +" + P(r) + "%";
                 case RewardEffect.AllAttackSpeed: return "所有塔攻速 +" + P(r) + "%";
                 case RewardEffect.AllRange: return "所有塔射程 +" + P(r) + "%";
-                case RewardEffect.CannonRadius: return "震岩炮爆炸半径 +" + P(r) + "%";
+                case RewardEffect.CannonRadius: return "岩甲兽爆炸半径 +" + P(r) + "%";
                 case RewardEffect.ArrowRange: return "针弩射程 +" + P(r) + "%";
                 case RewardEffect.AddBlock: return "牌组加入 1 张 " + Shape(r) + " 形墙牌";
                 case RewardEffect.NextDraw: return "下次抽牌至少 1 张带符文";
@@ -103,7 +107,7 @@ namespace StoneSignal.UI
         {
             yield return Wave(10, 12); yield return Battle; yield return ChooseUpgrade; yield return Choose; yield return CoreDark; yield return Restart;
             foreach (StoneSignal.VFX.DrawPileState s in System.Enum.GetValues(typeof(StoneSignal.VFX.DrawPileState))) yield return DrawStatus(s);
-            foreach (var v in Towers.Values) yield return v; foreach (var v in Enemies.Values) yield return v;
+            foreach (var v in Towers.Values) yield return v; foreach (var v in TowerBlurbs.Values) yield return v; foreach (var v in Enemies.Values) yield return v;
             for (int i = 0; i < RuneNames.Length; i++) { yield return RuneTitle(i); yield return RuneDesc(i); }
             foreach (var v in Notices.Values) yield return v;
             yield return "普通精良稀有传说"; yield return RemainingPrefix + RemainingSuffix; yield return RuneOptionNote; yield return ExtraDrawTitle; yield return ExtraDrawDesc;
