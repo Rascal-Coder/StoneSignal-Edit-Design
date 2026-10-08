@@ -334,6 +334,32 @@ namespace StoneSignal.EditorTools
                 log.Add("  EaseOutCubic curve max error vs 1-(1-t)^3: " + err.ToString("F5"));
                 return ok && err < .002f;
             });
+            Case("fan style v18.5b (art follow-ups): lift 0.08 s EaseOutCubic, stack top never covered, merge fly shadow, redeal 0.04 s / <= 0.45 s, PC hover 1.02 / 4 (press 1.04 / 8)", () =>
+            {
+                var st = new HandFanStyle(); bool ok = st.selectLiftSeconds == .08f && st.stackTopNeverCovered && st.stackTopClearancePx == 0f && st.mergeFlyShadow;
+                ok &= st.redealStaggerSeconds == .04f && st.redealMaxSeconds == .45f && st.hoverScale == 1.02f && st.hoverLiftPx == 4f && st.pressScale == 1.04f && st.pressLiftPx == 8f;
+                float err = 0f; for (int i = 0; i <= 20; i++) { float t = i / 20f; err = Mathf.Max(err, Mathf.Abs(st.selectLiftEase.Evaluate(t) - (1f - Mathf.Pow(1f - t, 3f)))); }
+                log.Add("  select lift curve max error vs 1-(1-t)^3: " + err.ToString("F5"));
+                return ok && err < .002f;
+            });
+            Case("fan redeal interval = min(0.04, (0.45 - enter) / (n - 1)): 7 cards -> 0.04 s, total 0.44 s; enter 0.25 s -> compressed 0.0333 s, total 0.45 s; 1 card -> 0", () =>
+            {
+                var st = new HandFanStyle(); bool ok = true; string t = "";
+                for (int n = 2; n <= 7; n++) { float iv = HandFanLayout.RedealInterval(n, st), total = st.enterSeconds + iv * (n - 1); ok &= iv <= st.redealStaggerSeconds + 1e-6f && total <= st.redealMaxSeconds + 1e-5f; t += " n" + n + " " + iv.ToString("F4") + "/" + total.ToString("F3"); }
+                ok &= Mathf.Abs(HandFanLayout.RedealInterval(7, st) - .04f) < 1e-6f && HandFanLayout.RedealInterval(1, st) == 0f;
+                var st2 = new HandFanStyle { enterSeconds = .25f }; float c2 = HandFanLayout.RedealInterval(7, st2);
+                ok &= Mathf.Abs(c2 - .2f / 6f) < 1e-5f && Mathf.Abs(st2.enterSeconds + 6 * c2 - .45f) < 1e-5f;
+                log.Add("  interval / total:" + t + "; enter 0.25 s, 7 cards: " + c2.ToString("F4") + " s");
+                return ok;
+            });
+            Case("fan expanded step with a xN stack: >= card + next card's reach (rune badge 10 / stacked neighbour's xN badge 12 card units): 162 stays 162 (161.7 needed), adjacent stacks -> 164.1", () =>
+            {
+                var st = new HandFanStyle(); float need = (Mathf.Max(38f, st.fanCountBadgePos.x + 56f) + 10f) * 150f / 128f + 2f;
+                var r0 = HandFanLayout.Compute(6, 150, 162, 1336, st, need); var r1 = HandFanLayout.Compute(6, 150, 162, 1336, st, need, 150f + 10f * 150f / 128f);
+                var r2 = HandFanLayout.Compute(5, 150, 162, 1336, st, need, 150f + 12f * 150f / 128f);
+                log.Add("  expanded step: no stack " + r0.expandedStep.ToString("F2") + ", one stack " + r1.expandedStep.ToString("F2") + ", adjacent stacks " + r2.expandedStep.ToString("F2"));
+                return r0.expandedStep == 162f && r1.expandedStep == 162f && Mathf.Abs(r2.expandedStep - 164.0625f) < .001f;
+            });
             UnityEngine.Object.DestroyImmediate(c);
             int cases = 0; foreach (var l in log) if (l.StartsWith("PASS ") || l.StartsWith("FAIL ")) cases++; // info lines (indented) are not test cases
             string result = string.Join("\n", log) + "\nRUNE/DRAW TESTS: " + (cases - fail) + "/" + cases + " passed";

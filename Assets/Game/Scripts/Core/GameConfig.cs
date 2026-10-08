@@ -69,6 +69,24 @@ namespace StoneSignal
         [Tooltip("Hand-count pill (7/7) bottom = row y + card + this, reference px (was 8: overlapped a selected left card with a rune badge). Rises with expandedLiftPx while expanded.")]
         public float handCountGapPx = 28f;
 
+        // ---- art v18.5b follow-ups (美术策划 decisions on the v18.5 review points 1-5).
+        [Header("Art v18.5b: follow-ups")]
+        [Tooltip("1) Selected card +12 lift slides over this many seconds with selectLiftEase (0 = instant; position changes keep relayoutSeconds).")]
+        [Min(0)] public float selectLiftSeconds = .08f;
+        public AnimationCurve selectLiftEase = EaseOutCubic();
+        [Tooltip("2) Expanded row: the stack's lower layers may tuck under the next card, but the top card of a xN stack and its badge are never covered - the expanded step is kept >= card + the next card's rune-badge overhang (10 card units) + this clearance, reference px.")]
+        public bool stackTopNeverCovered = true;
+        [Min(0)] public float stackTopClearancePx = 0f;
+        [Tooltip("3) A merging stack flies above the other cards (last sibling) carrying the fan shadow (shadowColor / shadowOffset) in every fan state; it settles to its resting shadow as it lands.")]
+        public bool mergeFlyShadow = true;
+        [Tooltip("4) Several groups entering in one rebuild (whole-hand redeal): enter staggered left to right, this interval per card, seconds...")]
+        [Min(0)] public float redealStaggerSeconds = .04f;
+        [Tooltip("...with the whole hand done within this many seconds: interval = min(redealStaggerSeconds, (redealMaxSeconds - enterSeconds) / (n - 1)). Cards wait hidden until their turn.")]
+        [Min(0)] public float redealMaxSeconds = .45f;
+        [Tooltip("5) PC mouse hover on a fanned card (no hover state on touch; hover never expands the fan). Press keeps pressScale / pressLiftPx.")]
+        public float hoverScale = 1.02f;
+        public float hoverLiftPx = 4f;
+
         public static AnimationCurve EaseOutCubic() => new AnimationCurve(new Keyframe(0f, 0f, 0f, 3f), new Keyframe(1f, 1f, 0f, 0f));
     }
 }

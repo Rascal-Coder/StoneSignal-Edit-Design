@@ -38,6 +38,7 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fantest") >= 0) { yield return FanTest(); Debug.Log("FAN TEST DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fanseq") >= 0) { yield return FanSeq(); Debug.Log("FAN SEQ DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hoverpc") >= 0) { yield return HoverPc(); Debug.Log("HOVER PC DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudcd") >= 0) { yield return HudDc(); Debug.Log("HUD DC DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-camcompare") >= 0) { yield return CamCompare(); Debug.Log("CAM COMPARE DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-dragthrough") >= 0) { yield return DragThrough(); Debug.Log("DRAG THROUGH DONE " + path); Application.Quit(0); yield break; }
@@ -417,23 +418,33 @@ namespace StoneSignal
             bool Sel(RectTransform h) { var c = h.Find("Card"); return c != null && c.GetComponent<UnityEngine.UI.Outline>() != null; }
             UnityEngine.UI.Shadow Shd(RectTransform h) { var c = h.Find("Card"); if (c == null) return null; foreach (var x in c.GetComponents<UnityEngine.UI.Shadow>()) if (!(x is UnityEngine.UI.Outline)) return x; return null; }
             float Bright(RectTransform h) { var c = h.Find("Card"); return c != null ? c.GetComponent<UnityEngine.UI.Image>().color.r : -1f; }
-            var seqLast = new List<(float t, List<Vector2> c, List<float> a, List<float> sc)>();
+            var seqLast = new List<(float t, List<Vector2> c, List<float> a, List<float> sc)>(); var seqShd = new List<List<float>>();
             string Poses(float w) { var t = ""; foreach (var f in ui.FanCards()) { var c = Centre(f.holder, w); t += "(" + c.x.ToString("F1") + "," + c.y.ToString("F1") + " " + Ang(f.holder).ToString("F2") + "deg s" + (f.holder.localScale.x * 128f / w).ToString("F3") + ") "; } return t; }
             IEnumerator Seq(string name, int count, System.Action start)
             {
-                float w = ui.DebugHandCardW; seqLast = new List<(float, List<Vector2>, List<float>, List<float>)>();
+                float w = ui.DebugHandCardW; seqLast = new List<(float, List<Vector2>, List<float>, List<float>)>(); seqShd = new List<List<float>>();
                 Time.captureDeltaTime = 1f / 60f; yield return null; yield return null;
                 for (int f = 0; f <= count; f++)
                 {
                     if (f == 1) { start(); yield return null; } else if (f > 1) yield return null;
                     frames.Add((name + "_" + f.ToString("00"), Grab()));
                     var cl = new List<Vector2>(); var al = new List<float>(); var scl = new List<float>(); foreach (var h in ui.FanCards()) { cl.Add(Centre(h.holder, w)); al.Add(Ang(h.holder)); scl.Add(h.holder.localScale.x * 128f / w); }
-                    seqLast.Add((Time.unscaledTime, cl, al, scl));
+                    seqLast.Add((Time.unscaledTime, cl, al, scl)); var shl = new List<float>(); foreach (var h in ui.FanCards()) { var d = Shd(h.holder); shl.Add(d != null ? d.effectColor.a : 0f); } seqShd.Add(shl);
                     sb.Append("  " + name + " f" + f.ToString("00") + " t=" + Time.unscaledTime.ToString("F4") + " fanT=" + ui.FanProgress.ToString("F3") + " " + Poses(w) + "\n");
                 }
                 Time.captureDeltaTime = 0f;
             }
-            void Flush() { foreach (var fr in frames) { File.WriteAllBytes(Path.Combine(dir, fr.name + ".png"), fr.tex.EncodeToPNG()); Destroy(fr.tex); } frames.Clear(); }
+            // v18.5b: frames are cropped to the hand area (bottom-left 1320 x 660 ref px) and stored as JPG q92 (archive < 100 MB)
+            void Flush()
+            {
+                foreach (var fr in frames)
+                {
+                    var t = fr.tex; int cw = Mathf.Min(t.width, Mathf.CeilToInt(1320 * k)), ch = Mathf.Min(t.height, Mathf.CeilToInt(660 * k));
+                    var crop = new Texture2D(cw, ch, TextureFormat.RGB24, false); crop.SetPixels(t.GetPixels(0, 0, cw, ch)); crop.Apply();
+                    File.WriteAllBytes(Path.Combine(dir, fr.name + ".jpg"), crop.EncodeToJPG(92)); Destroy(crop); Destroy(t);
+                }
+                frames.Clear();
+            }
             // ---- 1. collapsed worst case (7 different; oldest = leftmost carries a rune and is the selected card)
             yield return SetHand(new List<(int, int)> { (0, 0), (1, NR), (2, NR), (3, NR), (4, NR), (0, NR), (1, 1) }); yield return WaitRt(.7f);
             var fc = ui.FanCards(); float W = ui.DebugHandCardW, Y0 = ui.DebugHandRowY; int n = fc.Count;
@@ -499,7 +510,7 @@ namespace StoneSignal
             yield return SetHand(new List<(int, int)> { (0, NR), (0, NR), (1, NR), (2, 2) }); yield return WaitRt(.6f);
             {
                 fc = ui.FanCards(); RectTransform badge = null; float maxA = 0f; foreach (var f in fc) { var b = f.holder.Find("Card/Count"); if (b != null) badge = (RectTransform)b; maxA = Mathf.Max(maxA, Mathf.Abs(Ang(f.holder))); }
-                Check(!ui.FanActive && badge != null && (badge.anchoredPosition - new Vector2(84, 12)).sqrMagnitude < .01f && maxA < .01f && fc[0].holder.Find("Card").GetComponent<CardHover>().Scale == 1.06f,
+                Check(!ui.FanActive && badge != null && (badge.anchoredPosition - new Vector2(84, 12)).sqrMagnitude < .01f && maxA < .01f && fc[0].holder.Find("Card").GetComponent<CardHover>().Scale == 1.06f && fc[0].holder.Find("Card").GetComponent<CardHover>().HoverScale == 0f,
                     "unfanned (" + fc.Count + " groups): v17 row unchanged - xN badge TL " + (badge != null ? badge.anchoredPosition.ToString("F0") : "none") + " (v17 (84,-12)), no tilt (max " + maxA.ToString("F2") + " deg), hover 1.06 / 12");
             }
             yield return ShotNamed(root, "hand_unfanned_" + res);
@@ -554,13 +565,18 @@ namespace StoneSignal
             // ---- 6. press / release on a covered card (pointer enter = the touch press; StandaloneInputModule sends it on touch-down)
             yield return WaitRt(.5f); fc = ui.FanCards();
             {
-                var h = fc[2].holder; var go = h.Find("Card").gameObject; var p0 = h.anchoredPosition; float s0 = h.localScale.x, b0 = Bright(h);
-                yield return Seq("press", 6, () => UnityEngine.EventSystems.ExecuteEvents.Execute(go, new UnityEngine.EventSystems.PointerEventData(es), UnityEngine.EventSystems.ExecuteEvents.pointerEnterHandler));
+                var h = fc[2].holder; var go = h.Find("Card").gameObject; var hv = go.GetComponent<CardHover>(); var p0 = h.anchoredPosition; float s0 = h.localScale.x, b0 = Bright(h);
+                {   // v18.5b: touch has no hover state - pointer over the card without a press leaves it at rest
+                    hv.OnPointerEnter(null); yield return null; yield return null; var dh = h.anchoredPosition - p0; float sh0 = h.localScale.x / s0; hv.OnPointerExit(null); yield return null;
+                    Check(!PointerInput.TouchMode || (dh.sqrMagnitude < .01f && Mathf.Abs(sh0 - 1f) < 1e-4f && !ui.FanExpanded), "touch: pointer over a fanned card without a press = no hover state (lift " + dh.y.ToString("F1") + ", scale x" + sh0.ToString("F3") + ", touch=" + PointerInput.TouchMode + ")");
+                }
+                // touch press = pointer enter + pointer down (StandaloneInputModule sends both on touch-down)
+                yield return Seq("press", 6, () => { hv.OnPointerEnter(null); hv.OnPointerDown(null); });
                 var dp = h.anchoredPosition - p0; float ds = h.localScale.x / s0, b1 = Bright(h);
                 Check(Mathf.Abs(dp.y - fs.pressLiftPx) < .1f && Mathf.Abs(dp.x) < .1f && Mathf.Abs(ds - fs.pressScale) < .001f && Mathf.Abs(b0 - fs.coveredBrightness) < .01f && Mathf.Abs(b1 - 1f) < .01f,
                     "press on covered card #2: lift " + dp.y.ToString("F1") + " ref px, scale x" + ds.ToString("F3") + ", brightness " + b0.ToString("F2") + " -> " + b1.ToString("F2") + " (spec +8, x1.04, un-dimmed)");
                 yield return new WaitForEndOfFrame(); Capture(Path.Combine(root, "fan_pressed_" + res + ".png"));
-                yield return Seq("release", 4, () => UnityEngine.EventSystems.ExecuteEvents.Execute(go, new UnityEngine.EventSystems.PointerEventData(es), UnityEngine.EventSystems.ExecuteEvents.pointerExitHandler));
+                yield return Seq("release", 4, () => { hv.OnPointerUp(null); hv.OnPointerExit(null); });
                 Check((h.anchoredPosition - p0).sqrMagnitude < .01f && Mathf.Abs(h.localScale.x - s0) < 1e-4f && Mathf.Abs(Bright(h) - b0) < .01f, "release restores pose, scale and covered brightness");
                 Flush();
             }
@@ -578,10 +594,116 @@ namespace StoneSignal
                 yield return Seq("merge", 18, () => { s.Blocks.Hand.AddCard(B[2], NR); s.Blocks.NotifyChanged(); });
                 fc = ui.FanCards(); var lastH = fc[fc.Count - 1].holder; var cb = lastH.Find("Card/Count");
                 Check(fc.Count == 6 && cb != null && Mathf.Abs(cb.localScale.x - 1f) < .001f, "drawn card stacks: its group slides to the far right with a x2 badge (bump " + fs.countBumpScale + " -> 1 in " + fs.countBumpSeconds + " s), final badge scale " + (cb != null ? cb.localScale.x.ToString("F3") : "-"));
+                // v18.5b (art point 3): the merging stack flies on top (last sibling) carrying the fan shadow in every fan state
+                string Fly(string tag, float restWant, out bool ok)
+                {
+                    float rb = ui.DebugRebuildTime, dur = fs.relayoutSeconds, minFly = 1f, fin = -1f; int nf = 0; ok = true; string trace = "";
+                    for (int f = 1; f < seqLast.Count; f++)
+                    {
+                        var shl = seqShd[f]; if (shl.Count == 0) continue; float a = shl[shl.Count - 1], dt = seqLast[f].t - rb; fin = a;
+                        if (dt > 1e-4f && dt < .6f * dur) { minFly = Mathf.Min(minFly, a); nf++; }
+                        if (dt > -1e-4f && dt < dur + .02f) trace += " " + a.ToString("F2");
+                    }
+                    ok = nf > 0 && minFly >= fs.shadowColor.a - .01f && Mathf.Abs(fin - restWant) < .01f;
+                    return tag + ": in flight alpha >= " + minFly.ToString("F2") + " (" + nf + " frames), landed " + fin.ToString("F2") + " (rest " + restWant.ToString("F2") + ") [" + trace.Trim() + "]";
+                }
+                string f1 = Fly("collapsed fan", fs.shadowColor.a, out bool ok1);
                 Flush();
+                yield return SetHand(spec6); yield return WaitRt(.5f); ui.DebugSetFan(true); yield return WaitRt(.4f);
+                yield return Seq("merge_expanded", 18, () => { s.Blocks.Hand.AddCard(B[2], NR); s.Blocks.NotifyChanged(); });
+                string f2 = Fly("expanded fan", 0f, out bool ok2); bool exp2 = ui.FanExpanded; Flush(); ui.DebugSetFan(false); yield return WaitRt(.4f);
+                yield return SetHand(new List<(int, int)> { (0, NR), (1, NR), (2, NR) }); yield return WaitRt(.6f);
+                yield return Seq("merge_unfanned", 18, () => { s.Blocks.Hand.AddCard(B[0], NR); s.Blocks.NotifyChanged(); });
+                fc = ui.FanCards(); bool top3 = fc.Count == 3 && fc[2].index == 0 && fc[2].holder.GetSiblingIndex() > fc[1].holder.GetSiblingIndex();
+                string f3 = Fly("unfanned row", 0f, out bool ok3); Flush();
+                Check(ok1 && ok2 && exp2 && ok3 && top3, "merging stack flies on top (last sibling) with the fan shadow #" + ColorUtility.ToHtmlStringRGBA(fs.shadowColor) + " " + fs.shadowOffset + " (full for the first 60 % of the " + fs.relayoutSeconds + " s flight, then blends to its resting shadow): " + f1 + "; " + f2 + "; " + f3);
+            }
+            // ---- 8. v18.5b (art point 1): selected-card +12 lift slides in selectLiftSeconds (0.08 s) EaseOutCubic; x / tilt unchanged
+            yield return FullHand(); yield return WaitRt(.7f); fc = ui.FanCards(); n = fc.Count;
+            {
+                int sel0 = -1; for (int i = 0; i < n; i++) if (Sel(fc[i].holder)) sel0 = i; int tg = 3;
+                yield return Seq("lift", 10, () => s.Blocks.SelectCard(fc[tg].index)); var lg = seqLast; float rb = ui.DebugRebuildTime;
+                float y0t = lg[0].c[tg].y, y0s = sel0 >= 0 ? lg[0].c[sel0].y : 0f, settle = -1f, settleOld = -1f, frac1 = -1f, dx = 0f; string tr = "";
+                for (int f = 1; f < lg.Count; f++)
+                {
+                    if (lg[f].c.Count != n) continue; float dt = lg[f].t - rb, up = lg[f].c[tg].y - y0t, down = sel0 >= 0 ? y0s - lg[f].c[sel0].y : 12f;
+                    for (int i = 0; i < n; i++) dx = Mathf.Max(dx, Mathf.Abs(lg[f].c[i].x - lg[0].c[i].x), Mathf.Abs(lg[f].a[i] - lg[0].a[i]));
+                    if (Mathf.Abs(dt - 1f / 60f) < .002f) frac1 = up / 12f;
+                    if (settle < 0f && Mathf.Abs(up - 12f) < .01f) settle = dt; if (settleOld < 0f && Mathf.Abs(down - 12f) < .01f) settleOld = dt;
+                    tr += " " + dt.ToString("F3") + ":" + up.ToString("F2");
+                }
+                float want1 = 1f - Mathf.Pow(1f - (1f / 60f) / fs.selectLiftSeconds, 3f), lim = fs.selectLiftSeconds + 1f / 60f + .001f;
+                Check(sel0 >= 0 && sel0 != tg && settle >= fs.selectLiftSeconds - .001f && settle <= lim && settleOld >= fs.selectLiftSeconds - .001f && settleOld <= lim && Mathf.Abs(frac1 - want1) < .02f && dx < .05f,
+                    "selected lift: card #" + tg + " rises 12 px in " + fs.selectLiftSeconds + " s EaseOutCubic - after 1 frame " + frac1.ToString("F3") + " (want " + want1.ToString("F3") + "), settled at " + settle.ToString("F3") + " s (first 60 fps frame >= " + fs.selectLiftSeconds + " s); old selection #" + sel0 + " lowers in " + settleOld.ToString("F3") + " s; max x / tilt drift " + dx.ToString("F3") + " (was a 0.15 s relayout) [dt:lift" + tr + "]");
+                Flush();
+            }
+            // ---- 9. v18.5b (art point 4): whole-hand redeal (7 groups enter at once) staggered left to right
+            {
+                var spec7 = new List<(int, int)>(); for (int i = 0; i < BlockHandManager.MaxCards; i++) spec7.Add((i % B.Length, i < B.Length ? NR : i - B.Length));
+                yield return SetHand(new List<(int, int)>()); yield return WaitRt(.5f);
+                yield return Seq("redeal", 32, () => { foreach (var c in spec7) s.Blocks.Hand.AddCard(B[c.Item1], c.Item2); s.Blocks.NotifyChanged(); });
+                var lg = seqLast; float rb = ui.DebugRebuildTime, iv = ui.DebugRedealInterval; int cnt = ui.DebugRedealCount, m = 7;
+                float wantIv = Mathf.Min(fs.redealStaggerSeconds, (fs.redealMaxSeconds - fs.enterSeconds) / (m - 1));
+                var st0 = new float[m]; var en = new float[m]; bool order = true, hidden = true, okS = true; string tr = ""; float total = 0f;
+                var fin = lg[lg.Count - 1];
+                for (int j = 0; j < m; j++)
+                {
+                    st0[j] = -1f; en[j] = -1f;
+                    for (int f = 1; f < lg.Count; f++)
+                    {
+                        if (lg[f].c.Count != m) continue; float dt = lg[f].t - rb, sc = lg[f].sc[j];
+                        if (st0[j] < 0f) { if (sc > .01f) st0[j] = dt; else continue; }
+                        bool atRest = Mathf.Abs(sc - 1f) < 1e-3f && (lg[f].c[j] - fin.c[j]).magnitude < .05f && Mathf.Abs(lg[f].a[j] - fin.a[j]) < .01f;
+                        if (atRest && en[j] < 0f) en[j] = dt; else if (!atRest) en[j] = -1f;
+                    }
+                    for (int f = 1; f < lg.Count; f++) if (lg[f].c.Count == m && lg[f].t - rb < j * iv - 1e-4f && lg[f].sc[j] > .001f) hidden = false;
+                    if (j > 0 && st0[j] < st0[j - 1]) order = false;
+                    if (st0[j] < j * iv - .001f || st0[j] > j * iv + 1f / 60f + .001f) okS = false;
+                    total = Mathf.Max(total, en[j]); tr += " #" + j + " " + st0[j].ToString("F3") + "-" + en[j].ToString("F3");
+                }
+                Check(cnt == m && Mathf.Abs(iv - wantIv) < 1e-5f && order && hidden && okS && total > 0f && total <= fs.redealMaxSeconds + 1f / 120f && fin.c.Count == m,
+                    "redeal (" + cnt + " groups enter at once): interval " + iv.ToString("F4") + " s (min(" + fs.redealStaggerSeconds + ", (" + fs.redealMaxSeconds + " - " + fs.enterSeconds + ") / " + (m - 1) + ") = " + wantIv.ToString("F4") + "), left to right, waiting cards hidden; exact whole-hand time " + (fs.enterSeconds + iv * (m - 1)).ToString("F3") + " s, measured settled at " + total.ToString("F3") + " s (60 fps frames; limit " + fs.redealMaxSeconds + " s); visible-settled per card:" + tr);
+                Flush();
+                // compressed interval: enter 0.25 s -> (0.45 - 0.25) / 6 = 0.0333 s
+                float e0 = fs.enterSeconds; fs.enterSeconds = .25f;
+                yield return SetHand(new List<(int, int)>()); yield return WaitRt(.3f);
+                foreach (var c in spec7) s.Blocks.Hand.AddCard(B[c.Item1], c.Item2); s.Blocks.NotifyChanged(); yield return null; yield return null;
+                float iv2 = ui.DebugRedealInterval; fs.enterSeconds = e0; yield return WaitRt(.6f);
+                Check(Mathf.Abs(iv2 - .2f / 6f) < 1e-4f && .25f + 6 * iv2 <= fs.redealMaxSeconds + 1e-4f, "redeal interval compresses when 0.04 s would exceed 0.45 s: enter 0.25 s -> " + iv2.ToString("F4") + " s (whole hand " + (.25f + 6 * iv2).ToString("F3") + " s)");
             }
             sb.Insert(0, "ART SPEC CHECKS: " + nPass + "/" + (nPass + nFail) + " passed\n");
             File.WriteAllText(Path.Combine(root, "fanseq_" + res + ".txt"), sb.ToString()); Debug.Log("ART SPEC CHECKS: " + nPass + "/" + (nPass + nFail) + " passed");
+        }
+        /// -hoverpc (no -touch): v18.5b art point 5 - PC hover on a fanned card = x1.02 / +4 px, no un-dim, never expands; press (pointer down) =
+        /// x1.04 / +8 px un-dimmed; release back to hover, exit to rest; forced touch mode: no hover state, press unchanged. Shots fan_hover_pc / fan_press_pc.
+        IEnumerator HoverPc()
+        {
+            var ui = FindObjectOfType<GameUI>(); var pic = PlacementInputController.Instance; string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height;
+            var fs = s.config.handFan; var sb = new System.Text.StringBuilder("hover / press " + res + " touch=" + PointerInput.TouchMode + "\n"); int nPass = 0, nFail = 0;
+            void Check(bool ok, string what) { if (ok) nPass++; else nFail++; sb.Append(ok ? "PASS " : "FAIL ").Append(what).Append('\n'); }
+            yield return FullHand(); yield return WaitRt(.7f);
+            var fc = ui.FanCards(); var h = fc[2].holder; var hv = h.Find("Card").GetComponent<CardHover>(); var img = h.Find("Card").GetComponent<UnityEngine.UI.Image>();
+            var p0 = h.anchoredPosition; float s0 = h.localScale.x, b0 = img.color.r; int ev0 = ui.FanEvents;
+            string State() { var d = h.anchoredPosition - p0; return "lift " + d.y.ToString("F1") + " px, scale x" + (h.localScale.x / s0).ToString("F3") + ", brightness " + img.color.r.ToString("F2"); }
+            bool Is(float lift, float scale, float bright) { var d = h.anchoredPosition - p0; return Mathf.Abs(d.y - lift) < .1f && Mathf.Abs(d.x) < .1f && Mathf.Abs(h.localScale.x / s0 - scale) < .001f && Mathf.Abs(img.color.r - bright) < .01f; }
+            Check(!PointerInput.TouchMode && ui.FanActive && !ui.FanExpanded, "PC mode (touch=" + PointerInput.TouchMode + "), fanned collapsed 7-card hand, covered card #2 at rest: " + State());
+            hv.OnPointerEnter(null); yield return WaitRt(.6f);
+            Check(Is(fs.hoverLiftPx, fs.hoverScale, b0) && !ui.FanExpanded && ui.FanEvents == ev0, "PC hover: " + State() + " (spec +" + fs.hoverLiftPx + " px, x" + fs.hoverScale + ", stays dimmed " + b0.ToString("F2") + "); fan not expanded after 0.6 s (events " + (ui.FanEvents - ev0) + ")");
+            yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "fan_hover_pc_" + res + ".png"));
+            hv.OnPointerDown(null); yield return null; yield return null;
+            Check(Is(fs.pressLiftPx, fs.pressScale, 1f), "PC press (pointer down): " + State() + " (spec +" + fs.pressLiftPx + " px, x" + fs.pressScale + ", un-dimmed)");
+            yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "fan_press_pc_" + res + ".png"));
+            hv.OnPointerUp(null); yield return null; yield return null; bool backHover = Is(fs.hoverLiftPx, fs.hoverScale, b0); string sh = State();
+            hv.OnPointerExit(null); yield return null; yield return null;
+            Check(backHover && Is(0f, 1f, b0), "release -> hover (" + sh + "), exit -> rest (" + State() + ")");
+            PointerInput.ForceTouch = true; yield return null;
+            hv.OnPointerEnter(null); yield return null; yield return null; bool noHover = Is(0f, 1f, b0); string st1 = State();
+            hv.OnPointerDown(null); yield return null; yield return null; bool press = Is(fs.pressLiftPx, fs.pressScale, 1f); string st2 = State();
+            hv.OnPointerUp(null); hv.OnPointerExit(null); yield return null; yield return null; bool rest = Is(0f, 1f, b0);
+            PointerInput.ForceTouch = false;
+            Check(noHover && press && rest, "touch mode: pointer over without press = no hover (" + st1 + "); press = " + st2 + "; release = rest");
+            sb.Insert(0, "HOVER CHECKS: " + nPass + "/" + (nPass + nFail) + " passed\n");
+            File.WriteAllText(Path.Combine(dir, "hover_" + res + ".txt"), sb.ToString()); Debug.Log("HOVER CHECKS: " + nPass + "/" + (nPass + nFail) + " passed\n" + sb);
         }
         /// -fantest [-touch] [-notch]: v18.4 fanned block row - geometry, hit-testing of exposed parts, badges never covered, newest card
         /// fully visible, collapse triggers (drag start / empty tap / idle), expand by tap / hold, placement from the expanded fan;
@@ -656,6 +778,77 @@ namespace StoneSignal
             fc = ui.FanCards();
             { string bad = BadgeCheck(fc, out int nb); bool count = false; foreach (var f in fc) count |= f.holder.Find("Card/Count") != null; Check(bad == "" && count && ui.FanActive, "xN stack + rune badges fanned: " + fc.Count + " groups, " + nb + " badges, none covered" + bad); }
             yield return ShotNamed(dir, "fan_badges_" + res);
+            // ---- 2b. v18.5b (art point 2): expanded row - a xN stack's lower layers may tuck under the next card, but its top card and xN badge
+            // are never covered (tilted quads, separating-axis test, > 0.5 px = covered; Shadow / Outline effects inflate the drawn quad).
+            {
+                Vector2[] Quad(RectTransform r, float inflateUnits)
+                {
+                    r.GetWorldCorners(c4); var q = new Vector2[] { c4[0], c4[1], c4[2], c4[3] };
+                    if (inflateUnits > 0f && r.rect.width > 0f)
+                    {
+                        float d = inflateUnits * (q[3] - q[0]).magnitude / r.rect.width; var ux = (q[3] - q[0]).normalized * d; var uy = (q[1] - q[0]).normalized * d;
+                        q[0] += -ux - uy; q[1] += -ux + uy; q[2] += ux + uy; q[3] += ux - uy;
+                    }
+                    return q;
+                }
+                float Pen(Vector2[] A, Vector2[] Bq)
+                {
+                    float best = float.MaxValue;
+                    foreach (var P in new[] { A, Bq }) for (int e = 0; e < 2; e++)
+                    {
+                        var ed = P[e + 1] - P[e]; var ax = new Vector2(-ed.y, ed.x).normalized; float a0 = float.MaxValue, a1 = float.MinValue, b0 = float.MaxValue, b1 = float.MinValue;
+                        foreach (var v in A) { float d = Vector2.Dot(v, ax); a0 = Mathf.Min(a0, d); a1 = Mathf.Max(a1, d); }
+                        foreach (var v in Bq) { float d = Vector2.Dot(v, ax); b0 = Mathf.Min(b0, d); b1 = Mathf.Max(b1, d); }
+                        best = Mathf.Min(best, Mathf.Min(a1, b1) - Mathf.Max(a0, b0));
+                    }
+                    return best;
+                }
+                float Inflate(UnityEngine.UI.Graphic g) { float m = 0f; foreach (var x in g.GetComponents<UnityEngine.UI.Shadow>()) if (x.enabled && x.effectColor.a > .05f) m = Mathf.Max(m, Mathf.Abs(x.effectDistance.x), Mathf.Abs(x.effectDistance.y)); return m; }
+                // worst overlap of later holders' graphics on stack holder si's top card ("Card") and its "Count" badge, screen px
+                string Cover(List<(RectTransform holder, int index)> f, out float worst)
+                {
+                    worst = -999f; string bad = "";
+                    for (int i = 0; i < f.Count; i++)
+                    {
+                        var cnt = f[i].holder.Find("Card/Count"); if (cnt == null) continue;
+                        var targets = new[] { ((RectTransform)f[i].holder.Find("Card"), "top card"), ((RectTransform)cnt, "xN badge") };
+                        for (int j = i + 1; j < f.Count; j++) foreach (var g in f[j].holder.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                        {
+                            if (!g.enabled || g.color.a <= .05f || g.canvasRenderer.cull) continue; var gq = Quad(g.rectTransform, Inflate(g));
+                            foreach (var (tr, what) in targets) { float pn = Pen(Quad(tr, 0f), gq); if (pn > worst) worst = pn; if (pn > .5f) bad += " #" + i + " " + what + " covered " + pn.ToString("F1") + " px by #" + j + "/" + g.name; }
+                        }
+                    }
+                    return bad;
+                }
+                // runes 0..5 on every single card (rune badge = the widest reach to the left); the card right of the stack is selected (gold outline)
+                (int, int) G(int g) => (g % B.Length, g % 6);
+                string bad = "", lines = ""; float worstAll = -999f; int configs = 0;
+                for (int si = 0; si < 5; si++)
+                {
+                    var spec = new List<(int, int)>(); for (int g = 0; g < 6; g++) { spec.Add(G(g)); if (g == si) spec.Add(G(g)); }
+                    yield return SetHand(spec); yield return WaitRt(.3f); fc = ui.FanCards(); s.Blocks.SelectCard(fc[si + 1].index); yield return null; yield return null;
+                    ui.DebugSetFan(true); yield return WaitRt(.4f); fc = ui.FanCards();
+                    bad += Cover(fc, out float w0); worstAll = Mathf.Max(worstAll, w0); configs++; lines += " stack@" + si + " " + w0.ToString("F1");
+                    if (si == 2)
+                    {   // the neighbour pressed (x1.04 / +8) and the shot for the close-up
+                        yield return ShotNamed(dir, "fan_stack_expanded_" + res);
+                        var hv = fc[si + 1].holder.Find("Card").GetComponent<CardHover>(); hv.OnPointerEnter(null); hv.OnPointerDown(null); yield return null; yield return null;
+                        bad += Cover(fc, out float w1); worstAll = Mathf.Max(worstAll, w1); configs++; lines += " stack@2+pressed neighbour " + w1.ToString("F1");
+                        hv.OnPointerUp(null); hv.OnPointerExit(null); yield return null;
+                    }
+                    ui.DebugSetFan(false); yield return WaitRt(.3f);
+                }
+                Check(bad == "", "expanded xN stack: top card + badge never covered (" + configs + " configs: stack at slots 0..4 of 6, next card rune + selected, + pressed neighbour; deepest overlap " + worstAll.ToString("F1") + " px, < 0 = gap) step " + ui.FanRow.expandedStep.ToString("F2") + " ref px;" + lines + bad);
+                // two adjacent stacks: the right stack's xN badge reaches 12 card units left -> expanded step widened to card + 12 units
+                {
+                    var spec = new List<(int, int)> { G(0), G(1), G(1), G(2), G(2), G(3), G(4) };
+                    yield return SetHand(spec); yield return WaitRt(.3f); ui.DebugSetFan(true); yield return WaitRt(.4f); fc = ui.FanCards();
+                    string b2 = Cover(fc, out float w2); float want = row.cardW + Mathf.Max(10f, -s.config.handFan.fanCountBadgePos.x) * row.cardW / 128f;
+                    int stacks = 0; foreach (var f in fc) if (f.holder.Find("Card/Count") != null) stacks++;
+                    Check(b2 == "" && stacks == 2 && ui.FanActive && ui.FanRow.expandedStep >= want - .01f, "adjacent xN stacks expanded: " + fc.Count + " groups, " + stacks + " stacks, step " + ui.FanRow.expandedStep.ToString("F2") + " ref px (>= card + 12 units = " + want.ToString("F2") + "), deepest overlap " + w2.ToString("F1") + " px" + b2);
+                    ui.DebugSetFan(false); yield return WaitRt(.3f);
+                }
+            }
             // ---- 3. newest card goes to the far right, fully visible
             {
                 var spec = new List<(int, int)>(); for (int i = 0; i < 6; i++) spec.Add((i % B.Length, i < B.Length ? RuneRules.NoRune : 2)); yield return SetHand(spec);
