@@ -22,6 +22,9 @@ namespace StoneSignal.VFX
         public float deathDissolveDuration = 0.6f;
         [Tooltip("Optional: spawned at death (e.g. FX_Enemy_CoinPop / FX_Enemy_DeathPuff).")]
         public GameObject deathVfx;
+        // v19 flyer: locomotion state.speed baked by StylizedArtIntegration.BuildPrefab (clipLength / 0.6). 0 = not baked
+        // (controller still plays SS_Move at speed 1). Enemy.FlapScale divides by this so the two never stack.
+        public float flyerMoveRate;
 
         Renderer[] _renderers; MaterialPropertyBlock _mpb; Transform _rig; Animator _anim;
         Vector3 _rigScale = Vector3.one; float _flashT = -1, _squashT = -1, _dissolve; bool _dead;

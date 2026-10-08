@@ -23,6 +23,8 @@ namespace StoneSignal
         // Quaternius monsters ship skeletal walk/death clips on the visual prefab.
         private Animator animator;
         private float deathHold;
+        private float flapScale = 1f; // flyers: SS_Move clip length / FlyingMotion.FlapLoopSeconds (art: 2 flaps per 0.6 s)
+        public float FlapScale => flapScale;
         private static readonly int DeathTrigger = Animator.StringToHash(EnemyVisualContract.DieTrigger);
         public EnemyData Data { get; private set; }
         public float HP { get; private set; }
@@ -95,6 +97,16 @@ namespace StoneSignal
             if (controller != null)
                 foreach (var clip in controller.animationClips)
                     if (clip != null && clip.name == EnemyVisualContract.DeathClip) deathHold = clip.length;
+            flapScale = 1f;
+            if (controller != null && Data != null && Data.flying)
+                foreach (var clip in controller.animationClips)
+                    if (clip != null && clip.name == "SS_Move" && clip.length > .05f)
+                    {
+                        // Art spec is 2 flaps / 0.6 s. Divide out a rate the generator already baked into the
+                        // controller (flyerMoveRate / state.speed) so BatchImport and this runtime fix don't stack.
+                        float baked = Feedback != null && Feedback.flyerMoveRate > .05f ? Feedback.flyerMoveRate : 1f;
+                        flapScale = (clip.length / StoneSignal.VFX.FlyingMotion.FlapLoopSeconds) / baked;
+                    }
         }
         public void ResumeFrom(Vector3 position,Vector2Int anchor) {
             transform.position=position; hasEnd=false; path=owner.Paths.FindPath(anchor,grid.goal); node=0;
@@ -129,8 +141,8 @@ namespace StoneSignal
         private StoneSignal.VFX.FlyingMotion fly; private bool flyChecked; private float modelTop;
         private float BarHeight()
         {
-            // Bar sits at max(0.75, model top + 0.05) above the root, so tall ground meshes (e.g. the legged Skimmer) keep it above the model.
-            // A flyer (FlyingMotion active; no enemy in this version) adds its live lift on top.
+            // Bar sits at max(0.75, model top + 0.05) above the root, so tall ground meshes keep it above the model.
+            // A flyer (FlyingMotion active; no flying enemy is scheduled in waves 1-3 yet) adds its live lift on top.
             if (!flyChecked && Application.isPlaying && Time.frameCount > spawnFrame)
             {
                 fly = GetComponentInChildren<StoneSignal.VFX.FlyingMotion>(); flyChecked = true; modelTop = 0;
@@ -177,7 +189,7 @@ namespace StoneSignal
             if (!Alive) return; // dead: leave the animator running the death clip
             bool moving = Alive && owner != null && owner.CanMove();
             if (animator != null) animator.speed = moving ? 1 : 0;
-            if (Feedback != null && Alive && Data != null) Feedback.SetMoveSpeed(speed * owner.SpeedMultiplier() * slowMultiplier / Mathf.Max(.01f, Data.moveSpeed));
+            if (Feedback != null && Alive && Data != null) Feedback.SetMoveSpeed(speed * owner.SpeedMultiplier() * slowMultiplier / Mathf.Max(.01f, Data.moveSpeed) * flapScale);
             if (moving && !HeldBySpawn) Advance(Time.deltaTime); // spawn portal rise: hold until onDone
             if (barFade >= 0 && hpBar != null)
             {

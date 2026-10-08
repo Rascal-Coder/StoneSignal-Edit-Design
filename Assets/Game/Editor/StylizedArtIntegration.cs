@@ -195,6 +195,15 @@ public static class StylizedArtIntegration
                 var sm = ctrl.layers[0].stateMachine;
                 var loco = sm.AddState(EnemyVisualContract.LocomotionState, new Vector3(300, 0));
                 loco.motion = Clip(EnemyVisualContract.MoveClip); loco.speedParameterActive = true; loco.speedParameter = StoneSignal.VFX.EnemyAnimParams.MoveSpeed;
+                // v19 flyer (SM_Enemy_Flyer_01): SS_Move is 2 flaps / 0.6 s. The take is 0.75 s (18 frames @ 24 fps),
+                // so locomotion state.speed = clipLength / FlyingMotion.FlapLoopSeconds (x1.25). BatchImport rebuilds
+                // this controller; this is the line that keeps the timing. Enemy.FlapScale divides the same ratio out
+                // when flyerMoveRate is unset (a controller still at speed 1), so the two never stack.
+                if (a.fbx.Contains("Flyer"))
+                {
+                    var move = Clip(EnemyVisualContract.MoveClip);
+                    if (move != null && move.length > .05f) loco.speed = move.length / StoneSignal.VFX.FlyingMotion.FlapLoopSeconds;
+                }
                 sm.defaultState = loco;
                 var hitClip = Clip(StoneSignal.VFX.EnemyAnimParams.HitClip);
                 if (hitClip != null)
@@ -216,7 +225,12 @@ public static class StylizedArtIntegration
                 var anim = mesh.GetComponent<Animator>(); if (anim == null) anim = mesh.AddComponent<Animator>();
                 anim.runtimeAnimatorController = ctrl; anim.applyRootMotion = false; anim.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
             }
-            root.AddComponent<StoneSignal.VFX.EnemyHitFeedback>(); // visual-only: flash/squash/dissolve, no gameplay logic
+            var feedback = root.AddComponent<StoneSignal.VFX.EnemyHitFeedback>(); // visual-only: flash/squash/dissolve, no gameplay logic
+            if (a.fbx.Contains("Flyer"))
+            {
+                var moveClip = AssetDatabase.LoadAllAssetsAtPath(ArtDir + a.folder + "/" + a.fbx + ".fbx").OfType<AnimationClip>().FirstOrDefault(c => c.name == EnemyVisualContract.MoveClip);
+                if (moveClip != null && moveClip.length > .05f) feedback.flyerMoveRate = moveClip.length / StoneSignal.VFX.FlyingMotion.FlapLoopSeconds;
+            }
         }
         PrefabUtility.SaveAsPrefabAsset(root, PrefabDir + a.prefab + ".prefab");
         UnityEngine.Object.DestroyImmediate(root);

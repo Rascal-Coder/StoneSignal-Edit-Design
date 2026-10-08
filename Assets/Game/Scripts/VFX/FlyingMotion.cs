@@ -10,13 +10,17 @@ namespace StoneSignal.VFX
     {
         [Tooltip("Metres above the tile top")] public float heightOffset = 1.2f;
         public float bobAmp = .12f, bobFreq = .9f;
-        [Tooltip("Max roll (deg) when turning")] public float bankMax = 28f;
+        [Tooltip("Max roll (deg) when turning (art v17 spec: 22 deg into a turn; the preview's -14 deg is the same rule turning the other way, gentler)")] public float bankMax = 22f;
         [Tooltip("Roll degrees per (deg/s) of yaw rate")] public float bankPerYawRate = .12f;
         public float pitchForward = 8f, smoothing = 6f;
         [Tooltip("Seconds to climb to heightOffset after (re)spawn")] public float takeOff = .5f;
 
+        /// Art v17 spec: SS_Move = 2 wing flaps per 0.6 s. SM_Enemy_Flyer_01's SS_Move take is 18 frames at 24 fps (0.75 s), so Enemy scales the
+        /// locomotion speed by clipLength / FlapLoopSeconds for flyers (x1.25) instead of re-timing the art clip.
+        public const float FlapLoopSeconds = .6f;
         Vector3 baseLocal; Quaternion baseRot; float lastYaw, roll, pitch, t0, phase; Vector3 lastPos; bool init;
         public float CurrentHeight { get; private set; }
+        public float Roll => roll; public float Pitch => pitch;   // diagnostics (-flyershot)
 
         void OnEnable()
         {

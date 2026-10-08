@@ -38,6 +38,7 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fantest") >= 0) { yield return FanTest(); Debug.Log("FAN TEST DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fanseq") >= 0) { yield return FanSeq(); Debug.Log("FAN SEQ DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-flyershot") >= 0) { yield return FlyerShot(); Debug.Log("FLYER SHOT DONE " + path); Application.Quit(0); yield break; } // v19 flyer bird (GameplayShotFlyer.cs)
             { var r186 = V186(); if (r186 != null) { yield return r186; Debug.Log("V186 DONE " + path); Application.Quit(0); yield break; } } // v18.6 diagnostics (GameplayShotV186.cs)
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hoverpc") >= 0) { yield return HoverPc(); Debug.Log("HOVER PC DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudcd") >= 0) { yield return HudDc(); Debug.Log("HUD DC DONE " + path); Application.Quit(0); yield break; }
@@ -1197,7 +1198,7 @@ namespace StoneSignal
             string dir = Path.GetDirectoryName(path), info = "";
             EnemyData skimmer = null, drifter = null;
             foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) { if (d.name == "Skimmer") skimmer = d; if (d.name == "Drifter") drifter = d; }
-            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) if (d.flying) info += "FLYING ENEMY DATA: " + d.name + " (expected none in this version)\n";
+            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) if (d.flying) info += "FLYING ENEMY DATA: " + d.name + (d.name == "DiagFlyerPreview" ? " (diagnostics-only preview, not in any wave)" : " (no flyer is scheduled in waves 1-3)") + "\n";
             info += Bloom();
             TimeController.ResetAll(); captureNoUi = true;
             var cam = s.viewCamera; var home = cam.transform.position; float ortho = cam.orthographicSize, fov = cam.fieldOfView;
