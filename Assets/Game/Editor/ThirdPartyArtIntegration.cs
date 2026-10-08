@@ -46,7 +46,6 @@ public static class ThirdPartyArtIntegration
     private static readonly (string enemy, string monster, float height)[] Enemies =
     {
         ("Drifter", "Slime", 1.0f),
-        ("Skimmer", "Bat", .9f),
         ("Bulwark", "Skeleton", 1.4f),
         ("Splitter", "Dragon", 1.15f),
         ("Shard", "Slime", .6f)
@@ -462,7 +461,7 @@ public static class ThirdPartyArtIntegration
             tower.icon = AssetDatabase.LoadAssetAtPath<Sprite>(IconDir + towers[i] + ".png");
             EditorUtility.SetDirty(tower);
         }
-        foreach (string name in new[] { "Drifter", "Skimmer", "Bulwark", "Splitter", "Shard" })
+        foreach (string name in new[] { "Drifter", "Bulwark", "Splitter", "Shard" })
         {
             var enemy = AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "ScriptableObjects/Enemies/" + name + ".asset");
             enemy.visualPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + name + ".prefab");

@@ -30,7 +30,7 @@ namespace StoneSignal.UI
         static readonly Dictionary<string, string> Towers = new Dictionary<string, string>
         { { "Needle", "针弩" }, { "Pulse", "脉冲炮" }, { "Seismic", "震岩炮" }, { "Chill", "寒晶" } };
         static readonly Dictionary<string, string> Enemies = new Dictionary<string, string>
-        { { "Drifter", "漂石史莱姆" }, { "Skimmer", "掠影蝠" }, { "Bulwark", "骨垒卫" }, { "Splitter", "裂鳞龙" }, { "Shard", "碎晶" } };
+        { { "Drifter", "漂石史莱姆" }, { "Bulwark", "骨垒卫" }, { "Splitter", "裂鳞龙" }, { "Shard", "碎晶" } };
         public static string Tower(TowerData d) { if (d == null) return ""; foreach (var kv in Towers) if (d.name.StartsWith(kv.Key) || (d.displayName ?? "").StartsWith(kv.Key)) return kv.Value; return d.displayName; }
         public static string Enemy(string assetName) => Enemies.TryGetValue(assetName ?? "", out var s) ? s : assetName;
         public static readonly string[] RuneNames = { "锋·赤", "疾·苍", "望·金", "霜·紫", "丰·绿", "共鸣·白" };

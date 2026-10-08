@@ -439,7 +439,7 @@ public static class StylizedVFXBuilder
                              ("PF_Tower_Tesla_1x1", "FX_Muzzle_Tesla", "FX_Proj_Tesla_Arc", "FX_Hit_Lightning", "Pulse"),
                              ("PF_Tower_Flamer_1x2", "FX_Muzzle_Flamer", "FX_Proj_Fireball", "FX_Hit_Fire", "Flamer"),
                              ("PF_Tower_Mortar_2x2", "FX_Muzzle_Mortar", "FX_Proj_MortarShell", "FX_Explosion_HE", "Seismic") };
-        var enemies = new[] { "PF_Enemy_Drifter", "PF_Enemy_Skimmer", "PF_Enemy_Bulwark", "PF_Enemy_Shard", "PF_Enemy_Splitter", "PF_Enemy_Boss" };
+        var enemies = new[] { "PF_Enemy_Drifter", "PF_Enemy_Drifter", "PF_Enemy_Bulwark", "PF_Enemy_Shard", "PF_Enemy_Splitter", "PF_Enemy_Boss" }; // one target per tower (6); v19: the winged fast enemy is retired (_Deprecated), Drifter takes its slot
         cam.transform.position = new Vector3(-5, 9, -16); cam.transform.LookAt(new Vector3(0, .8f, .5f)); cam.fieldOfView = 32;
         for (int i = 0; i < towers.Length; i++)
         {
@@ -522,7 +522,7 @@ public static class StylizedVFXBuilder
         Put(pf + "PF_Enemy_Bulwark.prefab", new Vector3(-1.5f, 0, 2.6f), 200, s4);
         Num("96!", new Vector3(-1.3f, 2.9f, 2.6f), DamageNumbers.CritColor, DamageNumbers.CritScale * 1.2f);
         Label("CRIT (x1.6, gold, '!')", new Vector3(-1.5f, 4.1f, 2.6f), cam, 1.4f, H("FFE08A"));
-        Put(pf + "PF_Enemy_Skimmer.prefab", new Vector3(2.5f, 0, 2.6f), 200, s4);
+        Put(pf + "PF_Enemy_Drifter.prefab", new Vector3(2.5f, 0, 2.6f), 200, s4); // v19: winged fast enemy retired (_Deprecated)
         for (int j = 0; j < 3; j++) Num(new[] { "6", "12", "18" }[j], new Vector3(2.2f + j * .45f, 1.6f + j * .55f, 2.6f), A(Color.white, .35f + j * .3f), .7f + j * .2f);
         Label("stacking: 6 -> 12 -> 18 (same target, 0.35s)", new Vector3(2.8f, 3.6f, 2.6f), cam, 1.2f, H("C8D8FF"));
         StylizedArtIntegration.Capture(cam, PreviewDir + "vfx_numbers.png");

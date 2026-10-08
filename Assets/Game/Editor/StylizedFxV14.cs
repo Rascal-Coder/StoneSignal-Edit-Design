@@ -280,7 +280,7 @@ public static class StylizedFxV14
         }
         var sysGo = Put("PF_VFX_EnemyGroundSystem", Vector3.zero); var sys = sysGo.GetComponent<EnemyGroundFxSystem>();
         var dps = sys.dust; dps.useAutoRandomSeed = false; dps.randomSeed = 9;
-        string[] en = { "PF_Enemy_Drifter", "PF_Enemy_Bulwark", "PF_Enemy_Skimmer", "PF_Enemy_Splitter", "PF_Enemy_Flyer" };
+        string[] en = { "PF_Enemy_Drifter", "PF_Enemy_Bulwark", "PF_Enemy_Splitter", "PF_Enemy_Flyer" };
         var dir = new Vector3(1, 0, 1).normalized; var walkers = new System.Collections.Generic.List<(Vector3 end, EnemyGroundFx g)>();
         for (int i = 0; i < en.Length; i++)
         {

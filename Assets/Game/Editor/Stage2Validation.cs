@@ -12,15 +12,15 @@ public static class Stage2Validation {
   config.towers=new[]{Load<TowerData>("Towers","Needle"),Load<TowerData>("Towers","Pulse"),Load<TowerData>("Towers","Seismic"),Load<TowerData>("Towers","Chill")};
   string[] names={"AllDamage","AllAttackSpeed","AllRange","BaseHP","CannonRadius","AddBlock","NextDraw","PathSlow","BonusSlot","KillGold","WaveGold","TowerDiscount","WaveHeal","ExtraDraw"};
   config.rewards=Array.ConvertAll(names,n=>Load<RewardData>("Rewards",n));
-  var normal=Load<EnemyData>("Enemies","Drifter"); var fast=Load<EnemyData>("Enemies","Skimmer"); fast.kind=EnemyKind.Fast;
+  var normal=Load<EnemyData>("Enemies","Drifter"); // v19: the winged fast enemy was retired to _Deprecated; each N of it became ceil(1.2N) Drifters. Shard keeps EnemyKind.Fast
   var tank=Load<EnemyData>("Enemies","Bulwark"); var splitter=Load<EnemyData>("Enemies","Splitter"); splitter.splitChild=Load<EnemyData>("Enemies","Shard");
   Load<RewardData>("Rewards","AddBlock").blockShape=Load<BlockShapeData>("Blocks","O");
   Load<RewardData>("Rewards","BonusSlot").blockShape=Load<BlockShapeData>("Blocks","L");
-  config.waves[1].groups=new[]{new EnemyGroup{enemy=normal,count=5},new EnemyGroup{enemy=fast,count=3}};
-  config.waves[2].groups=new[]{new EnemyGroup{enemy=normal,count=6},new EnemyGroup{enemy=fast,count=2},new EnemyGroup{enemy=tank,count=2},new EnemyGroup{enemy=splitter,count=2}};
+  config.waves[1].groups=new[]{new EnemyGroup{enemy=normal,count=9}};
+  config.waves[2].groups=new[]{new EnemyGroup{enemy=normal,count=9},new EnemyGroup{enemy=tank,count=2},new EnemyGroup{enemy=splitter,count=2}};
   foreach(var item in config.rewards) { PrototypeChecks.Require(item!=null,"Reward asset"); EditorUtility.SetDirty(item); }
   foreach(var item in config.towers) PrototypeChecks.Require(item!=null,"Tower asset");
-  EditorUtility.SetDirty(config); EditorUtility.SetDirty(fast); EditorUtility.SetDirty(splitter);
+  EditorUtility.SetDirty(config); EditorUtility.SetDirty(splitter);
   foreach(var wave in config.waves) EditorUtility.SetDirty(wave);
   AssetDatabase.SaveAssets();
   Run();

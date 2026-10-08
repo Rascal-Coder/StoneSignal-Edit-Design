@@ -38,6 +38,7 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fantest") >= 0) { yield return FanTest(); Debug.Log("FAN TEST DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fanseq") >= 0) { yield return FanSeq(); Debug.Log("FAN SEQ DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-waveshots") >= 0) { yield return WaveShots(); Debug.Log("WAVE SHOTS DONE " + path); Application.Quit(0); yield break; } // v19 wave composition (GameplayShotWaves.cs)
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-flyershot") >= 0) { yield return FlyerShot(); Debug.Log("FLYER SHOT DONE " + path); Application.Quit(0); yield break; } // v19 flyer bird (GameplayShotFlyer.cs)
             { var r186 = V186(); if (r186 != null) { yield return r186; Debug.Log("V186 DONE " + path); Application.Quit(0); yield break; } } // v18.6 diagnostics (GameplayShotV186.cs)
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hoverpc") >= 0) { yield return HoverPc(); Debug.Log("HOVER PC DONE " + path); Application.Quit(0); yield break; }
@@ -1190,14 +1191,14 @@ namespace StoneSignal
             yield return new WaitForEndOfFrame(); Capture(Path.Combine(dir, "reward_glow_pick.png"));
             File.WriteAllText(Path.Combine(dir, "reward_glow.txt"), info); Debug.Log("REWARD SHOTS\n" + info);
         }
-        // -groundshot (v17.2): enemy ground pass. A Drifter on the bottom bridge (heading +z) and a Skimmer on the left bridge (heading +x)
+        // -groundshot (v17.2): enemy ground pass. A Drifter on the bottom bridge (heading +z) and a Shard on the left bridge (heading +x; v19: was the retired winged enemy)
         // close-ups with UI hidden: one ground shadow, footprints under the feet and aligned to the heading (straight z vs x segment checks
         // footprintYawOffset / footprintYawSign), HP bar above the model. Also logs Bloom (volume + camera post-processing).
         IEnumerator GroundShot()
         {
             string dir = Path.GetDirectoryName(path), info = "";
-            EnemyData skimmer = null, drifter = null;
-            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) { if (d.name == "Skimmer") skimmer = d; if (d.name == "Drifter") drifter = d; }
+            EnemyData shard = null, drifter = null;
+            foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) { if (d.name == "Shard") shard = d; if (d.name == "Drifter") drifter = d; }
             foreach (var d in Resources.FindObjectsOfTypeAll<EnemyData>()) if (d.flying) info += "FLYING ENEMY DATA: " + d.name + (d.name == "DiagFlyerPreview" ? " (diagnostics-only preview, not in any wave)" : " (no flyer is scheduled in waves 1-3)") + "\n";
             info += Bloom();
             TimeController.ResetAll(); captureNoUi = true;
@@ -1206,7 +1207,7 @@ namespace StoneSignal
             int bottom = -1, left = -1, right = -1;
             for (int i = 0; i < s.grid.Spawns.Count; i++) { var e = s.grid.Spawns[i]; if (e.y == 0) bottom = i; else if (e.x == 0) left = i; else if (e.x == s.grid.width - 1) right = i; }
             info += "WalkSurface tiles=" + WalkSurface.TileCount + " profiles=" + WalkSurface.ProfileCount + " plank samples=" + WalkSurface.PlankSamples + "\n";
-            foreach (var run in new[] { ("drifter_bottom_bridge", drifter, bottom), ("skimmer_left_bridge", skimmer, left), ("drifter_right_bridge", drifter, right) })
+            foreach (var run in new[] { ("drifter_bottom_bridge", drifter, bottom), ("shard_left_bridge", shard, left), ("drifter_right_bridge", drifter, right) })
             {
                 if (run.Item2 == null || run.Item3 < 0) { info += run.Item1 + ": data/spawn missing\n"; continue; }
                 if (s.Game.State != GameState.Combat) { var was = s.Game.State; ToBuild(); info += "(state " + was + " -> " + s.Game.State + " -> StartWave=" + s.Waves.StartWave() + ")\n"; } // enemies only move in Combat

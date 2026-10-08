@@ -54,7 +54,7 @@ public static class PrototypeBuild
             p.wall=Material("Stone wall",new Color(.47f,.57f,.58f)); p.spawn=Material("Entry",new Color(.11f,.83f,.75f)); p.goal=Material("Signal core",new Color(1,.65f,.25f));
             p.valid=Material("Valid ghost",new Color(.2f,.95f,.55f),true); p.invalid=Material("Invalid ghost",new Color(.98f,.24f,.3f),true);
             p.path=Material("Route",new Color(.38f,.85f,.94f),true); p.projectile=Material("Bolt",new Color(1,.88f,.46f),true);
-            p.enemy=Material("Drifter",new Color(.92f,.34f,.31f)); p.fastEnemy=Material("Skimmer",new Color(.95f,.5f,.82f)); p.towerBase=Material("Beacon plinth",new Color(.15f,.21f,.26f));
+            p.enemy=Material("Drifter",new Color(.92f,.34f,.31f)); p.fastEnemy=Material("FastEnemy",new Color(.95f,.5f,.82f)); p.towerBase=Material("Beacon plinth",new Color(.15f,.21f,.26f));
             p.arrow=Material("Needle",new Color(.23f,.83f,.68f)); p.rapid=Material("Pulse",new Color(.31f,.65f,1)); p.cannon=Material("Seismic",new Color(1,.69f,.26f));
             var particle=new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")); particle.name="Impact particles"; particle.SetColor("_BaseColor",Color.white);
             AssetDatabase.CreateAsset(particle,Root+"Materials/Impact particles.mat"); p.particle=particle;
@@ -70,7 +70,6 @@ public static class PrototypeBuild
         var blocks=new BlockShapeData[5];
         for(int i=0;i<5;i++) { int index=i; blocks[i]=Asset<BlockShapeData>(Root+"ScriptableObjects/Blocks/"+names[i]+".asset",s=>{s.displayName=names[index];s.cells=cells[index];}); }
         var normal=Asset<EnemyData>(Root+"ScriptableObjects/Enemies/Drifter.asset",e=>{e.displayName="Drifter";e.hp=32;e.moveSpeed=1.25f;e.reward=12;e.damageToBase=2;});
-        var fast=Asset<EnemyData>(Root+"ScriptableObjects/Enemies/Skimmer.asset",e=>{e.displayName="Skimmer";e.hp=22;e.moveSpeed=2.3f;e.reward=16;e.damageToBase=3;e.fast=true;e.kind=EnemyKind.Fast;});
         var tank=Asset<EnemyData>(Root+"ScriptableObjects/Enemies/Bulwark.asset",e=>{e.displayName="Bulwark";e.kind=EnemyKind.Tank;e.hp=110;e.moveSpeed=.75f;e.reward=25;e.damageToBase=5;});
         var shard=Asset<EnemyData>(Root+"ScriptableObjects/Enemies/Shard.asset",e=>{e.displayName="Shard";e.kind=EnemyKind.Fast;e.fast=true;e.hp=12;e.moveSpeed=1.8f;e.reward=4;e.damageToBase=1;});
         var splitter=Asset<EnemyData>(Root+"ScriptableObjects/Enemies/Splitter.asset",e=>{e.displayName="Splitter";e.kind=EnemyKind.Splitter;e.hp=42;e.moveSpeed=1.1f;e.reward=14;e.damageToBase=3;e.splitCount=2;e.splitChild=shard;});
@@ -81,8 +80,8 @@ public static class PrototypeBuild
         towers[3]=Asset<TowerData>(Root+"ScriptableObjects/Towers/Chill.asset",t=>{t.displayName="Chill Beacon";t.kind=TowerKind.Chill;t.cost=80;t.damage=3;t.attacksPerSecond=1.4f;t.range=4;t.projectileSpeed=12;t.slowFraction=.35f;t.slowDuration=2;t.role="Slow 35% for 2s. Combine with Seismic.";});
         var waves=new WaveData[3];
         waves[0]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave01.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=5}});
-        waves[1]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave02.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=5},new EnemyGroup{enemy=fast,count=3}});
-        waves[2]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave03.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=6},new EnemyGroup{enemy=fast,count=2},new EnemyGroup{enemy=tank,count=2},new EnemyGroup{enemy=splitter,count=2}});
+        waves[1]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave02.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=9}}); // v19: winged fast enemy retired (_Deprecated); N of it -> ceil(1.2N) Drifters (玩法策划)
+        waves[2]=Asset<WaveData>(Root+"ScriptableObjects/Waves/Wave03.asset",w=>w.groups=new[]{new EnemyGroup{enemy=normal,count=9},new EnemyGroup{enemy=tank,count=2},new EnemyGroup{enemy=splitter,count=2}});
         RewardEffect[] effects={RewardEffect.AllDamage,RewardEffect.AllAttackSpeed,RewardEffect.AllRange,RewardEffect.BaseHP,RewardEffect.CannonRadius,RewardEffect.AddBlock,RewardEffect.NextDraw,RewardEffect.PathSlow,RewardEffect.BonusSlot,RewardEffect.KillGold,RewardEffect.WaveGold,RewardEffect.TowerDiscount,RewardEffect.WaveHeal,RewardEffect.ExtraDraw};
         float[] amounts={.1f,.12f,.15f,10,.2f,1,1,.08f,1,.2f,30,.1f,2,1};
         string[] descriptions={"All tower damage +10%","All fire rate +12%","All range +15%","Core HP +10","Seismic blast radius +20%","Add 1 O wall card to the deck","Next draw has at least 1 rune card","Path enemy speed -8%","L gains safe adjacent platform","Kill gold +20%","Wave start gold +30","Tower costs -10%","End wave heal +2","2nd draw of the wave needs no ad"};

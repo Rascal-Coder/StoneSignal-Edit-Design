@@ -75,7 +75,9 @@ namespace StoneSignal
             Require(session.Paths.CurrentPaths.Count==grid.Spawns.Count && session.Paths.CurrentPaths.TrueForAll(p=>p.Count>1) && session.Game.State==GameState.Build,"Initial scene, a route from every spawn and Build state");
             session.Blocks.Refill(5);
             for(int i=0;i<5;i++) if(session.Blocks.Hand.Cards[i].displayName=="L") session.Blocks.SelectCard(i);
-            Require(session.config.waves[0].Total==5 && session.config.waves[1].Total==8 && session.config.waves[2].Total==12,"Configured 5 / 8 / 12 initial enemies");
+            Require(session.config.waves[0].Total==5 && session.config.waves[1].Total==9 && session.config.waves[2].Total==13,"Configured 5 / 9 / 13 initial enemies (v19: Skimmer retired, N -> ceil(1.2N) Drifters)");
+            { string comp=""; bool clean=true; for(int w=0;w<3;w++){ comp+=" W"+(w+1)+":"; foreach(var g in session.config.waves[w].groups){ string n=g.enemy!=null?g.enemy.name:"NULL"; comp+=" "+n+"x"+g.count; if(g.enemy==null || n.Contains("Skimmer") || (g.enemy.visualPrefab!=null && g.enemy.visualPrefab.name.Contains("Skimmer"))) clean=false; } }
+              Require(clean && comp==" W1: Drifterx5 W2: Drifterx9 W3: Drifterx9 Bulwarkx2 Splitterx2","Wave table has no Skimmer / null entries:"+comp); }
             Require(session.config.towers.Length==4 && session.config.rewards.Length==14,"Four towers and fourteen reward assets (incl. ExtraDraw)");
             Require(System.Array.Exists(session.config.rewards,r=>r!=null && r.effect==RewardEffect.ExtraDraw && r.tier==RewardTier.Rare),"ExtraDraw reward tier is Rare (精良)");
             // Sealing the core: every empty ring cell around the core at once must be rejected.
@@ -108,7 +110,10 @@ namespace StoneSignal
             yield return Capture("02-build");
             int[] spawnCounts=new int[3], childCounts=new int[3]; int killed=0;
             session.Enemies.ChildrenAdded+=n=>{if(session.Waves.WaveIndex<3) childCounts[session.Waves.WaveIndex]+=n;};
-            session.Enemies.Spawned+=(enemy) => { if(session.Waves.WaveIndex<3) spawnCounts[session.Waves.WaveIndex]++; };
+            var spawnedKinds=new System.Collections.Generic.SortedDictionary<string,int>(); string banned="";
+            session.Enemies.Spawned+=(enemy) => { if(session.Waves.WaveIndex<3) spawnCounts[session.Waves.WaveIndex]++;
+                string n=enemy.Data!=null?enemy.Data.name:"?"; spawnedKinds[n]=spawnedKinds.TryGetValue(n,out var c)?c+1:1;
+                if(n.Contains("Skimmer") || (enemy.Data!=null && enemy.Data.visualPrefab!=null && enemy.Data.visualPrefab.name.Contains("Skimmer"))) banned+=" "+n+"@W"+(session.Waves.WaveIndex+1); };
             session.Enemies.Resolved+=(enemy,reason) => { if(reason==EnemyResolution.Killed) killed++; };
             for(int wave=0;wave<3;wave++)
             {
@@ -175,6 +180,7 @@ namespace StoneSignal
                 Require(session.Draws.Next==(freeSecond?DrawRules.Offer.Free:DrawRules.Offer.Ad) && session.Draw() && session.Blocks.Remaining==BlockHandManager.MaxCards && session.Draws.Next==DrawRules.Offer.None && Time.timeScale>0,"2nd DRAW via "+(freeSecond?"ExtraDraw (free)":"placeholder ad")+" (hand reaches cap 7); ad pause released");
                 Require(!session.Draw(),"No 3rd DRAW");
             }
+            { string kinds=""; foreach(var kv in spawnedKinds) kinds+=" "+kv.Key+"x"+kv.Value; Require(banned=="","No Skimmer spawned in waves 1-3 (spawned:"+kinds+")"+banned); }
             Require(killed>0 && session.Economy.HP>0,"Three waves survived with automatic tower combat");
             Require(session.Enemies.StuckEvents==0,"No ENEMY STUCK events (guard is only a fallback)");
             { var fit=CameraFit.Instance; Require(fit!=null && fit.Fits>0 && fit.Size>=fit.BaseSize && !fit.Report.Contains("FALLBACK"),"Camera fit: board + entry bridges inside the safe area, clear of the HUD (ortho "+(fit!=null?fit.Size.ToString("F2")+" pan "+fit.Pan.ToString("F2"):"-")+")"); }

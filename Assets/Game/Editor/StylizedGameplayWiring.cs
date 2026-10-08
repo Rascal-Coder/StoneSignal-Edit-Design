@@ -158,7 +158,6 @@ namespace StoneSignal.EditorTools
             { t.explosionOnKill = true; });
 
             Enemy("Drifter", "PF_Enemy_Drifter", null);
-            Enemy("Skimmer", "PF_Enemy_Skimmer", null);
             Enemy("Bulwark", "PF_Enemy_Bulwark", null);
             Enemy("Shard", "PF_Enemy_Shard", null);
             Enemy("Splitter", "PF_Enemy_Splitter", e => { e.splitVfx = Fx("FX_Enemy_SplitBurst"); e.splitChildScale = 1; });
@@ -279,7 +278,7 @@ namespace StoneSignal.EditorTools
                 if (!t.visualPrefab || !t.muzzleVfx || !t.projectileVfx) problems++;
                 if (head == null) problems++; // v6: Tesla has a rotatable coil head too
             }
-            foreach (var n in new[] { "Drifter", "Skimmer", "Bulwark", "Splitter", "Shard" })
+            foreach (var n in new[] { "Drifter", "Bulwark", "Splitter", "Shard" })
             {
                 var e = Load<EnemyData>(D + "Enemies/" + n + ".asset");
                 bool fb = e.visualPrefab && e.visualPrefab.GetComponent<EnemyHitFeedback>();

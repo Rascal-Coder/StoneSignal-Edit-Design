@@ -54,7 +54,6 @@ public static class StylizedArtIntegration
         ("Towers", "SM_Tower_Flamer_1x2_01", "PF_Tower_Flamer_1x2", "Tower"),
         ("Towers", "SM_Tower_Mortar_2x2_01", "PF_Tower_Mortar_2x2", "Tower"),
         ("Enemies", "SM_Enemy_Drifter_01", "PF_Enemy_Drifter", "Enemy"),
-        ("Enemies", "SM_Enemy_Skimmer_01", "PF_Enemy_Skimmer", "Enemy"),
         ("Enemies", "SM_Enemy_Bulwark_01", "PF_Enemy_Bulwark", "Enemy"),
         ("Enemies", "SM_Enemy_Flyer_01", "PF_Enemy_Flyer", "Enemy"),
         ("Enemies", "SM_Enemy_Shard_01", "PF_Enemy_Shard", "Shard"),
