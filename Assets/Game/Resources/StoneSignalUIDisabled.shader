@@ -1,5 +1,5 @@
 // v18.6 one disabled style (美术策划): UI/Default + per-vertex grayscale / brightness from TEXCOORD1 (StoneSignal.UiDisable).
-// uv1.x = grey amount (0..1, 0.7 = "grayscale 70%"), uv1.y = darken (1 - brightness; 0.2 = "brightness 0.8"). uv1 = (0,0) -> identical to UI/Default,
+// uv1.x = grey amount (0..1, 0.7 = "grayscale 70%"; +2 = flat vertex colour, v18.6b outline copies), uv1.y = darken (1 - brightness; 0.2 = "brightness 0.8"). uv1 = (0,0) -> identical to UI/Default,
 // so every Image on the hand canvas shares this one material and still batches (no hue, no extra draw call).
 Shader "StoneSignal/UI/Disabled"
 {
@@ -48,9 +48,12 @@ Shader "StoneSignal/UI/Disabled"
             }
             fixed4 frag(v2f IN) : SV_Target
             {
-                half4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
+                half4 tex = tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd;
+                half4 color = tex * IN.color;
+                half flat = step(1.5, IN.fx.x);                 // v18.6b: uv1.x >= 2 -> flat vertex colour x sprite alpha (UiDisable silhouette outline)
+                color.rgb = lerp(color.rgb, IN.color.rgb, flat);
                 half g = dot(color.rgb, half3(0.299, 0.587, 0.114));
-                color.rgb = lerp(color.rgb, half3(g, g, g), saturate(IN.fx.x)) * (1.0 - saturate(IN.fx.y));
+                color.rgb = lerp(color.rgb, half3(g, g, g), saturate(IN.fx.x - 2.0 * flat)) * (1.0 - saturate(IN.fx.y));
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif

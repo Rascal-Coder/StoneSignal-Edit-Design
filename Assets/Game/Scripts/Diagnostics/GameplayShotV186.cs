@@ -19,7 +19,7 @@ namespace StoneSignal
             if (Arg("-dc186")) return Dc186();
             return V186Extra();
         }
-        IEnumerator V186Extra() => Arg("-combat186") ? Combat186() : null;
+        IEnumerator V186Extra() => Arg("-combat186") ? Combat186() : V19(); // v19 / v18.6b diagnostics (GameplayShotV19.cs)
 
         // ================= v18.6 combat-phase HUD tests + shots (-combat186 [-touch] [-seed N]) =================
         /// Screen px rect of a UI element, via the root canvas' local space (valid even in the frame a Grab() switched the canvases to
@@ -404,13 +404,15 @@ namespace StoneSignal
             sb.Append("recoil: none in code (Tower.Fire / Aim only yaw the head; lobbed barrels keep their authored pitch; no kick / scale animation).\n");
             sb.Append(VfxInfo("muzzleVfx", d.muzzleVfx)); sb.Append(VfxInfo("projectileVfx", d.projectileVfx)); sb.Append(VfxInfo("hitVfx", d.hitVfx)); sb.Append(VfxInfo("explosionVfx (every hit)", d.explosionVfx));
             // live: wave 1 at x1, log every Seismic shot (projectile with Owner == seis) and impact; burst frames around the 2nd impact
-            var seen = new HashSet<Projectile>(); int fires = 0, impacts = 0, hitsTotal = 0; float inRangeTime = 0, combatTime = 0, firstFire = -1;
+            var seen = new HashSet<Projectile>(); int fires = 0, impacts = 0, hitsTotal = 0; float inRangeTime = 0, combatTime = 0, firstFire = -1; float lastImpactT = -1f; Vector3 lastImpactP = default; bool forcedDone = false;
+            { var tsp = s.viewCamera.WorldToScreenPoint(seis.transform.position); sb.Append("seismic tower screen " + ((Vector2)tsp).ToString("F0") + " (" + Res + ")\n"); }
             var fireTimes = new List<float>(); var impactLog = new StringBuilder();
             System.Action<Vector3, float> onImpact = (p, r) =>
             {
                 if (Mathf.Abs(r - seis.SplashRadius) > .01f) return; impacts++; int hit = 0;
                 foreach (var e in s.Enemies.Active) if (e != null && e.Alive && (e.transform.position - p).sqrMagnitude <= r * r) hit++;
-                hitsTotal += hit; impactLog.Append("  impact #" + impacts + " t=" + Time.time.ToString("F2") + " at " + p.ToString("F1") + " enemies within splash (after damage, alive) " + hit + "\n");
+                hitsTotal += hit; lastImpactT = Time.time; lastImpactP = p; var sp = s.viewCamera.WorldToScreenPoint(p);
+                impactLog.Append("  impact #" + impacts + " t=" + Time.time.ToString("F2") + " at " + p.ToString("F1") + " screen " + ((Vector2)sp).ToString("F0") + " enemies within splash (after damage, alive) " + hit + "\n");
             };
             Projectile.Impact += onImpact;
             TimeController.ResetAll(); TimeController.SetSpeed(1); s.Waves.StartWave(); float t0 = Time.time; bool burstDone = false;
@@ -433,6 +435,46 @@ namespace StoneSignal
                     }
                     TimeController.ResetAll(); TimeController.SetSpeed(1);
                 }
+                if (burstDone && !forcedDone && fires >= 2)
+                {   // v18.6b: forced shots (Tower.Fire is public) - DC / tris around one impact at x1, then fire + impact frames at 1/4 speed
+                    Enemy tgt = null; float best = -1f; foreach (var e in s.Enemies.Active) if (e != null && e.Alive && !e.HeldBySpawn && e.HP > best) { best = e.HP; tgt = e; }
+                    if (tgt == null) continue;
+                    forcedDone = true; yield return Clean();
+                    var dl = new List<long>(); var tl2 = new List<long>(); for (int f = 0; f < 12; f++) { yield return null; dl.Add(draws.LastValue); tl2.Add(tris.LastValue); }
+                    dl.Sort(); tl2.Sort(); long dBase = dl[6], tBase = tl2[6];
+                    Transform barrel = null; if (seis.Head != null) foreach (var t in seis.Head.GetComponentsInChildren<Transform>(true)) if (t.name.EndsWith("_Barrel")) barrel = t;
+                    Transform part = barrel != null ? barrel : seis.Head; Vector3 rest = part != null ? part.position : Vector3.zero; float maxKick = 0f, kickAt = 0f;
+                    float imp0 = lastImpactT; seis.Fire(tgt); float f0 = Time.time; long dMax = 0, tMax = 0; var dSeq = new StringBuilder(); int nf = 0; float impSeen = -1f; long dImpMax = 0;
+                    while (Time.time - f0 < 2.2f && (impSeen < 0f || Time.time - impSeen < 1.2f))
+                    {
+                        yield return null; nf++; long dv = draws.LastValue, tr = tris.LastValue; dMax = System.Math.Max(dMax, dv); tMax = System.Math.Max(tMax, tr);
+                        if (part != null && Time.time - f0 < .15f) { float k = (part.position - rest).magnitude; if (k > maxKick) { maxKick = k; kickAt = Time.time - f0; } }
+                        if (impSeen < 0f && lastImpactT > imp0) impSeen = lastImpactT; if (impSeen >= 0f) dImpMax = System.Math.Max(dImpMax, dv);
+                        if (nf % 3 == 0) dSeq.Append(dv).Append(' ');
+                    }
+                    sb.Append("FORCED SHOT DC (x1, ProfilerRecorder, 1 frame lag): before fire median DC " + dBase + " tris " + tBase + " | max during fire + flight + impact + 1.2 s DC " + dMax + " (+" + (dMax - dBase) + ") tris " + tMax + " (+" + (tMax - tBase) + ") | max after impact DC " + dImpMax + " | every 3rd frame: " + dSeq + "\n");
+                    sb.Append("RECOIL: part '" + (part != null ? part.name : "-") + "' max displacement " + maxKick.ToString("F3") + " m at t+" + kickAt.ToString("F3") + " s (spec 0.06 m, spring back over 0.1 s)" + (impSeen < 0f ? " | NO IMPACT (target died?)" : "") + "\n");
+                    // fire + impact frames at 1/4 speed (game-time stamps)
+                    tgt = null; best = -1f; foreach (var e in s.Enemies.Active) if (e != null && e.Alive && !e.HeldBySpawn && e.HP > best) { best = e.HP; tgt = e; }
+                    if (tgt != null)
+                    {
+                        TimeController.SetSpeed(.25f); yield return null; float i1 = lastImpactT; seis.Fire(tgt); float g0 = Time.time;
+                        foreach (var at in new[] { 0f, .02f, .04f, .07f, .1f, .14f, .2f })
+                        { while (Time.time - g0 < at) yield return null; yield return new WaitForEndOfFrame(); grabs.Add((Grab(), "seismic_fire_" + Res + "_t" + Mathf.RoundToInt(at * 1000).ToString("0000") + "ms.png")); }
+                        float wt2 = Time.realtimeSinceStartup; while (lastImpactT <= i1 && Time.realtimeSinceStartup - wt2 < 12f) yield return null;
+                        if (lastImpactT > i1)
+                        {
+                            float h0 = lastImpactT; var isp = s.viewCamera.WorldToScreenPoint(lastImpactP); sb.Append("forced impact screen " + ((Vector2)isp).ToString("F0") + " world " + lastImpactP.ToString("F2") + "\n");
+                            foreach (var at in new[] { 0f, .03f, .06f, .1f, .14f, .18f, .23f, .28f, .35f, .42f, .5f, .6f, .75f })
+                            {
+                                while (Time.time - h0 < at) yield return null; yield return new WaitForEndOfFrame(); grabs.Add((Grab(), "seismic_impact_" + Res + "_t" + Mathf.RoundToInt(at * 1000).ToString("0000") + "ms.png"));
+                                sb.Append("  impact frame t+" + at.ToString("F2") + ": " + ImpactFxState() + "\n");
+                            }
+                        }
+                        else sb.Append("forced impact: none within 12 s\n");
+                        TimeController.ResetAll(); TimeController.SetSpeed(1);
+                    }
+                }
             }
             Projectile.Impact -= onImpact;
             foreach (var g in grabs) { File.WriteAllBytes(Path.Combine(Dir, g.name), g.tex.EncodeToPNG()); Destroy(g.tex); }
@@ -442,19 +484,27 @@ namespace StoneSignal
             File.WriteAllText(Path.Combine(Dir, "seismic_" + Res + ".txt"), sb.ToString()); Debug.Log(sb.ToString());
         }
 
+        /// Seismic impact ring state if the v18.6b driver exists (looked up by type name so this file also compiles on v18.6).
+        static string ImpactFxState()
+        {
+            var t = System.Type.GetType("StoneSignal.VFX.SeismicImpactFx"); if (t == null) return "(no v18.6b ring driver)";
+            var last = t.GetProperty("Last")?.GetValue(null) as Component; if (last == null) return "(no ring yet)";
+            string P(string n) { var v = t.GetProperty(n)?.GetValue(last); return v is float f ? f.ToString("F3") : "-"; }
+            return "ring r " + P("RingRadius") + " m width " + P("RingWidth") + " m alpha " + P("RingA") + " | wave r " + P("WaveR") + " alpha " + P("WaveA") + " | splash " + P("Splash");
+        }
         // ---- draw calls: Build and Combat (wave 2), full frame vs every canvas off (= HUD DC incl. screen-space HP bars / numbers) ---------
         IEnumerator DcMeasure(StringBuilder sb, string label)
         {
             yield return Clean();
-            var ld = new List<long>(); var lb = new List<long>(); var ls = new List<long>();
-            IEnumerator Sample() { ld.Clear(); lb.Clear(); ls.Clear(); for (int f = 0; f < 4; f++) yield return null; for (int f = 0; f < 21; f++) { yield return null; ld.Add(draws.LastValue); lb.Add(batches.LastValue); ls.Add(setPass.LastValue); } ld.Sort(); lb.Sort(); ls.Sort(); }
-            yield return Sample(); long dAll = ld[10], bAll = lb[10], sAll = ls[10]; string rAll = ld[0] + ".." + ld[20];
+            var ld = new List<long>(); var lb = new List<long>(); var ls = new List<long>(); var lt = new List<long>();
+            IEnumerator Sample() { ld.Clear(); lb.Clear(); ls.Clear(); lt.Clear(); for (int f = 0; f < 4; f++) yield return null; for (int f = 0; f < 21; f++) { yield return null; ld.Add(draws.LastValue); lb.Add(batches.LastValue); ls.Add(setPass.LastValue); lt.Add(tris.LastValue); } ld.Sort(); lb.Sort(); ls.Sort(); lt.Sort(); }
+            yield return Sample(); long dAll = ld[10], bAll = lb[10], sAll = ls[10], tAll = lt[10]; string rAll = ld[0] + ".." + ld[20], rtAll = lt[0] + ".." + lt[20];
             var off = new List<Canvas>(); foreach (var cv in FindObjectsOfType<Canvas>()) if (cv.enabled && cv.isRootCanvas) { cv.enabled = false; off.Add(cv); }
-            yield return Sample(); long dScene = ld[10], bScene = lb[10]; string rScene = ld[0] + ".." + ld[20];
+            yield return Sample(); long dScene = ld[10], bScene = lb[10], tScene = lt[10]; string rScene = ld[0] + ".." + ld[20];
             foreach (var cv in off) if (cv != null) cv.enabled = true;
             yield return Sample(); long dAll2 = ld[10];
-            sb.Append(label + ": full frame DC " + dAll + " (range " + rAll + ", re-measured " + dAll2 + "), batches " + bAll + ", setpass " + sAll + " | canvases off DC " + dScene + " (range " + rScene + "), batches " + bScene +
-                      " | HUD DC (full - canvases off) " + (dAll - dScene) + " | root canvases " + off.Count + ", live enemies " + s.Enemies.Active.Count + "\n");
+            sb.Append(label + ": full frame DC " + dAll + " (range " + rAll + ", re-measured " + dAll2 + "), batches " + bAll + ", setpass " + sAll + ", tris " + tAll + " (range " + rtAll + ") | canvases off DC " + dScene + " (range " + rScene + "), batches " + bScene + ", tris " + tScene +
+                      " | HUD DC (full - canvases off) " + (dAll - dScene) + " | root canvases " + off.Count + ", live enemies " + s.Enemies.Active.Count + ", towers " + s.Towers.Towers.Count + "\n");
         }
         IEnumerator Dc186()
         {

@@ -63,13 +63,24 @@ namespace StoneSignal
         public bool screenSpaceHpBars = true;
         [Tooltip("Bar size in world units (the 3D bar it replaces: 0.65 wide; visible thickness ~0.095 at the game camera pitch).")] public float hpBarWorldWidth = .65f, hpBarWorldHeight = .095f;
         [Header("Floating damage numbers (one layer below the HP bars)")]
-        public float numberSpawnAbovePx = 14f, numberDriftXPx = 18f, numberDriftYPx = 26f; [Min(.05f)] public float numberSeconds = .6f;
+        [Tooltip("v18.6b: horizontal offset alternates +-numberDriftXPx (art 28, was 18).")]
+        public float numberSpawnAbovePx = 14f, numberDriftXPx = 28f, numberDriftYPx = 26f; [Min(.05f)] public float numberSeconds = .6f;
         [Range(0, 1)] public float numberFadeTail = .4f;
         public float numberNormalPx = 24f, numberCritPx = 30f, numberPopFrom = 1.2f; [Min(0)] public float numberPopFromSeconds = .08f;
         [Tooltip("Same-target hits within this window add into the live number instead of a new one (0 = every hit its own number, alternating left / right).")]
         [Min(0)] public float numberStackSeconds = 0f;
+        [Tooltip("v18.6b queue: a number on the same enemy within this window of the previous one spawns numberQueueStepPx above the previous number's CURRENT position.")]
+        [Min(0)] public float numberQueueSeconds = .3f; public float numberQueueStepPx = 22f;
+        [Tooltip("v18.6b: at most this many queued numbers per enemy; one more pushes the oldest straight into its fade-out.")] [Min(1)] public int numberQueueMax = 3;
+        [Tooltip("v18.6b: the crit '!' sits this many ref px right of the number (separate glyph, never overlapping).")] public float numberCritGapPx = 4f;
         [Header("Gold pickup ring")]
-        [Tooltip("If the ring would reach the HP orb's outer ring, its max radius is capped at this x the gold pill height.")] public float goldRingCapPillFrac = .9f;
+        [Tooltip("v18.6 (superseded by goldRingMaxRadiusPx in v18.6b): cap as a fraction of the pill height.")] public float goldRingCapPillFrac = .9f;
+        [Tooltip("v18.6b: visible ring radius at the end of the pulse, ref px (48 = ~0.67 x the 72 px pill; never reaches the HP orb). The pulse keeps the art 1 -> 1.5 growth ratio.")] public float goldRingMaxRadiusPx = 48f;
+        [Header("Tower card outline (v17 white outline, v18.6b)")]
+        [Tooltip("Outside the card face, ref px (scales with the canvas); follows the face silhouette (same corner radius). 0 = off.")] public float towerCardOutlinePx = 4f;
+        public Color towerCardOutlineColor = Color.white;
+        [Header("Draw pile pill in combat (v18.6b)")]
+        [Tooltip("The status pill (and tail) fades out with its label over pileSeconds in combat and back in on Build - no empty bar.")] public bool pileHidePillInCombat = true;
         [Header("Hand count pill")]
         [Tooltip("During a (re)deal the 5/7 pill counts up as each entering card settles.")] public bool handCountCountsUp = true;
     }

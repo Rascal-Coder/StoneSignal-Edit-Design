@@ -78,7 +78,12 @@ namespace StoneSignal
             if (source == null) return;
             Vector3 at = point + Vector3.up * .3f;
             bool big = source.explosionVfx != null && (source.explosionOnEveryHit || (crit && source.explosionOnCrit) || (killed && source.explosionOnKill));
-            if (big) StylizedVfx.Play(source.explosionVfx, point);
+            if (big && source.lobbedShot)
+            {   // v18.6b Seismic: ground impact ring (radius = this shot's splash radius, tracks upgrades) + ground wave + dust + short scorch
+                var fx = StylizedVfx.Play(SeismicFx.Impact(source.explosionVfx), point);
+                var drv = fx != null ? fx.GetComponent<SeismicImpactFx>() : null; if (drv != null) drv.Begin(radius);
+            }
+            else if (big) StylizedVfx.Play(source.explosionVfx, point);
             else if (source.hitVfx != null) StylizedVfx.Play(source.hitVfx, at);
             if (big || crit)
             {

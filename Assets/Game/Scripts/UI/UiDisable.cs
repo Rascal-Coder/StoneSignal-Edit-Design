@@ -16,11 +16,37 @@ namespace StoneSignal
             if (Mathf.Approximately(g, gray) && Mathf.Approximately(b, brightness)) return;
             gray = g; brightness = b; if (graphic != null) graphic.SetVerticesDirty();
         }
+        // ---- v18.6b silhouette outline (tower cards, v17 white outline): copies of the graphic's own quads, offset `outlinePx` (local
+        // units = 1080p ref px on a scaled canvas) in OutlineDirs directions and drawn underneath in a flat colour (shader flag uv1.x + 2:
+        // vertex colour x sprite alpha). The union is the face silhouette dilated by outlinePx: outside the card, same corner shape
+        // (offset curve of the face's rounded corners). Same material / atlas -> +0 draw calls. The grey / brightness of the disabled
+        // style applies to the copies too, so a disabled card's outline goes grey with it.
+        [SerializeField] float outlinePx; [SerializeField] Color outlineColor = Color.white;
+        public const int OutlineDirs = 16;
+        public float OutlinePx => outlinePx; public Color OutlineColor => outlineColor;
+        public void SetOutline(float px, Color c)
+        {
+            px = Mathf.Max(0f, px); if (Mathf.Approximately(px, outlinePx) && c == outlineColor) return;
+            outlinePx = px; outlineColor = c; if (graphic != null) graphic.SetVerticesDirty();
+        }
+        static readonly System.Collections.Generic.List<UIVertex> stream = new System.Collections.Generic.List<UIVertex>(), outStream = new System.Collections.Generic.List<UIVertex>();
         public override void ModifyMesh(VertexHelper vh)
         {
             if (!IsActive()) return;
-            var v = new UIVertex(); var fx = new Vector4(gray, 1f - brightness, 0f, 0f);
-            for (int i = 0; i < vh.currentVertCount; i++) { vh.PopulateUIVertex(ref v, i); v.uv1 = fx; vh.SetUIVertex(v, i); }
+            var fx = new Vector4(gray, 1f - brightness, 0f, 0f);
+            stream.Clear(); vh.GetUIVertexStream(stream);
+            outStream.Clear();
+            if (outlinePx > 0f && stream.Count > 0)
+            {
+                var flat = new Vector4(gray + 2f, 1f - brightness, 0f, 0f); Color32 oc = outlineColor;
+                for (int d = 0; d < OutlineDirs; d++)
+                {
+                    float a = d * Mathf.PI * 2f / OutlineDirs; var off = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * outlinePx;
+                    for (int i = 0; i < stream.Count; i++) { var v = stream[i]; v.position += off; v.uv1 = flat; v.color = new Color32(oc.r, oc.g, oc.b, (byte)(oc.a * v.color.a / 255)); outStream.Add(v); }
+                }
+            }
+            for (int i = 0; i < stream.Count; i++) { var v = stream[i]; v.uv1 = fx; outStream.Add(v); }
+            vh.Clear(); vh.AddUIVertexTriangleStream(outStream);
         }
         static Material mat; static bool looked;
         /// Shared material (one for every Image on the hand canvas -> they keep batching). Null if the shader is missing (fallback: no grey).

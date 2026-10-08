@@ -141,7 +141,7 @@ namespace StoneSignal
                 // towards the orb), drawn above the pill; max radius capped when it would reach the HP orb's outer ring.
                 var ring = Img(pill, "Glow ring", ringSprite, new Color(1, 1, 1, 0)); Set(ring, new Vector2(0, 1), new Vector2(.5f, .5f), 6 + 30, -(6 + 30), 126, 126);
                 ring.GetComponent<Image>().raycastTarget = false; goldCounter.glowRing = ring.GetComponent<Image>(); goldRing = ring;
-                goldCounter.ringMaxScale = GoldRingMaxScale(126f, 72f);
+                goldCounter.ringMaxScale = GoldRingMaxScale(126f, 72f); goldCounter.ringMinScale = goldCounter.ringMaxScale / 1.5f; // v18.6b: 48 px cap, art 1 -> 1.5 growth ratio kept
             }
             var pop = Txt(pill, "", 28, Gold); TL(pop.rectTransform, 80, 66, 140, 36); pop.outlineWidth = .25f; pop.outlineColor = Navy; goldCounter.incomePop = pop;
             goldCounter.SetValue(session.Economy.Gold, true);
@@ -196,14 +196,14 @@ namespace StoneSignal
 
         /// v18.6: ui_counter_glow_ring's visible ring reaches 0.92 of its half size (alpha > 32 of 255, measured on the sprite).
         private const float RingVisibleFrac = .92f;
-        /// Ring max scale: the art 1.5 unless its visible radius would reach the core orb's outer ring - then capped at
-        /// goldRingCapPillFrac x the pill height (ref px). Layout: orb TL(24,24,150) circle, coin centre = pill (190,44) + (36,36).
+        /// Ring max scale. v18.6b (art): the visible radius at the end of the pulse is capped at goldRingMaxRadiusPx (48 ref px, ~0.67 x the
+        /// 72 px pill) so it never touches the HP orb (v18.6 capped at 0.9 x pill = 64.8 px, still 11 px past the 53.4 px orb gap).
+        /// Layout: orb TL(24,24,150) circle, coin centre = pill (190,44) + (36,36).
         private float GoldRingMaxScale(float ringSize, float pillH)
         {
-            float half = ringSize * .5f * RingVisibleFrac, orbR = 75f; var orbC = new Vector2(24 + 75, 24 + 75); var coinC = new Vector2(190 + 36, 44 + 36);
-            float gap = Vector2.Distance(orbC, coinC) - orbR; const float artMax = 1.5f;
-            if (half * artMax < gap) return artMax;
-            return Mathf.Min(artMax, CH.goldRingCapPillFrac * pillH / half);
+            float half = ringSize * .5f * RingVisibleFrac; const float artMax = 1.5f;
+            float cap = CH.goldRingMaxRadiusPx > 0f ? CH.goldRingMaxRadiusPx : CH.goldRingCapPillFrac * pillH;
+            return Mathf.Min(artMax, cap / half);
         }
         // ---------- state ----------
         private void Dirty() { handDirty = true; Refresh(); }
@@ -276,6 +276,9 @@ namespace StoneSignal
                     var set = new DimSet { tower = true, index = i, cost = session.Towers.Cost(data), price = price, priceBase = price.color };
                     foreach (var g in card.GetComponentsInChildren<Image>(true)) set.full.Add(g.gameObject.AddComponent<UiDisable>());
                     set.k = towerDimK.TryGetValue(i, out var k0) ? k0 : -1f; dimSets.Add(set);
+                    // v18.6b v17 white outline: 4 ref px outside the face, silhouette-following (same corner radius), drawn under the face in the
+                    // face's own mesh (same material / atlas: +0 DC); greys with the card when disabled (same UiDisable values).
+                    { var hud = HudStyle; var fd = face.GetComponent<UiDisable>(); if (fd != null) fd.SetOutline(hud.towerCardOutlinePx, hud.towerCardOutlineColor); }
                 }
             }
             // ---- block hand: ui_card_blueprint 128x128 (9-slice 24) + ui_icon_block_X 128x128 overlay (uniform, never per-shape scaling),
@@ -723,6 +726,7 @@ namespace StoneSignal
         }
 
         // ================= v18.6 combat-phase HUD =================
+        private CombatHudStyle HudStyle => CH; // (RebuildHands shadows CH with its card-height constant)
         private CombatHudStyle CH => session != null && session.config != null && session.config.combatHud != null ? session.config.combatHud : defaultCH;
         private static readonly CombatHudStyle defaultCH = new CombatHudStyle();
         /// Towers can be built now: Build, or Combat with allowCombatTowers (same rule as GameBootstrap's TowerManager gate).
@@ -898,7 +902,12 @@ namespace StoneSignal
         {
             if (Mathf.Approximately(k, pileK)) return; pileK = k; var m = CH.pileMultiply;
             var mul = Color.Lerp(Color.white, new Color(m.r, m.g, m.b, 1f), k);
-            foreach (var (g, c) in pileBase) if (g != null) g.color = new Color(c.r * mul.r, c.g * mul.g, c.b * mul.b, c.a);
+            bool hidePill = CH.pileHidePillInCombat;
+            foreach (var (g, c) in pileBase) if (g != null)
+            {   // v18.6b: the status pill (+ tail) fades with its label - no empty grey bar over the pile in combat
+                float a = hidePill && (g == drawPile.pillImage || g == drawPile.tail) ? c.a * (1f - k) : c.a;
+                g.color = new Color(c.r * mul.r, c.g * mul.g, c.b * mul.b, a);
+            }
             if (drawPile.statusLabel != null) drawPile.statusLabel.alpha = 1f - k;
             if (drawPile.statusIcon != null) { var ic = drawPile.statusIcon.color; ic.a = 1f - k; drawPile.statusIcon.color = ic; }
         }
@@ -1067,7 +1076,7 @@ namespace StoneSignal
         /// Index of the first wrapped paragraph-last line that holds exactly one counted character, or -1.
         public static int OrphanLine(TMP_Text t, out int lines)
         {
-            t.ForceMeshUpdate(true, true); var ti = t.textInfo; lines = ti.lineCount;
+            t.ForceMeshUpdate(true, true); var ti = t.textInfo; if (ti == null) { lines = 0; return -1; } lines = ti.lineCount; // inactive / never-laid-out text has no textInfo yet (NRE seen when a reward card was inactive)
             for (int l = 1; l < ti.lineCount; l++)
             {
                 var li = ti.lineInfo[l]; var prev = ti.lineInfo[l - 1];

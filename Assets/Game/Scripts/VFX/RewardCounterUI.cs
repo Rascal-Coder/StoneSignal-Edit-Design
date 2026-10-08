@@ -14,6 +14,7 @@ namespace StoneSignal.VFX
         public TMPro.TMP_Text incomePop;      // "+20" floating text (pooled single label, restarts on each add)
         public float rollSpeed = 6f;
         [Tooltip("v18.6: glow ring scale at the end of its pulse (art 1.5; GameUI caps it at goldRingCapPillFrac x the pill height when it would reach the core orb).")] public float ringMaxScale = 1.5f;
+        [Tooltip("v18.6b: glow ring scale at the start of its pulse (default 1 = unchanged; GameUI keeps the art 1 -> 1.5 ratio under the 48 px cap).")] public float ringMinScale = 1f;
 
         int target; float shown; float punch, ring, pop; int popSum;
         public int Value => target;
@@ -40,7 +41,7 @@ namespace StoneSignal.VFX
             float s = 1 + .14f * Mathf.Sin(punch * Mathf.PI) * punch;
             if (punchTarget) punchTarget.localScale = new Vector3(s, s, 1);
             if (icon) { float si = 1 + .3f * Mathf.Sin(punch * Mathf.PI); icon.localScale = new Vector3(si, si, 1); icon.localRotation = Quaternion.Euler(0, 0, -12 * Mathf.Sin(punch * Mathf.PI * 2) * punch); }
-            if (glowRing) { var c = glowRing.color; c.a = ring * ring; glowRing.color = c; glowRing.rectTransform.localScale = Vector3.one * (1 + (1 - ring) * (ringMaxScale - 1f)); }
+            if (glowRing) { var c = glowRing.color; c.a = ring * ring; glowRing.color = c; glowRing.rectTransform.localScale = Vector3.one * (ringMinScale + (1 - ring) * (ringMaxScale - ringMinScale)); }
             if (incomePop) { incomePop.alpha = Mathf.Clamp01(pop * 2); incomePop.rectTransform.anchoredPosition = new Vector2(0, -38 - (1 - pop) * -30); }
         }
     }

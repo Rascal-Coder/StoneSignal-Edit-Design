@@ -15,6 +15,8 @@ namespace StoneSignal
         private float cooldown, visualElevation;
         private Vector3 aimDirection = Vector3.forward;
         private GameObject arcSource; private bool isArc; // cached: no GetComponent per shot
+        private ITowerFireAnimation fireAnim; // v18.6b recoil hook (see Initialize / Fire)
+        public ITowerFireAnimation FireAnimation => fireAnim;
         public TowerData Data { get; private set; }
         public Vector2Int Origin { get; private set; }
         public Vector2Int Size { get; private set; } = Vector2Int.one;
@@ -45,6 +47,10 @@ namespace StoneSignal
                 head=FindPart(visual,data.headName,"_Head");
                 barrel=FindPart(head!=null?head:visual,null,"_Barrel");
                 muzzle=FindPart(head!=null?head:visual,null,"_Muzzle");
+                // v18.6b recoil hook: a visual that brings its own ITowerFireAnimation (patch 03: TowerMonsterAnimator) owns the fire kick;
+                // until then the lobbed Seismic barrel gets the placeholder TowerRecoil (0.06 m back along the fire direction, 0.1 s spring).
+                fireAnim = visual.GetComponentInChildren<ITowerFireAnimation>(true);
+                if (fireAnim == null && data.lobbedShot) { var rc = visual.gameObject.AddComponent<TowerRecoil>(); rc.Bind(barrel != null ? barrel : head); fireAnim = rc; }
                 return;
             }
             Material mat = data.kind == TowerKind.Arrow ? colors.arrow : data.kind == TowerKind.Rapid ? colors.rapid : data.kind == TowerKind.Chill ? colors.path : colors.cannon;
@@ -105,7 +111,11 @@ namespace StoneSignal
         public Projectile Fire(Enemy target)
         {
             var (muzzlePos, muzzleRot) = Muzzle();
-            if (Data.muzzleVfx != null) StylizedVfx.Play(Data.muzzleVfx, muzzlePos, muzzleRot);
+            // v18.6b Seismic: art fire FX (flash 0.14 s core + glow, 4 smoke puffs) on a runtime variant of the same muzzle prefab / pool
+            if (Data.muzzleVfx != null) StylizedVfx.Play(Data.lobbedShot ? SeismicFx.Muzzle(Data.muzzleVfx) : Data.muzzleVfx, muzzlePos, muzzleRot);
+            // v18.6b recoil hook - patch 03 replaces the TowerRecoil placeholder by implementing ITowerFireAnimation on TowerMonsterAnimator
+            // (its Tower.Fire hunk then becomes this one call; Initialize only adds TowerRecoil when the visual has no ITowerFireAnimation).
+            fireAnim?.OnFire(muzzleRot * Vector3.forward);
             bool crit = GameRng.Gameplay.Permille(GameRng.ToPermille(Data.critChance));
             float damage = Damage * (crit ? Data.critMultiplier : 1);
             GameObject obj;
@@ -130,6 +140,34 @@ namespace StoneSignal
             projectile.Initialize(target, enemies, Data.projectileSpeed, damage, SplashRadius, canAttack, slow, slowFor); projectile.Owner = this;
             projectile.SetPresentation(Data, crit, Data.lobbedShot ? Data.lobHeight : 0);
             return projectile;
+        }
+    }
+    /// v18.6b fire-animation hook (Tower.Fire calls OnFire once per shot with the world fire direction). Patch 03's TowerMonsterAnimator
+    /// should implement this; while it is absent, lobbed towers use TowerRecoil.
+    public interface ITowerFireAnimation { void OnFire(Vector3 fireDirectionWorld); }
+
+    /// v18.6b placeholder recoil (art spec, until patch 03): the bound part (Seismic barrel, else head) jumps 0.06 m back along the reverse
+    /// fire direction and springs back over 0.1 s (EaseOutCubic). Game time (pauses / speeds with the game). Visual only.
+    public sealed class TowerRecoil : MonoBehaviour, ITowerFireAnimation
+    {
+        public float distance = .06f, seconds = .1f;
+        Transform part; Vector3 rest, kickLocal; float firedAt = -1f;
+        public Transform Part => part;
+        /// Current displacement of the part from its rest pose in metres (diagnostics).
+        public float Offset => part != null && part.parent != null ? part.parent.TransformVector(part.localPosition - rest).magnitude : 0f;
+        public void Bind(Transform t) { part = t; if (t != null) rest = t.localPosition; }
+        public void OnFire(Vector3 dir)
+        {
+            if (part == null || dir.sqrMagnitude < 1e-6f) return;
+            var p = part.parent; Vector3 w = -dir.normalized * distance; kickLocal = p != null ? p.InverseTransformVector(w) : w;
+            firedAt = Time.time; Apply(0f);
+        }
+        static float EaseOutCubic(float t) { t = 1f - Mathf.Clamp01(t); return 1f - t * t * t; }
+        void Apply(float t) { if (part != null) part.localPosition = rest + kickLocal * (1f - EaseOutCubic(t)); }
+        void LateUpdate()
+        {
+            if (firedAt < 0f || part == null) return;
+            float t = seconds <= 0f ? 1f : (Time.time - firedAt) / seconds; Apply(t); if (t >= 1f) firedAt = -1f;
         }
     }
 }

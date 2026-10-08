@@ -32,6 +32,16 @@ namespace StoneSignal.VFX
         static readonly Stack<UiDamageNumber> UiPool = new Stack<UiDamageNumber>();
         static readonly Dictionary<int, UiDamageNumber> UiLive = new Dictionary<int, UiDamageNumber>();
         static readonly Dictionary<int, float> Side = new Dictionary<int, float>();
+        static readonly Dictionary<int, List<UiDamageNumber>> Queues = new Dictionary<int, List<UiDamageNumber>>();
+        static readonly List<int> pruneScratch = new List<int>();
+        static void PruneQueues()
+        {
+            pruneScratch.Clear();
+            foreach (var kv in Queues) { kv.Value.RemoveAll(x => x == null || !x.gameObject.activeSelf || x.queueId != kv.Key || x.Fading); if (kv.Value.Count == 0) pruneScratch.Add(kv.Key); }
+            foreach (var k in pruneScratch) Queues.Remove(k);
+        }
+        /// Diagnostics: live queued numbers on one enemy (oldest first).
+        public static List<UiDamageNumber> DebugQueue(Object target) { var l = new List<UiDamageNumber>(); if (target && Queues.TryGetValue(target.GetInstanceID(), out var q)) foreach (var x in q) if (x && x.gameObject.activeSelf) l.Add(x); return l; }
         /// HudScaler px scale (1080p reference px -> screen px).
         public static float PxScale => HudScaler.ScaleFor(Screen.width, Screen.height);
         public static int UiLiveCount { get { int n = 0; if (_uiRoot) foreach (Transform c in _uiRoot) if (c.gameObject.activeSelf) n++; return n; } }
@@ -58,7 +68,15 @@ namespace StoneSignal.VFX
             var t = go.GetComponent<TMPro.TextMeshProUGUI>(); if (_font) t.font = _font; if (_fontMat) t.fontSharedMaterial = _fontMat;
             t.alignment = TMPro.TextAlignmentOptions.Bottom; t.enableWordWrapping = false; t.overflowMode = TMPro.TextOverflowModes.Overflow; t.raycastTarget = false; t.fontStyle = TMPro.FontStyles.Bold;
             var rt = (RectTransform)go.transform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(.5f, 0f); rt.sizeDelta = new Vector2(160f, 40f);
-            var n = go.AddComponent<UiDamageNumber>(); n.text = t; n.rt = rt; return n;
+            var n = go.AddComponent<UiDamageNumber>(); n.text = t; n.rt = rt;
+            {   // v18.6b crit '!': its own glyph numberCritGapPx right of the number (same font material -> same batch, +0 DC)
+                var bg = new GameObject("crit", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI)); bg.transform.SetParent(go.transform, false);
+                var bt = bg.GetComponent<TMPro.TextMeshProUGUI>(); if (_font) bt.font = _font; if (_fontMat) bt.fontSharedMaterial = _fontMat;
+                bt.alignment = TMPro.TextAlignmentOptions.BottomLeft; bt.enableWordWrapping = false; bt.overflowMode = TMPro.TextOverflowModes.Overflow; bt.raycastTarget = false; bt.fontStyle = TMPro.FontStyles.Bold; bt.text = "!";
+                var brt = (RectTransform)bg.transform; brt.anchorMin = brt.anchorMax = new Vector2(.5f, 0f); brt.pivot = new Vector2(0f, 0f); brt.sizeDelta = new Vector2(40f, 40f);
+                n.bang = bt; bg.SetActive(false);
+            }
+            return n;
         }
         internal static void ReleaseUi(UiDamageNumber n)
         {
@@ -76,7 +94,20 @@ namespace StoneSignal.VFX
             float side = 1f; if (id != 0) { side = Side.TryGetValue(id, out var last) ? -last : 1f; Side[id] = side; if (Side.Count > 256) Side.Clear(); }
             n.key = key; if (key != 0 && !crit) UiLive[key] = n;
             float px = (crit ? Style.numberCritPx : Style.numberNormalPx) * PxScale;
-            n.Begin(top, enemy, amount, crit ? CritColor : ColorFor(kind), crit, px, side);
+            // v18.6b queue (美术策划): a number within numberQueueSeconds of the previous one on the same enemy spawns numberQueueStepPx above
+            // the previous number's CURRENT position; at most numberQueueMax per enemy - one more pushes the oldest straight into its fade-out.
+            float lift = 0f;
+            if (id != 0)
+            {
+                if (!Queues.TryGetValue(id, out var q)) { if (Queues.Count > 128) PruneQueues(); Queues[id] = q = new List<UiDamageNumber>(4); }
+                q.RemoveAll(x => x == null || !x.gameObject.activeSelf || x.queueId != id || x.Fading);
+                var prev = q.Count > 0 ? q[q.Count - 1] : null;
+                if (prev != null && prev.age < Style.numberQueueSeconds) lift = prev.CurrentLiftPx + Style.numberQueueStepPx;
+                while (q.Count >= Mathf.Max(1, Style.numberQueueMax)) { q[0].ForceFade(); q.RemoveAt(0); }
+                q.Add(n);
+            }
+            n.queueId = id;
+            n.Begin(top, enemy, amount, crit ? CritColor : ColorFor(kind), crit, px, side, lift);
             return n;
         }
 
