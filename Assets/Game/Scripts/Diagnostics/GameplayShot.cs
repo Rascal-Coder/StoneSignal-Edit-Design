@@ -37,6 +37,8 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cnshots") >= 0) { yield return CnShots(); Debug.Log("CN SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fantest") >= 0) { yield return FanTest(); Debug.Log("FAN TEST DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fanseq") >= 0) { yield return FanSeq(); Debug.Log("FAN SEQ DONE " + path); Application.Quit(0); yield break; }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudcd") >= 0) { yield return HudDc(); Debug.Log("HUD DC DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-camcompare") >= 0) { yield return CamCompare(); Debug.Log("CAM COMPARE DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-dragthrough") >= 0) { yield return DragThrough(); Debug.Log("DRAG THROUGH DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-cardtext") >= 0) { yield return CardText(); Debug.Log("CARD TEXT DONE " + path); Application.Quit(0); yield break; }
@@ -364,6 +366,222 @@ namespace StoneSignal
             CameraFit.Mode = mode0; CameraFit.HudFreeGroupBlocks = groups0; fit.Refit();
             File.WriteAllText(Path.Combine(dir, "cam_" + res + ".txt"), sb.ToString());
             HudScaler.SimulatedSafeArea = null;
+        }
+        /// -hudcd [-notch]: v18.5 HUD draw-call capture (ProfilerRecorder in the development player; the Frame Debugger is editor-only) with the
+        /// worst-case collapsed hand: all on / HP plate hidden / old hand order (tower row first) / every root canvas off -> HUD DC = all on - scene only.
+        IEnumerator HudDc()
+        {
+            bool notch = Notch(); var ui = FindObjectOfType<GameUI>(); string dir = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height + (notch ? "_notch" : "");
+            var sb = new System.Text.StringBuilder("HUD draw calls " + res + " - ProfilerRecorder Draw Calls / Batches / SetPass Calls Count, median of 15 frames each, development player, worst-case collapsed hand\n");
+            yield return FullHand(); yield return WaitRt(1f);
+            var ld = new List<long>(); var lb = new List<long>(); var ls = new List<long>(); long md = 0, mb = 0, ms = 0;
+            IEnumerator Measure()
+            {
+                for (int f = 0; f < 6; f++) yield return null;
+                ld.Clear(); lb.Clear(); ls.Clear();
+                for (int f = 0; f < 15; f++) { yield return null; ld.Add(draws.LastValue); lb.Add(batches.LastValue); ls.Add(setPass.LastValue); }
+                ld.Sort(); lb.Sort(); ls.Sort(); md = ld[7]; mb = lb[7]; ms = ls[7];
+            }
+            string Row(string what) => "  " + what + ": DC " + md + ", batches " + mb + ", setpass " + ms + " (DC range " + ld[0] + ".." + ld[14] + ")\n";
+            yield return Measure(); long dAll = md, bAll = mb; sb.Append(Row("all on (v18.5: HP plate, block row before tower row)"));
+            var plate = ui.DebugHpPlate; plate.gameObject.SetActive(false);
+            yield return Measure(); long dNoPlate = md, bNoPlate = mb; sb.Append(Row("HP plate hidden")); plate.gameObject.SetActive(true);
+            var bh = ui.DebugBlockHand; var th = ui.DebugTowerHand; int bi = bh.GetSiblingIndex(); bh.SetSiblingIndex(th.GetSiblingIndex());
+            yield return Measure(); long dOld = md; sb.Append(Row("old hand order (tower row first, block row on top)" + (bh.GetSiblingIndex() > th.GetSiblingIndex() ? "" : " [order swap FAILED]")));
+            plate.gameObject.SetActive(false);
+            yield return Measure(); long dV184 = md; sb.Append(Row("7c977d5-equivalent HUD (old order + no HP plate)")); plate.gameObject.SetActive(true);
+            bh.SetSiblingIndex(bi);
+            var off = new List<Canvas>(); foreach (var c in FindObjectsOfType<Canvas>()) if (c.enabled && c.isRootCanvas) { c.enabled = false; off.Add(c); }
+            yield return Measure(); long dScene = md; sb.Append(Row("every root canvas off (scene only, " + off.Count + " canvases)")); foreach (var c in off) c.enabled = true;
+            ui.DebugSetFan(true); yield return WaitRt(.4f);
+            yield return Measure(); long dExp = md; sb.Append(Row("expanded fan (all on)")); ui.DebugSetFan(false); yield return WaitRt(.4f);
+            sb.Append("HUD DC (all on - scene only) " + (dAll - dScene) + " | 7c977d5-equivalent HUD " + (dV184 - dScene) + " | HP plate delta " + (dAll - dNoPlate) + " DC (" + (bAll - bNoPlate) + " batches) | hand order delta " + (dAll - dOld) + " DC | expanded vs collapsed " + (dExp - dAll) + " DC\n");
+            sb.Insert(0, "SUMMARY\t" + res + "\thudDC " + (dAll - dScene) + "\thudDC_7c977d5 " + (dV184 - dScene) + "\tplateDelta " + (dAll - dNoPlate) + "\torderDelta " + (dAll - dOld) + "\tframeDC " + dAll + "\n");
+            File.WriteAllText(Path.Combine(dir, "hudcd_" + res + ".txt"), sb.ToString()); Debug.Log("HUD DC:\n" + sb);
+            HudScaler.SimulatedSafeArea = null;
+        }
+        /// -fanseq [-touch]: v18.5 art fan motion as frame sequences (Time.captureDeltaTime = 1/60: the game clock advances exactly 1/60 s per frame,
+        /// so the grabs do not stretch the animation; grabs stay in memory and are encoded afterwards) - expand, collapse, press / release,
+        /// new card entering, stack merge - plus ART SPEC checks of the art v18.4 spec values (poses, depth, pill, draw order, xN badge, occlusion
+        /// rect vs the real tilted graphics, HP plate, stagger / easing timing). Writes seq_<res>/*.png and fanseq_<res>.txt.
+        IEnumerator FanSeq()
+        {
+            var ui = FindObjectOfType<GameUI>(); var pic = PlacementInputController.Instance; string root = Path.GetDirectoryName(path), res = Screen.width + "x" + Screen.height;
+            string dir = Path.Combine(root, "seq_" + res); Directory.CreateDirectory(dir);
+            var sb = new System.Text.StringBuilder("fan sequences / art spec checks " + res + " touch=" + PointerInput.TouchMode + " canvas scale " + pic.CanvasScale.ToString("F3") + "\n"); int nPass = 0, nFail = 0;
+            void Check(bool ok, string what) { if (ok) nPass++; else nFail++; sb.Append(ok ? "PASS " : "FAIL ").Append(what).Append('\n'); }
+            var fs = s.config.handFan ?? new HandFanStyle(); float k = pic.CanvasScale; var B = s.config.blocks; var es = UnityEngine.EventSystems.EventSystem.current; int NR = RuneRules.NoRune;
+            var frames = new List<(string name, Texture2D tex)>();
+            float Ang(RectTransform h) { float a = h.localEulerAngles.z; return a > 180f ? a - 360f : a; }
+            Vector2 Centre(RectTransform h, float w) { float r = Ang(h) * Mathf.Deg2Rad; return h.anchoredPosition + new Vector2(Mathf.Cos(r), Mathf.Sin(r)) * (w * .5f); }
+            bool Sel(RectTransform h) { var c = h.Find("Card"); return c != null && c.GetComponent<UnityEngine.UI.Outline>() != null; }
+            UnityEngine.UI.Shadow Shd(RectTransform h) { var c = h.Find("Card"); if (c == null) return null; foreach (var x in c.GetComponents<UnityEngine.UI.Shadow>()) if (!(x is UnityEngine.UI.Outline)) return x; return null; }
+            float Bright(RectTransform h) { var c = h.Find("Card"); return c != null ? c.GetComponent<UnityEngine.UI.Image>().color.r : -1f; }
+            var seqLast = new List<(float t, List<Vector2> c, List<float> a, List<float> sc)>();
+            string Poses(float w) { var t = ""; foreach (var f in ui.FanCards()) { var c = Centre(f.holder, w); t += "(" + c.x.ToString("F1") + "," + c.y.ToString("F1") + " " + Ang(f.holder).ToString("F2") + "deg s" + (f.holder.localScale.x * 128f / w).ToString("F3") + ") "; } return t; }
+            IEnumerator Seq(string name, int count, System.Action start)
+            {
+                float w = ui.DebugHandCardW; seqLast = new List<(float, List<Vector2>, List<float>, List<float>)>();
+                Time.captureDeltaTime = 1f / 60f; yield return null; yield return null;
+                for (int f = 0; f <= count; f++)
+                {
+                    if (f == 1) { start(); yield return null; } else if (f > 1) yield return null;
+                    frames.Add((name + "_" + f.ToString("00"), Grab()));
+                    var cl = new List<Vector2>(); var al = new List<float>(); var scl = new List<float>(); foreach (var h in ui.FanCards()) { cl.Add(Centre(h.holder, w)); al.Add(Ang(h.holder)); scl.Add(h.holder.localScale.x * 128f / w); }
+                    seqLast.Add((Time.unscaledTime, cl, al, scl));
+                    sb.Append("  " + name + " f" + f.ToString("00") + " t=" + Time.unscaledTime.ToString("F4") + " fanT=" + ui.FanProgress.ToString("F3") + " " + Poses(w) + "\n");
+                }
+                Time.captureDeltaTime = 0f;
+            }
+            void Flush() { foreach (var fr in frames) { File.WriteAllBytes(Path.Combine(dir, fr.name + ".png"), fr.tex.EncodeToPNG()); Destroy(fr.tex); } frames.Clear(); }
+            // ---- 1. collapsed worst case (7 different; oldest = leftmost carries a rune and is the selected card)
+            yield return SetHand(new List<(int, int)> { (0, 0), (1, NR), (2, NR), (3, NR), (4, NR), (0, NR), (1, 1) }); yield return WaitRt(.7f);
+            var fc = ui.FanCards(); float W = ui.DebugHandCardW, Y0 = ui.DebugHandRowY; int n = fc.Count;
+            float CX0(int i) => 24 + W * .5f + i * (4 * (W + 12) - 12 - W) / (n - 1);
+            float CX1(int i) => 24 + W * .5f + i * (W + 12);
+            {
+                string bad = "";
+                for (int i = 0; i < n; i++)
+                {
+                    float u = 2f * i / (n - 1) - 1f; var c = Centre(fc[i].holder, W);
+                    float ex = CX0(i), ey = Y0 + (Sel(fc[i].holder) ? 12 : 0) + fs.arcSagPx * (1 - u * u), ea = -fs.tiltDeg * u;
+                    if (Mathf.Abs(c.x - ex) > .2f || Mathf.Abs(c.y - ey) > .2f || Mathf.Abs(Ang(fc[i].holder) - ea) > .05f) bad += " #" + i + " (" + c.x.ToString("F1") + "," + c.y.ToString("F1") + "," + Ang(fc[i].holder).ToString("F2") + ") want (" + ex.ToString("F1") + "," + ey.ToString("F1") + "," + ea.ToString("F2") + ")";
+                }
+                Check(n == 7 && bad == "", "collapsed pose (7 cards): bottom-centre x " + CX0(0).ToString("F0") + " + i*" + (CX0(1) - CX0(0)).ToString("F1") + ", arc " + fs.arcSagPx + " px, tilt +" + fs.tiltDeg + ".." + (-fs.tiltDeg) + " deg, selected +12" + bad);
+                string sh = "";
+                for (int i = 0; i < n; i++)
+                {
+                    var h = fc[i].holder; var d = Shd(h); float wantB = i < n - 1 && !Sel(h) ? fs.coveredBrightness : 1f;
+                    if (Mathf.Abs(Bright(h) - wantB) > .01f) sh += " #" + i + " brightness " + Bright(h).ToString("F2") + " want " + wantB.ToString("F2");
+                    if (i == 0 ? d != null : (d == null || Mathf.Abs(d.effectColor.a - fs.shadowColor.a) > .01f || (d.effectDistance - fs.shadowOffset).sqrMagnitude > .01f)) sh += " #" + i + " shadow " + (d == null ? "none" : d.effectColor + " " + d.effectDistance);
+                }
+                Check(sh == "", "collapsed depth: covered cards brightness " + fs.coveredBrightness + " (newest + selected 1), shadow #" + ColorUtility.ToHtmlStringRGBA(fs.shadowColor) + " offset " + fs.shadowOffset + " on cards 1..6, none on the leftmost" + sh);
+                var obs = new List<Rect>(); ui.HudObstacles(obs, 0f, BlockHandManager.MaxCards, true); var rr = obs[obs.Count - 1]; var bc = new Vector3[4]; ui.DebugBlockHand.GetWorldCorners(bc);
+                var refR = Rect.MinMaxRect((rr.xMin - bc[0].x) / k, (rr.yMin - bc[0].y) / k, (rr.xMax - bc[0].x) / k, (rr.yMax - bc[0].y) / k);
+                float over = -999f; string ow = ""; var c4 = new Vector3[4];
+                foreach (var f in fc) foreach (var g in f.holder.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                {
+                    if (g.name == "Stack" || !g.enabled || g.color.a <= .05f) continue; g.rectTransform.GetWorldCorners(c4);
+                    foreach (var p in c4) { float x = (p.x - bc[0].x) / k, y = (p.y - bc[0].y) / k; float o = Mathf.Max(Mathf.Max(refR.xMin - x, x - refR.xMax), Mathf.Max(refR.yMin - y, y - refR.yMax)); if (o > over) { over = o; ow = f.holder.name + "/" + g.name; } }
+                }
+                Check(Mathf.Abs(refR.xMin - 3.9f) < .3f && Mathf.Abs(refR.xMax - 667.7f) < .3f && Mathf.Abs(refR.yMin - 272.1f) < .3f && Mathf.Abs(refR.yMax - 458f) < .3f && over <= .5f,
+                    "collapsed occlusion rect (HudObstacles, worst case) x " + refR.xMin.ToString("F1") + "-" + refR.xMax.ToString("F1") + " y " + refR.yMin.ToString("F1") + "-" + refR.yMax.ToString("F1") + " ref px (spec 3.9-667.7 / 272-458); the real tilted card graphics (selected rune card leftmost, rune card rightmost) stay inside: closest corner " + (over <= 0 ? (-over).ToString("F1") + " px inside" : over.ToString("F1") + " px OUTSIDE") + " (" + ow + ")");
+                Check(Mathf.Abs(ui.DebugHandCount.anchoredPosition.y - (Y0 + W + fs.handCountGapPx)) < .1f, "7/7 pill collapsed: bottom y " + ui.DebugHandCount.anchoredPosition.y.ToString("F1") + " ref px (spec 454 = row + card + " + fs.handCountGapPx + ")");
+                Check(ui.DebugBlockHand.GetSiblingIndex() < ui.DebugTowerHand.GetSiblingIndex(), "hand canvas draw order: block row (sibling " + ui.DebugBlockHand.GetSiblingIndex() + ") before tower row (sibling " + ui.DebugTowerHand.GetSiblingIndex() + ")");
+            }
+            yield return ShotNamed(root, "fan_collapsed_" + res);
+            // ---- 2. expanded
+            ui.DebugSetFan(true); yield return WaitRt(.4f); fc = ui.FanCards();
+            {
+                string bad = "";
+                for (int i = 0; i < n; i++)
+                {
+                    float u = 2f * i / (n - 1) - 1f; var c = Centre(fc[i].holder, W); var h = fc[i].holder; var d = Shd(h);
+                    float ex = CX1(i), ey = Y0 + (Sel(h) ? 12 : 0) + fs.expandedLiftPx + fs.expandedArcSagPx * (1 - u * u), ea = -fs.expandedTiltDeg * u;
+                    if (Mathf.Abs(c.x - ex) > .2f || Mathf.Abs(c.y - ey) > .2f || Mathf.Abs(Ang(h) - ea) > .05f) bad += " #" + i + " (" + c.x.ToString("F1") + "," + c.y.ToString("F1") + "," + Ang(h).ToString("F2") + ") want (" + ex.ToString("F1") + "," + ey.ToString("F1") + "," + ea.ToString("F2") + ")";
+                    if (Mathf.Abs(Bright(h) - 1f) > .01f) bad += " #" + i + " brightness " + Bright(h).ToString("F2");
+                    if (d != null && d.effectColor.a > .01f) bad += " #" + i + " shadow alpha " + d.effectColor.a.ToString("F2");
+                }
+                Check(bad == "", "expanded pose: x " + CX1(0).ToString("F0") + " + i*" + (W + 12).ToString("F0") + ", lift " + fs.expandedLiftPx + " + arc " + fs.expandedArcSagPx + ", tilt +" + fs.expandedTiltDeg + ".." + (-fs.expandedTiltDeg) + " deg, brightness 1, shadows faded out; right edge " + (CX1(n - 1) + W * .5f).ToString("F0") + " ref px" + bad);
+                Check(Mathf.Abs(ui.DebugHandCount.anchoredPosition.y - (Y0 + W + fs.handCountGapPx + fs.expandedLiftPx)) < .1f, "7/7 pill expanded: bottom y " + ui.DebugHandCount.anchoredPosition.y.ToString("F1") + " ref px (spec 474)");
+            }
+            yield return ShotNamed(root, "fan_expanded_" + res);
+            ui.DebugSetFan(false); yield return WaitRt(.5f);
+            // ---- 3. xN badge: fanned (6 groups, x2 stack) / unfanned (3 groups); row width fixed with a stack
+            yield return SetHand(new List<(int, int)> { (0, NR), (0, NR), (1, 0), (2, 1), (3, NR), (4, 3), (0, 4) }); yield return WaitRt(.6f);
+            {
+                fc = ui.FanCards(); RectTransform badge = null; foreach (var f in fc) { var b = f.holder.Find("Card/Count"); if (b != null) badge = (RectTransform)b; }
+                var last = fc[fc.Count - 1]; var cl = Centre(last.holder, W);
+                Check(badge != null && (badge.anchoredPosition - new Vector2(fs.fanCountBadgePos.x, -fs.fanCountBadgePos.y)).sqrMagnitude < .01f && Mathf.Abs(ui.FanRow.collapsedWidth - (4 * (W + 12) - 12)) < .5f && Mathf.Abs(cl.x - (24 + 4 * (W + 12) - 12 - W * .5f)) < .2f,
+                    "fanned with a x2 stack (" + fc.Count + " groups): xN badge TL " + (badge != null ? badge.anchoredPosition.ToString("F0") : "none") + " (spec (-12,100) card units), collapsed row " + ui.FanRow.collapsedWidth.ToString("F1") + " ref px, rightmost centre x " + cl.x.ToString("F1") + " (fixed 636 row: 585)");
+            }
+            yield return ShotNamed(root, "fan_badges_" + res);
+            yield return SetHand(new List<(int, int)> { (0, NR), (0, NR), (1, NR), (2, 2) }); yield return WaitRt(.6f);
+            {
+                fc = ui.FanCards(); RectTransform badge = null; float maxA = 0f; foreach (var f in fc) { var b = f.holder.Find("Card/Count"); if (b != null) badge = (RectTransform)b; maxA = Mathf.Max(maxA, Mathf.Abs(Ang(f.holder))); }
+                Check(!ui.FanActive && badge != null && (badge.anchoredPosition - new Vector2(84, 12)).sqrMagnitude < .01f && maxA < .01f && fc[0].holder.Find("Card").GetComponent<CardHover>().Scale == 1.06f,
+                    "unfanned (" + fc.Count + " groups): v17 row unchanged - xN badge TL " + (badge != null ? badge.anchoredPosition.ToString("F0") : "none") + " (v17 (84,-12)), no tilt (max " + maxA.ToString("F2") + " deg), hover 1.06 / 12");
+            }
+            yield return ShotNamed(root, "hand_unfanned_" + res);
+            // ---- 4. HP plate
+            {
+                var plate = ui.DebugHpPlate; var img = plate.GetComponent<UnityEngine.UI.Image>(); var hs = ui.DebugHpSmall; float pref = hs.GetPreferredValues(hs.text).x, pw = Mathf.Max(64f, pref + 20f);
+                bool ok = img.sprite != null && img.sprite.name == "ui9_panel_navy" && img.type == UnityEngine.UI.Image.Type.Sliced && Mathf.Abs(img.pixelsPerUnitMultiplier - 2.4f) < .01f && Mathf.Abs(img.color.a - .85f) < .01f && !img.raycastTarget
+                    && (plate.anchoredPosition - new Vector2(99, -176)).sqrMagnitude < .01f && plate.pivot == new Vector2(.5f, 1f) && plate.anchorMin == new Vector2(0, 1) && Mathf.Abs(plate.sizeDelta.y - 28f) < .01f && Mathf.Abs(plate.sizeDelta.x - pw) < .5f
+                    && Mathf.Abs(hs.outlineWidth - .3f) < .001f && ColorUtility.ToHtmlStringRGB(hs.outlineColor) == "1E2A4A" && plate.GetSiblingIndex() + 1 == hs.rectTransform.GetSiblingIndex();
+                Check(ok, "HP plate: sprite " + (img.sprite ? img.sprite.name : "null") + " " + img.type + " ppu x" + img.pixelsPerUnitMultiplier + " alpha " + img.color.a.ToString("F2") + " anchor TL pivot " + plate.pivot + " pos " + plate.anchoredPosition + " size " + plate.sizeDelta + " (text '" + hs.text + "' " + pref.ToString("F1") + " px + 20, min 64), text outline " + hs.outlineWidth.ToString("F2") + " #" + ColorUtility.ToHtmlStringRGB(hs.outlineColor) + ", plate right before the text");
+            }
+            // ---- 5. sequences: expand + collapse (7 cards collapsed, as in the acceptance worst case)
+            yield return FullHand(); yield return WaitRt(.7f); n = ui.FanCards().Count;
+            yield return Seq("expand", 16, () => ui.DebugSetFan(true)); var expLog = seqLast;
+            yield return Seq("collapse", 16, () => ui.DebugSetFan(false)); var colLog = seqLast; Flush();
+            {
+                string Timing(List<(float t, List<Vector2> c, List<float> a, List<float> sc)> lg, bool expand, out bool ok)
+                {
+                    ok = lg.Count > 12; var first = new int[n]; var done = new int[n]; string t = "";
+                    for (int i = 1; i < n; i++)
+                    {
+                        first[i] = -1; done[i] = -1;
+                        for (int f = 1; f < lg.Count; f++)
+                        {
+                            float fr = (lg[f].c[i].x - CX0(i)) / (CX1(i) - CX0(i)); if (!expand) fr = 1f - fr;
+                            if (first[i] < 0 && fr > .001f) first[i] = f; if (done[i] < 0 && fr > .999f) done[i] = f;
+                        }
+                        t += " #" + i + " moves f" + first[i] + " done f" + done[i];
+                        if (i > 1 && first[i] > first[i - 1]) ok = false;
+                        if (done[i] < 0 || done[i] > 10) ok = false;
+                    }
+                    float fr6 = (lg[1].c[n - 1].x - CX0(n - 1)) / (CX1(n - 1) - CX0(n - 1)); if (!expand) fr6 = 1f - fr6;
+                    float total = expand ? fs.expandSeconds : fs.collapseSeconds, per = total - fs.staggerSeconds * (n - 1), dt = lg[1].t - lg[0].t, want = 1f - Mathf.Pow(1f - Mathf.Clamp01(dt / per), 3f);
+                    if (Mathf.Abs(fr6 - want) > .02f || Mathf.Abs(dt - 1f / 60f) > .001f) ok = false;
+                    return "frame dt " + dt.ToString("F4") + " s; rightmost card after 1 frame " + fr6.ToString("F3") + " (EaseOutCubic over " + per.ToString("F3") + " s: " + want.ToString("F3") + ");" + t;
+                }
+                string te = Timing(expLog, true, out bool okE), tc = Timing(colLog, false, out bool okC);
+                Check(okE, "expand timing: " + fs.expandSeconds + " s total, stagger " + fs.staggerSeconds + " s/card rightmost first, all cards in place by frame 10 (0.167 s at 60 fps): " + te);
+                Check(okC, "collapse timing: " + fs.collapseSeconds + " s total, stagger rightmost first: " + tc);
+            }
+            // ---- 5b. direction reversal mid-animation continues from the current eased position (v18.5 review fix in GameUI.SetFan)
+            {
+                yield return WaitRt(.3f); Time.captureDeltaTime = 1f / 60f; yield return null;
+                ui.DebugSetFan(true); for (int f = 0; f < 3; f++) yield return null;
+                float t0 = ui.FanProgress, e0 = fs.expandEase.Evaluate(t0);
+                ui.DebugSetFan(false); float t1 = ui.FanProgress, e1 = 1f - fs.collapseEase.Evaluate(1f - t1);
+                var fcr = ui.FanCards(); var pA = Centre(fcr[n - 1].holder, W); yield return null; var pB = Centre(fcr[n - 1].holder, W);
+                Time.captureDeltaTime = 0f;
+                Check(t0 > .05f && t0 < .95f && Mathf.Abs(e1 - e0) < .01f, "reversal mid-expand (review fix): fanT " + t0.ToString("F3") + " eased " + e0.ToString("F3") + " -> collapsing from fanT " + t1.ToString("F3") + " eased " + e1.ToString("F3") + " (the 7c977d5 mapping would jump to " + (1f - fs.collapseEase.Evaluate(1f - t0)).ToString("F3") + "); rightmost card moves " + (pB - pA).magnitude.ToString("F1") + " ref px in the next frame");
+                yield return WaitRt(.5f);
+            }
+            // ---- 6. press / release on a covered card (pointer enter = the touch press; StandaloneInputModule sends it on touch-down)
+            yield return WaitRt(.5f); fc = ui.FanCards();
+            {
+                var h = fc[2].holder; var go = h.Find("Card").gameObject; var p0 = h.anchoredPosition; float s0 = h.localScale.x, b0 = Bright(h);
+                yield return Seq("press", 6, () => UnityEngine.EventSystems.ExecuteEvents.Execute(go, new UnityEngine.EventSystems.PointerEventData(es), UnityEngine.EventSystems.ExecuteEvents.pointerEnterHandler));
+                var dp = h.anchoredPosition - p0; float ds = h.localScale.x / s0, b1 = Bright(h);
+                Check(Mathf.Abs(dp.y - fs.pressLiftPx) < .1f && Mathf.Abs(dp.x) < .1f && Mathf.Abs(ds - fs.pressScale) < .001f && Mathf.Abs(b0 - fs.coveredBrightness) < .01f && Mathf.Abs(b1 - 1f) < .01f,
+                    "press on covered card #2: lift " + dp.y.ToString("F1") + " ref px, scale x" + ds.ToString("F3") + ", brightness " + b0.ToString("F2") + " -> " + b1.ToString("F2") + " (spec +8, x1.04, un-dimmed)");
+                yield return new WaitForEndOfFrame(); Capture(Path.Combine(root, "fan_pressed_" + res + ".png"));
+                yield return Seq("release", 4, () => UnityEngine.EventSystems.ExecuteEvents.Execute(go, new UnityEngine.EventSystems.PointerEventData(es), UnityEngine.EventSystems.ExecuteEvents.pointerExitHandler));
+                Check((h.anchoredPosition - p0).sqrMagnitude < .01f && Mathf.Abs(h.localScale.x - s0) < 1e-4f && Mathf.Abs(Bright(h) - b0) < .01f, "release restores pose, scale and covered brightness");
+                Flush();
+            }
+            // ---- 7. a newly drawn card enters (6 -> 7 groups) / a drawn card merges into a stack (xN bump)
+            {
+                var spec6 = new List<(int, int)>(); for (int i = 0; i < 6; i++) spec6.Add((i % B.Length, i < B.Length ? NR : i - B.Length));
+                yield return SetHand(spec6); yield return WaitRt(.7f);
+                yield return Seq("enter", 18, () => { s.Blocks.Hand.AddCard(B[1], 1); s.Blocks.NotifyChanged(); }); var enLog = seqLast;
+                var lastF = enLog[enLog.Count - 1]; int m = lastF.c.Count; var cN = lastF.c[m - 1];
+                bool started = false; for (int f = 1; f < enLog.Count; f++) if (enLog[f].c.Count == m && enLog[f].sc[m - 1] < .99f) started = true;
+                Check(m == 7 && started && Mathf.Abs(cN.x - CX0(6)) < .2f && Mathf.Abs(lastF.a[m - 1] + fs.tiltDeg) < .05f && Mathf.Abs(lastF.sc[m - 1] - 1f) < .001f,
+                    "new card enters from +" + fs.enterOffsetPx + " at x" + fs.enterScaleFrom + " (EaseOutBack " + fs.enterSeconds + " s) and ends in the rightmost slot: centre " + cN.ToString("F1") + ", tilt " + lastF.a[m - 1].ToString("F2") + ", scale " + lastF.sc[m - 1].ToString("F3"));
+                Flush();
+                yield return SetHand(spec6); yield return WaitRt(.7f);
+                yield return Seq("merge", 18, () => { s.Blocks.Hand.AddCard(B[2], NR); s.Blocks.NotifyChanged(); });
+                fc = ui.FanCards(); var lastH = fc[fc.Count - 1].holder; var cb = lastH.Find("Card/Count");
+                Check(fc.Count == 6 && cb != null && Mathf.Abs(cb.localScale.x - 1f) < .001f, "drawn card stacks: its group slides to the far right with a x2 badge (bump " + fs.countBumpScale + " -> 1 in " + fs.countBumpSeconds + " s), final badge scale " + (cb != null ? cb.localScale.x.ToString("F3") : "-"));
+                Flush();
+            }
+            sb.Insert(0, "ART SPEC CHECKS: " + nPass + "/" + (nPass + nFail) + " passed\n");
+            File.WriteAllText(Path.Combine(root, "fanseq_" + res + ".txt"), sb.ToString()); Debug.Log("ART SPEC CHECKS: " + nPass + "/" + (nPass + nFail) + " passed");
         }
         /// -fantest [-touch] [-notch]: v18.4 fanned block row - geometry, hit-testing of exposed parts, badges never covered, newest card
         /// fully visible, collapse triggers (drag start / empty tap / idle), expand by tap / hold, placement from the expanded fan;

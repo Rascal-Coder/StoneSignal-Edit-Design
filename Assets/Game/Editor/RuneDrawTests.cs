@@ -323,11 +323,16 @@ namespace StoneSignal.EditorTools
                 var r3 = HandFanLayout.Compute(7, 150, 162, 700, st2, 30f);
                 return r.collapsedStep == 44f && r2.collapsedStep == 100f && Mathf.Abs(r3.expandedWidth - 700f) < .01f && r3.expandedStep >= r3.collapsedStep;
             });
-            Case("fan style: N = 4, 4 slots, 44 px, 2 s idle collapse; neutral visuals (linear easing, no shadow, no tint)", () =>
+            Case("fan style: gameplay N = 4, 4 slots, 44 px, 2 s idle, 0.35 s hold unchanged; art v18.4 spec values (EaseOutCubic = 1-(1-t)^3, shadow #0D1229 a.5 (-5,-3), covered 0.88, xN (-12,100), tilt 3/2, arc 6/8, lift 20, stagger 0.008, press 1.04 / 8, pill gap 28)", () =>
             {
-                var st = new HandFanStyle();
-                return st.collapseAbove == 4 && st.rowSlots == 4f && st.minExposedPx == 44f && st.idleCollapseSeconds == 2f && st.shadowColor.a == 0f && st.coveredBrightness == 1f
-                    && Mathf.Abs(st.expandEase.Evaluate(.5f) - .5f) < .01f && Mathf.Abs(st.collapseEase.Evaluate(.5f) - .5f) < .01f;
+                var st = new HandFanStyle(); bool ok = st.collapseAbove == 4 && st.rowSlots == 4f && st.minExposedPx == 44f && st.idleCollapseSeconds == 2f && st.holdExpandSeconds == .35f && st.expandedStepPx == 0f;
+                ok &= st.expandSeconds == .15f && st.collapseSeconds == .15f && st.expandedLiftPx == 20f && st.coveredBrightness == .88f && st.fanCountBadgePos == new Vector2(-12f, 100f) && st.shadowOffset == new Vector2(-5f, -3f);
+                ok &= ColorUtility.ToHtmlStringRGB(st.shadowColor) == "0D1229" && Mathf.Abs(st.shadowColor.a - .5f) < .001f;
+                ok &= st.tiltDeg == 3f && st.arcSagPx == 6f && st.expandedTiltDeg == 2f && st.expandedArcSagPx == 8f && st.fixedRowIgnoresStackSpacing && st.staggerSeconds == .008f && st.relayoutSeconds == .15f;
+                ok &= st.enterSeconds == .2f && st.enterOffsetPx == new Vector2(48f, -24f) && st.enterScaleFrom == .85f && st.countBumpScale == 1.25f && st.countBumpSeconds == .18f && st.pressScale == 1.04f && st.pressLiftPx == 8f && st.handCountGapPx == 28f;
+                float err = 0f; for (int i = 0; i <= 20; i++) { float t = i / 20f, want = 1f - Mathf.Pow(1f - t, 3f); err = Mathf.Max(err, Mathf.Abs(st.expandEase.Evaluate(t) - want), Mathf.Abs(st.collapseEase.Evaluate(t) - want)); }
+                log.Add("  EaseOutCubic curve max error vs 1-(1-t)^3: " + err.ToString("F5"));
+                return ok && err < .002f;
             });
             UnityEngine.Object.DestroyImmediate(c);
             int cases = 0; foreach (var l in log) if (l.StartsWith("PASS ") || l.StartsWith("FAIL ")) cases++; // info lines (indented) are not test cases
