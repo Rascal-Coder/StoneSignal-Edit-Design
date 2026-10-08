@@ -96,7 +96,7 @@ namespace StoneSignal
             Blocks.Initialize(grid,viewCamera,config.palette,config.blocks,() => Game.State == GameState.Build || (config.allowCombatBlocks && Game.State == GameState.Combat));
             Blocks.Runes = Runes; Blocks.Refill(config.blocksPerBuild,true); Blocks.ValidateAdditional = Validator.ValidatePlacement;
             Towers = Service<TowerManager>("Tower placement");
-            Towers.Initialize(grid,Validator,Enemies,config.palette,Modifiers,config.towers,Blocks,() => Game.State == GameState.Build,() => Game.State == GameState.Combat,Economy.Spend,() => Economy.Gold);
+            Towers.Initialize(grid,Validator,Enemies,config.palette,Modifiers,config.towers,Blocks,() => Game.State == GameState.Build || (config.allowCombatTowers && Game.State == GameState.Combat),() => Game.State == GameState.Combat,Economy.Spend,() => Economy.Gold);
             Towers.RuneRulesConfig = Runes;
             // v16.2: spawn portals (rise before walking, active only in combat) + core enclosure damage states
             Enemies.PortalAt = MapView.PortalAt;
@@ -127,6 +127,11 @@ namespace StoneSignal
                 }
             }
             Service<CombatFeedback>("Combat feedback").Initialize(Enemies,config.palette,viewCamera);
+            if (config.combatHud != null && config.combatHud.screenSpaceHpBars)
+            {   // v18.6 (美术策划 4): HP bars on a screen-space canvas above every floating number; numbers one layer below (both under the HUD)
+                Service<EnemyHpBarsUI>("Enemy HP bars").Initialize(Enemies,config.palette,viewCamera,config.combatHud);
+                StoneSignal.VFX.DamageNumbers.ConfigureScreenSpace(config.combatHud,viewCamera);
+            }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-touch") >= 0) { PointerInput.ForceTouch = true; Debug.Log("TOUCH MODE: forced by -touch (diagnostics)"); }
             { var a = System.Environment.GetCommandLineArgs(); int i = System.Array.IndexOf(a,"-camfit"); if (i >= 0 && i + 1 < a.Length) { CameraFit.Mode = a[i + 1].ToLowerInvariant() == "hudfree" ? CameraFitMode.HudFree : CameraFitMode.Screen; Debug.Log("CAMERA FIT MODE: " + CameraFit.Mode + " (-camfit)"); } } // v18.3 HudFree experiment

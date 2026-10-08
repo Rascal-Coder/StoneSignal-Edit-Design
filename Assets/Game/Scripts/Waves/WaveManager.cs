@@ -12,7 +12,10 @@ namespace StoneSignal
         private RunModifiers modifiers;
         private bool allSpawned;
         public int WaveIndex { get; private set; }
+        /// Enemies of this wave still alive or not yet spawned (split children included: each split adds its children).
         public int Remaining { get; private set; }
+        /// v18.6: this wave's enemy total - wave.Total plus every split child spawned so far (grows with Remaining on a split).
+        public int Total { get; private set; }
         public event Action Changed;
         public event Action Completed;
         public void Initialize(GameManager state, GameConfig settings, EnemyManager registry, EnemySpawner source, RunModifiers upgrades)
@@ -24,13 +27,13 @@ namespace StoneSignal
         {
             if (game.State != GameState.Build) return false;
             WaveData wave = config.waves[Mathf.Min(WaveIndex,config.waves.Length-1)];
-            Remaining = wave.Total; allSpawned = false; modifiers.BeginWave(); game.SetState(GameState.Combat); Changed?.Invoke();
+            Remaining = Total = wave.Total; allSpawned = false; modifiers.BeginWave(); game.SetState(GameState.Combat); Changed?.Invoke();
             float extraScale = 1 + Mathf.Max(0,WaveIndex-config.waves.Length+1)*.2f;
             spawner.Begin(wave,extraScale,() => { allSpawned = true; TryComplete(); });
             return true;
         }
         private void Update() { if (Input.GetKeyDown(KeyCode.Space)) StartWave(); }
-        private void OnChildren(int count) { if(game.State==GameState.Combat) { Remaining+=count; Changed?.Invoke(); } }
+        private void OnChildren(int count) { if(game.State==GameState.Combat) { Remaining+=count; Total+=count; Changed?.Invoke(); } }
         private void OnResolved(Enemy enemy, EnemyResolution reason)
         {
             if (game.State != GameState.Combat || Remaining <= 0) return;

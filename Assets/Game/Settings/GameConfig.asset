@@ -15,7 +15,8 @@ MonoBehaviour:
   baseHP: 30
   initialGold: 200
   blocksPerBuild: 3
-  allowCombatBlocks: 1
+  allowCombatBlocks: 0
+  allowCombatTowers: 1
   blocks:
   - {fileID: 11400000, guid: 253e30cf571905d4b8b1b50690baa1f4, type: 2}
   - {fileID: 11400000, guid: 3a8b1f7ce769787458c4bc0741ceb173, type: 2}

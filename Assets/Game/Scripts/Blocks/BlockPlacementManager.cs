@@ -157,6 +157,10 @@ namespace StoneSignal
         public bool Pinned { get; set; } // scripted presentation keeps the current Preview()
         public Transform PlacedRoot => placedRoot;
         public bool ExternalDrive { get; set; }
+        /// v18.6: walls may be placed in the current game state (Build; combat only with allowCombatBlocks).
+        public bool PhaseAllows => canBuild != null && canBuild();
+        /// v18.6: route a notice through the same toast path as placement notices (e.g. a wall drag in combat).
+        public void RaiseNotice(string message) => Notice?.Invoke(message);
         public bool CanPlaceNow => toolActive && canBuild != null && canBuild() && Remaining > 0;
         private void Update()
         {

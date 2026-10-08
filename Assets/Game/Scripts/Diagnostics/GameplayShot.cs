@@ -10,7 +10,7 @@ namespace StoneSignal
     // -stonesignal-shot <png>: scripted build + combat on the real runtime board; pins a VALID block ghost, a BLOCKED tower
     // ghost and the slot highlights (tower selected), saves a 1920x1080 frame with the real HUD, writes <png>.txt with the
     // measured frame stats (ProfilerRecorder: draw calls, batches, set-pass, tris), then quits.
-    public sealed class GameplayShot : MonoBehaviour
+    public sealed partial class GameplayShot : MonoBehaviour
     {
         GameBootstrap s; string path;
         ProfilerRecorder draws, batches, setPass, tris;
@@ -38,6 +38,7 @@ namespace StoneSignal
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-toastshots") >= 0) { yield return ToastShots(); Debug.Log("TOAST SHOTS DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fantest") >= 0) { yield return FanTest(); Debug.Log("FAN TEST DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-fanseq") >= 0) { yield return FanSeq(); Debug.Log("FAN SEQ DONE " + path); Application.Quit(0); yield break; }
+            { var r186 = V186(); if (r186 != null) { yield return r186; Debug.Log("V186 DONE " + path); Application.Quit(0); yield break; } } // v18.6 diagnostics (GameplayShotV186.cs)
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hoverpc") >= 0) { yield return HoverPc(); Debug.Log("HOVER PC DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-hudcd") >= 0) { yield return HudDc(); Debug.Log("HUD DC DONE " + path); Application.Quit(0); yield break; }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-camcompare") >= 0) { yield return CamCompare(); Debug.Log("CAM COMPARE DONE " + path); Application.Quit(0); yield break; }
@@ -510,8 +511,8 @@ namespace StoneSignal
             yield return SetHand(new List<(int, int)> { (0, NR), (0, NR), (1, NR), (2, 2) }); yield return WaitRt(.6f);
             {
                 fc = ui.FanCards(); RectTransform badge = null; float maxA = 0f; foreach (var f in fc) { var b = f.holder.Find("Card/Count"); if (b != null) badge = (RectTransform)b; maxA = Mathf.Max(maxA, Mathf.Abs(Ang(f.holder))); }
-                Check(!ui.FanActive && badge != null && (badge.anchoredPosition - new Vector2(84, 12)).sqrMagnitude < .01f && maxA < .01f && fc[0].holder.Find("Card").GetComponent<CardHover>().Scale == 1.06f && fc[0].holder.Find("Card").GetComponent<CardHover>().HoverScale == 0f,
-                    "unfanned (" + fc.Count + " groups): v17 row unchanged - xN badge TL " + (badge != null ? badge.anchoredPosition.ToString("F0") : "none") + " (v17 (84,-12)), no tilt (max " + maxA.ToString("F2") + " deg), hover 1.06 / 12");
+                Check(!ui.FanActive && badge != null && (badge.anchoredPosition - new Vector2(84, 12)).sqrMagnitude < .01f && maxA < .01f && fc[0].holder.Find("Card").GetComponent<CardHover>().Scale == fs.pressScale && fc[0].holder.Find("Card").GetComponent<CardHover>().HoverScale == fs.hoverScale,
+                    "unfanned (" + fc.Count + " groups): v17 row unchanged - xN badge TL " + (badge != null ? badge.anchoredPosition.ToString("F0") : "none") + " (v17 (84,-12)), no tilt (max " + maxA.ToString("F2") + " deg); v18.6 hover unify: press " + fs.pressScale + " / +" + fs.pressLiftPx + ", PC hover " + fs.hoverScale + " / +" + fs.hoverLiftPx);
             }
             yield return ShotNamed(root, "hand_unfanned_" + res);
             // ---- 4. HP plate

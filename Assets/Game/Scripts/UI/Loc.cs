@@ -12,6 +12,10 @@ namespace StoneSignal.UI
         // ---- HUD
         public static string Wave(int i, int n) => "第 " + i + " / " + n + " 波";   // INVENTED wording (GDD: "WAVE x/y")
         public const string Battle = "开战";                                          // INVENTED (GDD: "BATTLE")
+        /// v18.6 combat info plate "剩余 N 只" (replaces BATTLE during combat).
+        public const string RemainingPrefix = "剩余", RemainingSuffix = "只";
+        /// v18.6 notice key (logic English, display 战斗中不能放墙): a wall drag started during combat.
+        public const string CombatNoWalls = "Walls cannot be placed during combat";
         // RotateHint "R 旋转 · 右键取消" removed (玩法策划 v18 text spec: no placement hint, PC too; R / RMB still work).
         public const string ChooseUpgrade = "选择强化", Choose = "选择";             // GDD 8.1 "波次强化"
         public const string CoreDark = "核心失守", Restart = "重新开始";               // 玩法策划 v18 (was "核心熄灭了")
@@ -92,7 +96,7 @@ namespace StoneSignal.UI
             { "Enemy is crossing this cell", "敌人正在经过该格" }, { "An enemy would be trapped", "会困住敌人" },
             { "No blocks left. Start the next wave.", "没有墙牌了，开始下一波吧" }, { "Outside the board", "超出棋盘" }, { "Off board", "超出棋盘" },
             { "Cell occupied / protected", "这里不能放" }, { "Duplicate block cell", "这里不能放" },
-            { "Blocked: the core needs an open route", "不能堵死通往核心的路线" }, { "Occupied by a tower", "已有塔" }, { "No tower selected", "先选一座塔" },
+            { "Blocked: the core needs an open route", "不能堵死通往核心的路线" }, { CombatNoWalls, "战斗中不能放墙" }, { "Occupied by a tower", "已有塔" }, { "No tower selected", "先选一座塔" },
         };
         /// Every static UI string (for the font atlas check; rewards are added by the caller from the reward pool).
         public static IEnumerable<string> All()
@@ -102,7 +106,7 @@ namespace StoneSignal.UI
             foreach (var v in Towers.Values) yield return v; foreach (var v in Enemies.Values) yield return v;
             for (int i = 0; i < RuneNames.Length; i++) { yield return RuneTitle(i); yield return RuneDesc(i); }
             foreach (var v in Notices.Values) yield return v;
-            yield return "普通精良稀有传说"; yield return RuneOptionNote; yield return ExtraDrawTitle; yield return ExtraDrawDesc;
+            yield return "普通精良稀有传说"; yield return RemainingPrefix + RemainingSuffix; yield return RuneOptionNote; yield return ExtraDrawTitle; yield return ExtraDrawDesc;
         }
         static readonly HashSet<string> reported = new HashSet<string>();
         public static string Notice(string en)

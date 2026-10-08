@@ -25,7 +25,9 @@ namespace StoneSignal
         public bool Over => Split ? down && over : over;
         /// PC hover look active (fanned rows, mouse, pointer over and not pressed).
         public bool Hovered => Split && over && !down && !PointerInput.TouchMode;
-        public bool Raised => Over || Hovered;
+        public bool Raised => (Active == null || Active()) && (Over || Hovered);
+        /// v18.6: null or true = hover / press looks on; false (block row in combat) = the card stays put (no lift / scale), it stays dimmed.
+        public System.Func<bool> Active;
         public void Init(RectTransform target, bool alreadyLifted) { card = target; rest = target.anchoredPosition; restScale = target.localScale; lifted = alreadyLifted; }
         Vector2 Offset => lifted || !Raised ? Vector2.zero : new Vector2(0, Over ? Lift : HoverLift);
         /// v18.4 fan animation moves the rest position.
@@ -69,7 +71,11 @@ namespace StoneSignal
         private ArtCatalog art;
         private TextMeshProUGUI hpNumber, hpSmall, gold, wave, hint, targetLabel; private RectTransform hpPlate;
         private RectTransform goldPill, handCount; private StoneSignal.VFX.DrawPileUI drawPile; private StoneSignal.VFX.RewardCounterUI goldCounter;
-        public RectTransform GoldTarget => goldPill; public StoneSignal.VFX.RewardCounterUI GoldCounter => goldCounter;
+        /// v18.6 gold ring fix: kill gold flies to the coin icon (pivot = its centre; RewardFlyFx aims at target.position). It was the pill
+        /// RectTransform, whose pivot is its top-left corner - every absorb flash landed on the pill's corner, between the core orb and the pill.
+        public RectTransform GoldTarget => goldCoin != null ? goldCoin : goldPill; public StoneSignal.VFX.RewardCounterUI GoldCounter => goldCounter;
+        private RectTransform goldCoin, goldRing;
+        public RectTransform DebugGoldPill => goldPill; public RectTransform DebugGoldRing => goldRing; public RectTransform DebugCoreOrb => hudOrb;
         private Button battle;
         private readonly Button[] speedButtons = new Button[4];
         private RectTransform towerHand, blockHand;
@@ -118,10 +124,10 @@ namespace StoneSignal
             hpSmall = Txt(root, "", 22, Ink); Set(hpSmall.rectTransform, new Vector2(0, 1), new Vector2(.5f, 1), 99, -176, 150, 28); hpSmall.outlineWidth = .30f; hpSmall.outlineColor = Navy;
             var pill = Panel(root, "Gold", "ui9_pill_gold", Gold); TL(pill, 190, 44, 220, 72);
             RectTransform coin;
-            if (S("ui_coin_gold") != null) { coin = Img(pill, "Coin", S("ui_coin_gold"), Color.white); TL(coin, 6, 6, 60, 60); }
+            if (S("ui_coin_gold") != null) { coin = Img(pill, "Coin", S("ui_coin_gold"), Color.white); Set(coin, new Vector2(0, 1), new Vector2(.5f, .5f), 6 + 30, -(6 + 30), 60, 60); } // v18.6: pivot = centre (fly target + punch about the coin centre; was TL 6,6)
             else
             {
-                var coinRim = Img(pill, "Coin rim", Circle, Navy); TL(coinRim, 10, 9, 54, 54); coin = coinRim;
+                var coinRim = Img(pill, "Coin rim", Circle, Navy); Set(coinRim, new Vector2(0, 1), new Vector2(.5f, .5f), 10 + 27, -(9 + 27), 54, 54); coin = coinRim;
                 var face = Img(coinRim, "Coin", Circle, Hex("FFC83D")); Center(face, 0, 0, 44, 44);
                 var dollar = Txt(face, "$", 28, Hex("8A5A00")); Full(dollar.rectTransform);
             }
@@ -129,7 +135,14 @@ namespace StoneSignal
             // kill gold flies into this counter (art RewardFlyFx + RewardCounterUI)
             goldCounter = pill.gameObject.AddComponent<StoneSignal.VFX.RewardCounterUI>(); goldCounter.label = gold; goldCounter.punchTarget = pill; goldCounter.icon = coin;
             var ringSprite = S("ui_counter_glow_ring");
-            if (ringSprite != null) { var ring = Img(pill, "Glow ring", ringSprite, new Color(1, 1, 1, 0)); TL(ring, -30, -30, 126, 126); ring.GetComponent<Image>().raycastTarget = false; goldCounter.glowRing = ring.GetComponent<Image>(); }
+            goldCoin = coin;
+            if (ringSprite != null)
+            {   // v18.6 gold ring fix: centred on the coin centre (pivot .5/.5 - it used to scale about its top-left corner and drift 31 px down-right
+                // towards the orb), drawn above the pill; max radius capped when it would reach the HP orb's outer ring.
+                var ring = Img(pill, "Glow ring", ringSprite, new Color(1, 1, 1, 0)); Set(ring, new Vector2(0, 1), new Vector2(.5f, .5f), 6 + 30, -(6 + 30), 126, 126);
+                ring.GetComponent<Image>().raycastTarget = false; goldCounter.glowRing = ring.GetComponent<Image>(); goldRing = ring;
+                goldCounter.ringMaxScale = GoldRingMaxScale(126f, 72f);
+            }
             var pop = Txt(pill, "", 28, Gold); TL(pop.rectTransform, 80, 66, 140, 36); pop.outlineWidth = .25f; pop.outlineColor = Navy; goldCounter.incomePop = pop;
             goldCounter.SetValue(session.Economy.Gold, true);
             goldPill = pill;
@@ -166,7 +179,9 @@ namespace StoneSignal
             noticePill.gameObject.SetActive(false);
             battle = Btn(root, Loc.Battle, 44, "ui9_button_battle_orange", Orange, () => session.Waves.StartWave(), CnFont); BR((RectTransform)battle.transform, -24, 24, 256, 104);
             battle.name = "BATTLE"; if (drawPile.statusLabel != null) UseCn(drawPile.statusLabel); { var bl = battle.GetComponentInChildren<TextMeshProUGUI>(); bl.rectTransform.offsetMin = new Vector2(22, 8); bl.rectTransform.offsetMax = new Vector2(-22, 0); bl.enableWordWrapping = false; bl.overflowMode = TextOverflowModes.Overflow; bl.enableAutoSizing = true; bl.fontSizeMin = 28; bl.fontSizeMax = 40; } // label kept inside the 9-slice face (it touched the rim)
+            BuildRemainingPlate(root);
             var handCanvas = Canvas("Hand", 1);
+            { var hcv = handCanvas.GetComponentInParent<Canvas>(); if (hcv != null) hcv.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1; } // v18.6 UiDisable (grey / brightness in uv1)
             // art v18.4: block row first, tower row on top - a xN stack underlay in the rightmost fan slot (and the tilted outer corners) now
             // tucks under the tower cards instead of covering tower card 3's 2x2 badge (7c977d5: 849 px2 of it). Same canvas, same materials: DC +0.
             blockHand = Group(handCanvas, "Block hand"); Full(blockHand);
@@ -179,6 +194,17 @@ namespace StoneSignal
             SetSpeed(1); Refresh();
         }
 
+        /// v18.6: ui_counter_glow_ring's visible ring reaches 0.92 of its half size (alpha > 32 of 255, measured on the sprite).
+        private const float RingVisibleFrac = .92f;
+        /// Ring max scale: the art 1.5 unless its visible radius would reach the core orb's outer ring - then capped at
+        /// goldRingCapPillFrac x the pill height (ref px). Layout: orb TL(24,24,150) circle, coin centre = pill (190,44) + (36,36).
+        private float GoldRingMaxScale(float ringSize, float pillH)
+        {
+            float half = ringSize * .5f * RingVisibleFrac, orbR = 75f; var orbC = new Vector2(24 + 75, 24 + 75); var coinC = new Vector2(190 + 36, 44 + 36);
+            float gap = Vector2.Distance(orbC, coinC) - orbR; const float artMax = 1.5f;
+            if (half * artMax < gap) return artMax;
+            return Mathf.Min(artMax, CH.goldRingCapPillFrac * pillH / half);
+        }
         // ---------- state ----------
         private void Dirty() { handDirty = true; Refresh(); }
         private void Refresh()
@@ -189,11 +215,11 @@ namespace StoneSignal
             wave.text = Loc.Wave(Mathf.Min(session.Waves.WaveIndex + 1, Mathf.Max(1, session.config.waves.Length)), session.config.waves.Length);
             var offer = session.DrawOffer; lastAdAvailable = session.AdAvailable; // ads unavailable: the ad draw is no offer (已用完); ExtraDraw makes the 2nd draw FREE
             var st = session.Blocks.Hand.IsFull ? StoneSignal.VFX.DrawPileState.Full : offer == DrawRules.Offer.Free ? StoneSignal.VFX.DrawPileState.Free : offer == DrawRules.Offer.Ad ? StoneSignal.VFX.DrawPileState.Ad : StoneSignal.VFX.DrawPileState.Used;
-            if (drawPile.State != st) drawPile.SetState(st);
+            if (drawPile.State != st) { drawPile.SetState(st); CapturePileBase(); }
             { var dl = Loc.DrawStatus(st); if (drawPile.statusLabel != null && drawPile.statusLabel.text != dl) drawPile.statusLabel.text = dl; } // art DrawPileUI writes English; label text is ours
             drawPile.SetStackCount(st == StoneSignal.VFX.DrawPileState.Free || st == StoneSignal.VFX.DrawPileState.Full ? 5 : st == StoneSignal.VFX.DrawPileState.Ad ? 4 : 3);
             if (session.Game.State != GameState.Build && drawPile.button.interactable) drawPile.button.interactable = false;
-            drawPile.SetHandCount(session.Blocks.Hand.Cards.Count, BlockHandManager.MaxCards);
+            SetHandCountShown();
             goldCounter.SetValue(session.Economy.Gold - session.GoldInFlight);
             battle.interactable = session.Game.State == GameState.Build;
             if (handDirty) RebuildHands();
@@ -203,7 +229,7 @@ namespace StoneSignal
         private void RebuildHands()
         {
             handDirty = false;
-            foreach (var g in built) Destroy(g); built.Clear(); handCards.Clear(); handAlphaApplied = -1f; hotkeyBadges.Clear(); badgesTouch = PointerInput.TouchMode;
+            foreach (var g in built) Destroy(g); built.Clear(); handCards.Clear(); dimSets.Clear(); handAlphaApplied = -1f; hotkeyBadges.Clear(); badgesTouch = PointerInput.TouchMode;
             var pic = PlacementInputController.Instance; if (pic != null) { pic.HandRects.Clear(); pic.HandRects.Add(handCount); } // touch "over the hand" = these rects
             bool build = session.Game.State == GameState.Build;
             var towers = session.config.towers;
@@ -224,10 +250,13 @@ namespace StoneSignal
                 var face = Img(card, "Frame", art ? art.uiCardTower : null, art && art.uiCardTower ? Color.white : Red); Full(face);
                 face.GetComponent<Image>().type = Image.Type.Sliced; // 9-slice L28 B64 R28 T28 (sprite borders from art .meta)
                 face.GetComponent<Image>().raycastTarget = true;
-                var button = face.gameObject.AddComponent<Button>(); button.targetGraphic = face.GetComponent<Image>(); button.interactable = build;
-                button.transition = Selectable.Transition.None; // keep the red card art during combat (no grey disabled tint)
-                { var cp = face.gameObject.AddComponent<CardPointer>(); cp.Tower = true; cp.Index = idx; cp.Enabled = () => session.Game.State == GameState.Build; } // tap / drag (PlacementInputController)
-                face.gameObject.AddComponent<CardHover>().Init(card, selected);
+                // v18.6 purple-tint fix: transition None BEFORE interactable. Setting interactable = false while the default ColorTint transition was
+                // still on cross-faded the face's CanvasRenderer to the default disabledColor (0.78, 0.78, 0.78, 0.5) and the later "None" never undid
+                // it: a 50 % red card over the blue board read purple in combat. The renderer colour is reset to white as well.
+                var button = face.gameObject.AddComponent<Button>(); button.transition = Selectable.Transition.None; button.targetGraphic = face.GetComponent<Image>();
+                button.interactable = TowersBuildable; face.GetComponent<Image>().canvasRenderer.SetColor(Color.white);
+                { var cp = face.gameObject.AddComponent<CardPointer>(); cp.Tower = true; cp.Index = idx; cp.Enabled = () => TowersBuildable; } // tap / drag (PlacementInputController); v18.6: towers also in combat (gold)
+                { var th = face.gameObject.AddComponent<CardHover>(); th.Init(card, selected); HoverUnify(th); } // v18.6 hover unify
                 if (data.icon != null) { var icon = Img(face, "Icon", data.icon, Color.white); TL(icon, 35, 15, 130, 130); icon.GetComponent<Image>().preserveAspect = true; }
                 var price = Txt(face, session.Towers.Cost(data).ToString(), 36, Ink); TL(price.rectTransform, 20, 162, 130, 44);
                 price.fontStyle = FontStyles.Bold; price.outlineWidth = .25f; price.outlineColor = new Color32(0x1E, 0x1A, 0x3A, 255); price.alignment = TextAlignmentOptions.Center;
@@ -243,6 +272,11 @@ namespace StoneSignal
                 }
                 if (selected) Outline(face, Gold, 5);
                 built.Add(card.gameObject); if (pic != null) pic.HandRects.Add(card); handCards.Add((card.gameObject.AddComponent<CanvasGroup>(), true, i));
+                {   // v18.6 one disabled style (unaffordable): the whole card grey 70 % + brightness 0.8, price #FF6B6B
+                    var set = new DimSet { tower = true, index = i, cost = session.Towers.Cost(data), price = price, priceBase = price.color };
+                    foreach (var g in card.GetComponentsInChildren<Image>(true)) set.full.Add(g.gameObject.AddComponent<UiDisable>());
+                    set.k = towerDimK.TryGetValue(i, out var k0) ? k0 : -1f; dimSets.Add(set);
+                }
             }
             // ---- block hand: ui_card_blueprint 128x128 (9-slice 24) + ui_icon_block_X 128x128 overlay (uniform, never per-shape scaling),
             // left-aligned on its own line above the tower hand (bottom 24+220+32) so it never overlaps the tower hand.
@@ -294,9 +328,12 @@ namespace StoneSignal
                 pose.restShadow = row.fanned && gi > 0 && fs.shadowColor.a > 0f;
                 if (pose.restShadow) { var sh = card.gameObject.AddComponent<UnityEngine.UI.Shadow>(); sh.effectColor = fs.shadowColor; sh.effectDistance = fs.shadowOffset; pose.shadow = sh; } // art v18.4: the leftmost card covers nothing -> no shadow
                 var b = card.gameObject.AddComponent<Button>(); b.targetGraphic = card.GetComponent<Image>(); b.transition = Selectable.Transition.None;
-                b.interactable = build || (session.config.allowCombatBlocks && session.Game.State == GameState.Combat);
-                { var cp = card.gameObject.AddComponent<CardPointer>(); cp.Tower = false; cp.Index = idx; cp.Enabled = () => b.interactable; }
-                var hover = card.gameObject.AddComponent<CardHover>(); hover.Init(holder, selected); if (row.fanned) { hover.Scale = fs.pressScale; hover.Lift = fs.pressLiftPx; hover.HoverScale = fs.hoverScale; hover.HoverLift = fs.hoverLiftPx; } // v18.5b: PC hover separate from press
+                b.interactable = session.Blocks.PhaseAllows; // v18.6: Build only (allowCombatBlocks false)
+                {   // v18.6 (玩法策划): in combat the card can't be dragged (press: no select / no move; drag start: toast 战斗中不能放墙), tap still expands the fan
+                    var cp = card.gameObject.AddComponent<CardPointer>(); cp.Tower = false; cp.Index = idx; cp.Enabled = () => session.Blocks.PhaseAllows;
+                    cp.Blocked = () => !session.Blocks.PhaseAllows && session.Game.State == GameState.Combat;
+                }
+                var hover = card.gameObject.AddComponent<CardHover>(); hover.Init(holder, selected); HoverUnify(hover); hover.Active = () => session.Blocks.PhaseAllows; // v18.5b split hover/press; v18.6 also unfanned rows
                 var iconSprite = BlockIcon(shape);
                 if (iconSprite != null) { var ic = Img(card, "Shape", iconSprite, Color.white); Full(ic); }
                 else
@@ -326,6 +363,16 @@ namespace StoneSignal
                 }
                 if (selected) Outline(card, Gold, 4);
                 built.Add(holder.gameObject); if (pic != null) pic.HandRects.Add(holder); handCards.Add((holder.gameObject.AddComponent<CanvasGroup>(), false, idx));
+                {   // v18.6 one disabled style (combat): card grey 70 % + brightness 0.8; xN / rune badges brightness 0.85 only
+                    var set = new DimSet { tower = false, index = idx, k = blockDimK };
+                    foreach (var g in holder.GetComponentsInChildren<Image>(true))
+                    {
+                        bool badge = (pose.badge != null && g.transform.IsChildOf(pose.badge)) || g.name == "Rune badge" || g.name == "Rune";
+                        (badge ? set.badge : set.full).Add(g.gameObject.AddComponent<UiDisable>());
+                    }
+                    if (pose.badge != null) foreach (var t in pose.badge.GetComponentsInChildren<TMP_Text>(true)) set.badgeText.Add((t, t.color));
+                    dimSets.Add(set);
+                }
                 fanCards.Add((holder, hover, card.GetComponent<Image>(), pc, pe, idx));
                 // art v18.4 intro: known group -> slide from its old pose; new group -> enter; grown stack -> xN bump
                 if (prevPose.TryGetValue(pose.key, out var old))
@@ -358,6 +405,11 @@ namespace StoneSignal
                     fanRedealInterval = iv; fanRedealCount = ne;
                 }
             }
+            {   // v18.6: every hand Image shares the UiDisable material (identity at uv1 = 0) -> the hand keeps batching (+0 DC)
+                var m = UiDisable.SharedMaterial;
+                if (m != null) { foreach (var g in towerHand.GetComponentsInChildren<Image>(true)) g.material = m; foreach (var g in blockHand.GetComponentsInChildren<Image>(true)) g.material = m; }
+            }
+            ApplyDims(true);
             ApplyFan();
         }
         // ---- v18.4 block-row fan ----------------------------------------------------------------------------------------------------
@@ -518,7 +570,7 @@ namespace StoneSignal
             }
         }
         private void CycleTarget() { session.Enemies.Targeting = (TargetMode)(((int)session.Enemies.Targeting + 1) % Enum.GetValues(typeof(TargetMode)).Length); Refresh(); }
-        private void OnState(GameState state) { handDirty = true; noticeUntil = 0; Refresh(); } // a stale placement notice never carries into reward / game over
+        private void OnState(GameState state) { handDirty = true; noticeUntil = 0; HudPhase(state); Refresh(); } // a stale placement notice never carries into reward / game over
         private void ShowNotice(string message)
         {
             var text = Loc.Notice(message); if (string.IsNullOrEmpty(text)) return; float now = Time.unscaledTime;
@@ -650,6 +702,7 @@ namespace StoneSignal
                 if (noticePill != null && noticePill.gameObject.activeSelf != on) noticePill.gameObject.SetActive(on);
             }
             UpdateFan();
+            UpdateCombatHud();
             {   // drag hand fade
                 var pic = PlacementInputController.Instance; bool fade = pic != null && pic.HandFade;
                 handAlpha = Mathf.MoveTowards(handAlpha, fade ? HandFadeAlpha : 1f, Time.unscaledDeltaTime * (1f - HandFadeAlpha) / HandFadeSeconds);
@@ -667,6 +720,208 @@ namespace StoneSignal
             if (PointerInput.TouchMode != badgesTouch) { badgesTouch = PointerInput.TouchMode; foreach (var b in hotkeyBadges) if (b != null) b.SetActive(!badgesTouch); } // first real touch (sticky) hides the 1-4 hotkey badges
             if (session.Draws.Next == DrawRules.Offer.Ad && session.AdAvailable != lastAdAvailable) Refresh(); // ad readiness changed (SDK loaded / failed)
             if (Input.GetKeyDown(KeyCode.Space) && session.Game.State == GameState.Build) session.Waves.StartWave();
+        }
+
+        // ================= v18.6 combat-phase HUD =================
+        private CombatHudStyle CH => session != null && session.config != null && session.config.combatHud != null ? session.config.combatHud : defaultCH;
+        private static readonly CombatHudStyle defaultCH = new CombatHudStyle();
+        /// Towers can be built now: Build, or Combat with allowCombatTowers (same rule as GameBootstrap's TowerManager gate).
+        private bool TowersBuildable => session != null && (session.Game.State == GameState.Build || (session.config.allowCombatTowers && session.Game.State == GameState.Combat));
+        /// v18.6 hover unify: every hand card (fanned / unfanned block cards, tower cards) uses the v18.5b split PC hover / press values.
+        private void HoverUnify(CardHover h) { var fs = FanStyle; h.Scale = fs.pressScale; h.Lift = fs.pressLiftPx; h.HoverScale = fs.hoverScale; h.HoverLift = fs.hoverLiftPx; }
+
+        // ---- one disabled style: grey 70 % + brightness 0.8 (UiDisable, no hue), badges brightness only, 0.15 s ----
+        private sealed class DimSet
+        {
+            public bool tower; public int index, cost; public float k = -1f; public TMP_Text price; public Color priceBase;
+            public readonly List<UiDisable> full = new List<UiDisable>(), badge = new List<UiDisable>();
+            public readonly List<(TMP_Text t, Color c)> badgeText = new List<(TMP_Text, Color)>();
+        }
+        private readonly List<DimSet> dimSets = new List<DimSet>();
+        private readonly Dictionary<int, float> towerDimK = new Dictionary<int, float>(); private float blockDimK = -1f;
+        private bool DimTarget(DimSet d) => d.tower ? (!TowersBuildable && session.Game.State != GameState.Reward && session.Game.State != GameState.GameOver) || d.cost > session.Economy.Gold
+                                                    : !session.Blocks.PhaseAllows && session.Game.State == GameState.Combat;
+        private void ApplyDims(bool force)
+        {
+            if (session == null) return; var ch = CH; float dt = Time.unscaledDeltaTime, step = ch.disabledSeconds <= 0f ? 1f : dt / ch.disabledSeconds;
+            foreach (var d in dimSets)
+            {
+                float target = DimTarget(d) ? 1f : 0f, k = d.k < 0f ? target : force ? d.k : Mathf.MoveTowards(d.k, target, step);
+                if (!force && Mathf.Approximately(k, d.k)) continue;
+                d.k = k; if (d.tower) towerDimK[d.index] = k; else blockDimK = k;
+                float g = ch.disabledGray * k, b = Mathf.Lerp(1f, ch.disabledBrightness, k), bb = Mathf.Lerp(1f, ch.badgeBrightness, k);
+                foreach (var fx in d.full) if (fx != null) fx.Set(g, b);
+                foreach (var fx in d.badge) if (fx != null) fx.Set(0f, bb);
+                foreach (var (t, c) in d.badgeText) if (t != null) t.color = new Color(c.r * bb, c.g * bb, c.b * bb, c.a);
+                if (d.price != null) d.price.color = Color.Lerp(d.priceBase, ch.unaffordablePrice, k);
+            }
+        }
+        /// Diagnostics: (tower?, index, dim k 0..1, grey, brightness) per hand card.
+        public List<(bool tower, int index, float k, float gray, float brightness)> DebugDims()
+        {
+            var l = new List<(bool, int, float, float, float)>();
+            foreach (var d in dimSets) { var fx = d.full.Count > 0 ? d.full[0] : null; l.Add((d.tower, d.index, d.k, fx != null ? fx.Gray : 0f, fx != null ? fx.Brightness : 1f)); }
+            return l;
+        }
+
+        // ---- '剩余 N 只' info plate (replaces BATTLE in combat) ----
+        private RectTransform plate, plateFill, plateTrack, plateRow; private CanvasGroup plateCg, battleCg; private Image plateDot;
+        private TextMeshProUGUI plateLabel, plateNumber, plateSuffix; private int plateN = -1, plateT = -1; private float platePopAt = -10f;
+        private enum Anim { Hidden, In, Shown, Out }
+        private Anim plateAnim = Anim.Hidden, battleAnim = Anim.Shown; private float plateAt, battleAt; private GameState hudState = GameState.Build;
+        public RectTransform DebugPlate => plate; public TextMeshProUGUI DebugPlateNumber => plateNumber; public RectTransform DebugPlateFill => plateFill;
+        public Image DebugPlateDot => plateDot; public CanvasGroup DebugPlateGroup => plateCg; public CanvasGroup DebugBattleGroup => battleCg; public Button DebugBattle => battle;
+        public string DebugCombatHud => $"plate={plateAnim} a={(plateCg ? plateCg.alpha : -1):F2} s={(plate ? plate.localScale.x : 0):F3} N={plateN}/{plateT} | battle={battleAnim} a={(battleCg ? battleCg.alpha : -1):F2} s={(battle ? battle.transform.localScale.x : 0):F3}";
+        private void BuildRemainingPlate(RectTransform root)
+        {
+            var ch = CH; battleCg = battle.gameObject.AddComponent<CanvasGroup>();
+            float h = 104f * ch.plateHeightFrac;
+            // own nested canvas: the breathing dot / N pop animate every frame and would otherwise rebuild the whole HUD canvas mesh
+            var go = new GameObject("Remaining plate", typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup)); plate = (RectTransform)go.transform; plate.SetParent(root, false);
+            Set(plate, new Vector2(1, 0), new Vector2(.5f, .5f), -24 - 128, 24 + 52, 256, h); // BATTLE rect (BR -24,24 256x104), 0.8 high, vertically centred; pivot centre for the scale-in
+            plateCg = go.GetComponent<CanvasGroup>(); plateCg.blocksRaycasts = false; plateCg.interactable = false;
+            var face = Img(plate, "Plate", S("ui9_panel_navy") ?? Rounded, S("ui9_panel_navy") != null ? ch.plateColor : new Color(Navy.r, Navy.g, Navy.b, ch.plateColor.a)); Full(face);
+            { var fi = face.GetComponent<Image>(); fi.type = Image.Type.Sliced; fi.pixelsPerUnitMultiplier = ch.platePpuMultiplier; fi.raycastTarget = false; } // flat: same language as the HP plate
+            var white = UiWhite.Get(art);
+            plateTrack = Img(plate, "Bar track", white, ch.barTrack); Set(plateTrack, new Vector2(0, 0), new Vector2(0, 0), 0, 0, 0, 0);
+            plateTrack.anchorMin = new Vector2(0, 0); plateTrack.anchorMax = new Vector2(1, 0); plateTrack.offsetMin = new Vector2(ch.barInsetPx, ch.barInsetPx); plateTrack.offsetMax = new Vector2(-ch.barInsetPx, ch.barInsetPx + ch.barHeightPx);
+            plateFill = Img(plateTrack, "Bar fill", white, ch.barFill); plateFill.anchorMin = Vector2.zero; plateFill.anchorMax = new Vector2(1, 1); plateFill.pivot = new Vector2(0, .5f); plateFill.offsetMin = plateFill.offsetMax = Vector2.zero;
+            // one centred line: [dot] 剩余 N 只 above the bar
+            plateRow = new GameObject("Line", typeof(RectTransform)).GetComponent<RectTransform>(); plateRow.SetParent(plate, false);
+            plateRow.anchorMin = new Vector2(0, 0); plateRow.anchorMax = new Vector2(1, 1); plateRow.offsetMin = new Vector2(0, ch.barInsetPx + ch.barHeightPx); plateRow.offsetMax = Vector2.zero;
+            plateDot = Img(plateRow, "Ember dot", S("ui_reward_ember") ?? white, ch.dotColor).GetComponent<Image>();
+            plateLabel = PlateText(Loc.RemainingPrefix, ch.labelPx, ch.labelColor, false); plateNumber = PlateText("0", ch.numberPx, ch.numberColor, true); plateSuffix = PlateText(Loc.RemainingSuffix, ch.labelPx, ch.labelColor, false);
+            plateNumber.outlineWidth = ch.numberOutlineWidth; plateNumber.outlineColor = ch.numberOutline;
+            go.SetActive(false); plateAnim = Anim.Hidden;
+        }
+        private TextMeshProUGUI PlateText(string v, float px, Color c, bool bold)
+        {
+            var t = Txt(plateRow, v, px, c); UseCn(t); t.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal; t.enableWordWrapping = false; t.overflowMode = TextOverflowModes.Overflow;
+            var r = t.rectTransform; r.anchorMin = r.anchorMax = new Vector2(.5f, .5f); r.pivot = new Vector2(.5f, .5f); t.alignment = TextAlignmentOptions.Center; return t;
+        }
+        private void LayoutPlate()
+        {
+            var ch = CH; float gap = ch.wordGapPx;
+            float wl = plateLabel.GetPreferredValues(plateLabel.text).x, wn = plateNumber.GetPreferredValues(plateNumber.text).x, ws = plateSuffix.GetPreferredValues(plateSuffix.text).x;
+            float total = ch.dotPx + ch.dotGapPx + wl + gap + wn + gap + ws, x = -total * .5f;
+            void Put(RectTransform r, float w, float hgt) { r.sizeDelta = new Vector2(w, hgt); r.anchoredPosition = new Vector2(x + w * .5f, 0f); x += w; }
+            {   // ui_reward_ember has a soft edge: its visible disc (alpha >= 50 %) is dotSpriteVisibleFrac of the rect, so the rect is enlarged to show a dotPx dot
+                float vis = Mathf.Max(.1f, ch.dotSpriteVisibleFrac), d = ch.dotPx / vis; var dr = plateDot.rectTransform; dr.sizeDelta = new Vector2(d, d); dr.anchoredPosition = new Vector2(x + ch.dotPx * .5f, 0f); x += ch.dotPx + ch.dotGapPx;
+            }
+            Put(plateLabel.rectTransform, wl, 40f); x += gap; Put(plateNumber.rectTransform, wn, 48f); x += gap; Put(plateSuffix.rectTransform, ws, 40f);
+        }
+        /// State change: BATTLE <-> plate transitions.
+        private void HudPhase(GameState st)
+        {
+            if (plate == null || battle == null) return; float now = Time.unscaledTime; var prev = hudState; hudState = st;
+            if (st == GameState.Combat)
+            {
+                plateN = plateT = -1; UpdatePlateContent(true);
+                plate.gameObject.SetActive(true); plateAnim = Anim.In; plateAt = now;
+                if (battleAnim != Anim.Hidden) { battleAnim = Anim.Out; battleAt = now; }
+            }
+            else
+            {
+                if (plateAnim == Anim.In || plateAnim == Anim.Shown) { plateAnim = Anim.Out; plateAt = now; }
+                if (st == GameState.Build && (battleAnim == Anim.Hidden || battleAnim == Anim.Out)) { battleAnim = Anim.In; battleAt = now; } // 开战 bounce
+                else if (st != GameState.Build && battleAnim != Anim.Hidden) { battleAnim = Anim.Out; battleAt = now; }
+            }
+            ApplyCombatHud(now);
+        }
+        private void UpdatePlateContent(bool force)
+        {
+            var ch = CH; int n = Mathf.Max(0, session.Waves.Remaining), t = Mathf.Max(n, session.Waves.Total);
+            if (n != plateN || force)
+            {
+                if (plateN >= 0 && n < plateN) platePopAt = Time.unscaledTime;  // kill / leak pops; a split (n grows) does not
+                plateN = n; plateNumber.text = n.ToString(); plateNumber.color = n <= ch.lowCount ? ch.lowColor : ch.numberColor; LayoutPlate();
+            }
+            if (t != plateT || force) plateT = t;
+            float f = plateT > 0 ? Mathf.Clamp01(plateN / (float)plateT) : 0f;
+            if (plateFill != null) { plateFill.anchorMax = new Vector2(f, 1f); plateFill.gameObject.SetActive(f > 0f); }
+        }
+        private void ApplyCombatHud(float now)
+        {
+            var ch = CH;
+            if (plate != null)
+            {
+                float a = 1f, sc = 1f;
+                if (plateAnim == Anim.In) { float k = ch.plateInSeconds <= 0f ? 1f : (now - plateAt) / ch.plateInSeconds; if (k >= 1f) plateAnim = Anim.Shown; k = Mathf.Clamp01(k); a = k; sc = Mathf.Lerp(ch.plateInScaleFrom, 1f, EaseOutCubic(k)); }
+                else if (plateAnim == Anim.Out) { float k = ch.plateOutSeconds <= 0f ? 1f : (now - plateAt) / ch.plateOutSeconds; if (k >= 1f) { plateAnim = Anim.Hidden; plate.gameObject.SetActive(false); } a = 1f - Mathf.Clamp01(k); }
+                else if (plateAnim == Anim.Hidden) a = 0f;
+                if (plateCg.alpha != a) plateCg.alpha = a; if (plate.localScale.x != sc) plate.localScale = new Vector3(sc, sc, 1f);
+                if (plateAnim != Anim.Hidden)
+                {
+                    float ph = ch.dotPeriod > 0f ? now * Mathf.PI * 2f / ch.dotPeriod : 0f; var dc = ch.dotColor; dc.a = Mathf.Lerp(ch.dotAlphaMin, ch.dotAlphaMax, .5f - .5f * Mathf.Cos(ph)); plateDot.color = dc;
+                    float pk = ch.numberPopSeconds <= 0f ? 1f : (now - platePopAt) / ch.numberPopSeconds; float ps = pk >= 1f ? 1f : Mathf.Lerp(ch.numberPopScale, 1f, EaseOutCubic(pk));
+                    plateNumber.rectTransform.localScale = new Vector3(ps, ps, 1f);
+                }
+            }
+            if (battle != null && battleCg != null)
+            {
+                var bt = battle.transform; float a = 1f, sc = 1f;
+                if (battleAnim == Anim.Out) { float k = ch.buttonOutSeconds <= 0f ? 1f : (now - battleAt) / ch.buttonOutSeconds; if (k >= 1f) battleAnim = Anim.Hidden; k = Mathf.Clamp01(k); a = 1f - k; sc = Mathf.Lerp(1f, ch.buttonOutScale, k); }
+                else if (battleAnim == Anim.In)
+                {   // 0.9 -> 1.08 -> 1.0 over buttonBounceSeconds (curve), alpha in over the first 40 %
+                    float k = ch.buttonBounceSeconds <= 0f ? 1f : (now - battleAt) / ch.buttonBounceSeconds; if (k >= 1f) battleAnim = Anim.Shown; k = Mathf.Clamp01(k);
+                    sc = ch.buttonBounce != null && ch.buttonBounce.length > 0 ? ch.buttonBounce.Evaluate(k) : 1f; a = Mathf.Clamp01(k / .4f);
+                }
+                else if (battleAnim == Anim.Hidden) { a = 0f; sc = ch.buttonOutScale; }
+                bool live = battleAnim == Anim.Shown || battleAnim == Anim.In;
+                if (battleCg.alpha != a) battleCg.alpha = a; if (battleCg.blocksRaycasts != live) battleCg.blocksRaycasts = battleCg.interactable = live;
+                if (bt.localScale.x != sc) bt.localScale = new Vector3(sc, sc, 1f); // written only on change (HUD canvas rebuild)
+            }
+        }
+        private void UpdateCombatHud()
+        {
+            float now = Time.unscaledTime;
+            if (session.Game.State != hudState) HudPhase(session.Game.State);
+            if (plate != null && plateAnim != Anim.Hidden) UpdatePlateContent(false); // also while fading out (the last kill shows 0)
+            ApplyCombatHud(now);
+            ApplyDims(false);
+            UpdatePileDim();
+            SetHandCountShown();
+        }
+
+        // ---- draw pile in combat: colour x (0.55,0.55,0.6), labels fade, no raycasts, 0.15 s ----
+        private readonly List<(Graphic g, Color c)> pileBase = new List<(Graphic, Color)>(); private float pileK = -1f; private CanvasGroup pileCg;
+        public float DebugPileDim => pileK;
+        private void CapturePileBase()
+        {
+            pileBase.Clear(); if (drawPile == null) return;
+            void Add(Graphic g) { if (g != null) pileBase.Add((g, g.color)); }
+            Add(drawPile.top); Add(drawPile.pillImage); Add(drawPile.tail);
+            foreach (var img in drawPile.stackRoot.GetComponentsInChildren<Image>(true)) if (img != drawPile.top) Add(img);
+            if (pileK > 0f) { float k = pileK; pileK = -2f; ApplyPile(k); }
+        }
+        private void ApplyPile(float k)
+        {
+            if (Mathf.Approximately(k, pileK)) return; pileK = k; var m = CH.pileMultiply;
+            var mul = Color.Lerp(Color.white, new Color(m.r, m.g, m.b, 1f), k);
+            foreach (var (g, c) in pileBase) if (g != null) g.color = new Color(c.r * mul.r, c.g * mul.g, c.b * mul.b, c.a);
+            if (drawPile.statusLabel != null) drawPile.statusLabel.alpha = 1f - k;
+            if (drawPile.statusIcon != null) { var ic = drawPile.statusIcon.color; ic.a = 1f - k; drawPile.statusIcon.color = ic; }
+        }
+        private void UpdatePileDim()
+        {
+            if (drawPile == null) return;
+            if (pileCg == null) { pileCg = drawPile.gameObject.GetComponent<CanvasGroup>() ?? drawPile.gameObject.AddComponent<CanvasGroup>(); if (pileBase.Count == 0) CapturePileBase(); }
+            bool combat = session.Game.State == GameState.Combat; var ch = CH;
+            pileCg.blocksRaycasts = !combat; // raycastTarget off in combat (draw is Build-only)
+            float target = combat ? 1f : 0f, k = pileK < 0f ? target : Mathf.MoveTowards(pileK, target, ch.pileSeconds <= 0f ? 1f : Time.unscaledDeltaTime / ch.pileSeconds);
+            ApplyPile(k);
+        }
+
+        // ---- hand count pill counts up per settled card during a (re)deal ----
+        private int handCountShown = -1;
+        public int DebugHandCountShown => handCountShown;
+        private void SetHandCountShown()
+        {
+            if (session == null || drawPile == null) return;
+            int n = session.Blocks.Hand.Cards.Count;
+            if (CH.handCountCountsUp) { float now = Time.unscaledTime; foreach (var p in fanPose) if (p.enter && p.introStart >= 0f && now < p.introStart + p.introDur) n -= p.count; }
+            n = Mathf.Max(0, n); if (n == handCountShown) return; handCountShown = n;
+            drawPile.SetHandCount(n, BlockHandManager.MaxCards);
         }
 
         // ---------- reward / game over ----------

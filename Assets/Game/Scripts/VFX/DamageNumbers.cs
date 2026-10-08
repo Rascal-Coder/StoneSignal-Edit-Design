@@ -26,9 +26,64 @@ namespace StoneSignal.VFX
             DamageKind.Heal => new Color(.5f, 1f, .55f), _ => Color.white
         };
 
-        /// target: the enemy (or null). Same target+kind (non-crit) within StackWindow -> the existing number grows instead of a new one.
-        public static DamageNumber Spawn(Vector3 worldPos, float amount, DamageKind kind = DamageKind.Physical, bool crit = false, Object target = null)
+        // ---- v18.6 (美术策划 4): screen-space numbers one layer below the screen-space HP bars ----
+        public static CombatHudStyle Style = new CombatHudStyle();
+        static bool _ui; static Camera _cam; static RectTransform _uiRoot; static TMPro.TMP_FontAsset _font; static Material _fontMat;
+        static readonly Stack<UiDamageNumber> UiPool = new Stack<UiDamageNumber>();
+        static readonly Dictionary<int, UiDamageNumber> UiLive = new Dictionary<int, UiDamageNumber>();
+        static readonly Dictionary<int, float> Side = new Dictionary<int, float>();
+        /// HudScaler px scale (1080p reference px -> screen px).
+        public static float PxScale => HudScaler.ScaleFor(Screen.width, Screen.height);
+        public static int UiLiveCount { get { int n = 0; if (_uiRoot) foreach (Transform c in _uiRoot) if (c.gameObject.activeSelf) n++; return n; } }
+        /// Switch to screen-space numbers (sortingOrder EnemyHpBarsUI.NumbersOrder). Font + shared material come from PF_FX_DamageNumber (one draw call).
+        public static void ConfigureScreenSpace(CombatHudStyle style, Camera cam)
         {
+            Style = style ?? new CombatHudStyle(); _cam = cam; _ui = true;
+            if (!_prefab) _prefab = Resources.Load<GameObject>("StylizedVFX/PF_FX_DamageNumber");
+            var src = _prefab ? _prefab.GetComponent<TMPro.TextMeshPro>() : null;
+            if (src) { _font = src.font; _fontMat = src.fontSharedMaterial; }
+            if (!_uiRoot)
+            {
+                var go = new GameObject("[DamageNumbers UI]", typeof(RectTransform), typeof(Canvas)); Object.DontDestroyOnLoad(go);
+                var c = go.GetComponent<Canvas>(); c.renderMode = RenderMode.ScreenSpaceOverlay; c.sortingOrder = EnemyHpBarsUI.NumbersOrder;
+                c.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.Normal | AdditionalCanvasShaderChannels.Tangent;
+                _uiRoot = (RectTransform)go.transform;
+            }
+        }
+        static UiDamageNumber GetUi()
+        {
+            while (UiPool.Count > 0) { var p = UiPool.Pop(); if (p) return p; }
+            if (!_uiRoot) return null;
+            var go = new GameObject("dmg", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI)); go.transform.SetParent(_uiRoot, false); go.SetActive(false);
+            var t = go.GetComponent<TMPro.TextMeshProUGUI>(); if (_font) t.font = _font; if (_fontMat) t.fontSharedMaterial = _fontMat;
+            t.alignment = TMPro.TextAlignmentOptions.Bottom; t.enableWordWrapping = false; t.overflowMode = TMPro.TextOverflowModes.Overflow; t.raycastTarget = false; t.fontStyle = TMPro.FontStyles.Bold;
+            var rt = (RectTransform)go.transform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(.5f, 0f); rt.sizeDelta = new Vector2(160f, 40f);
+            var n = go.AddComponent<UiDamageNumber>(); n.text = t; n.rt = rt; return n;
+        }
+        internal static void ReleaseUi(UiDamageNumber n)
+        {
+            if (n.key != 0 && UiLive.TryGetValue(n.key, out var l) && l == n) UiLive.Remove(n.key);
+            n.gameObject.SetActive(false); n.target = null; UiPool.Push(n);
+        }
+        static UiDamageNumber SpawnUi(Vector3 worldPos, float amount, DamageKind kind, bool crit, Object target)
+        {
+            var enemy = target as Enemy; int id = target ? target.GetInstanceID() : 0; int key = id != 0 ? id * 8 + (int)kind : 0;
+            if (key != 0 && !crit && Style.numberStackSeconds > 0f && UiLive.TryGetValue(key, out var live) && live && live.gameObject.activeSelf && live.age < live.StackLimit) { live.Stack(amount); return live; }
+            var n = GetUi(); if (!n) return null;
+            Vector2 top; var bars = EnemyHpBarsUI.Instance;
+            if (enemy != null && bars != null && (bars.TryGetBar(enemy, out var r) || bars.Compute(enemy, out r))) top = new Vector2(r.center.x, r.yMax);
+            else { var cam = _cam ? _cam : Camera.main; Vector3 sp = cam ? cam.WorldToScreenPoint(worldPos) : Vector3.zero; top = sp; }
+            float side = 1f; if (id != 0) { side = Side.TryGetValue(id, out var last) ? -last : 1f; Side[id] = side; if (Side.Count > 256) Side.Clear(); }
+            n.key = key; if (key != 0 && !crit) UiLive[key] = n;
+            float px = (crit ? Style.numberCritPx : Style.numberNormalPx) * PxScale;
+            n.Begin(top, enemy, amount, crit ? CritColor : ColorFor(kind), crit, px, side);
+            return n;
+        }
+
+        /// target: the enemy (or null). Same target+kind (non-crit) within StackWindow -> the existing number grows instead of a new one.
+        public static Component Spawn(Vector3 worldPos, float amount, DamageKind kind = DamageKind.Physical, bool crit = false, Object target = null)
+        {
+            if (_ui) return SpawnUi(worldPos, amount, kind, crit, target);
             int key = target ? target.GetInstanceID() * 8 + (int)kind : 0;
             if (key != 0 && !crit && Live.TryGetValue(key, out var live) && live && live.gameObject.activeSelf && live.age < StackWindow + live.popTime)
             { live.Stack(amount); return live; }

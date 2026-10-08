@@ -38,7 +38,14 @@ namespace StoneSignal
     public sealed class CardPointer : MonoBehaviour, IPointerDownHandler
     {
         public bool Tower; public int Index; public System.Func<bool> Enabled;
-        public void OnPointerDown(PointerEventData e) { if (Enabled == null || Enabled()) PlacementInputController.Instance?.CardDown(Tower, Index, e.position); }
+        /// v18.6: card shown but its placement is off for this phase (block row in combat): a press neither selects nor moves the card;
+        /// a drag start raises the notice, a tap / hold still expands the fan (PlacementInputController.BlockedDown).
+        public System.Func<bool> Blocked;
+        public void OnPointerDown(PointerEventData e)
+        {
+            if (Enabled == null || Enabled()) PlacementInputController.Instance?.CardDown(Tower, Index, e.position);
+            else if (Blocked != null && Blocked()) PlacementInputController.Instance?.BlockedDown(Tower, Index, e.position);
+        }
     }
 
     /// Drives touch placement (Arknights-style drag -> direction swipe; tap-tap -> tap arrow) on top of the managers.
@@ -94,6 +101,31 @@ namespace StoneSignal
         public float LastInputTime { get; private set; } = -100f;
         float pressAt;
         void Consume() { Machine.Reset(); Cancel(); HandFade = GhostOverHand = false; Drive(); }
+        // ---- v18.6 (玩法策划): blocked card press (walls during combat) ----
+        bool blockedOn, blockedMoved; bool blockedTower; int blockedCard; Vector2 blockedPos; float blockedAt;
+        /// Notice raised when a blocked card drag starts (logic key, displayed via Loc.Notice; GameUI de-dupes the same text within 1 s).
+        public string BlockedNotice = "Walls cannot be placed during combat";
+        public int BlockedNotices { get; private set; }
+        public bool BlockedPressActive => blockedOn;
+        public void BlockedDown(bool tower, int index, Vector2 pos)
+        {
+            if (Machine.State != PlacementState.Idle) return;
+            blockedOn = true; blockedMoved = false; blockedTower = tower; blockedCard = index; blockedPos = pos; blockedAt = pressAt = Time.unscaledTime;
+        }
+        /// true = the pointer is owned by a blocked card press this frame.
+        bool UpdateBlocked(PointerInput.Sample p, float now)
+        {
+            if (!blockedOn) return false;
+            float th = Machine.DragThreshold * Machine.Scale;
+            if (p.Held && !p.Up)
+            {
+                if (!blockedMoved && (p.Position - blockedPos).sqrMagnitude >= th * th) { blockedMoved = true; BlockedNotices++; blocks.RaiseNotice(BlockedNotice); }
+                if (!blockedMoved && CardHeldHook != null && CardHeldHook(blockedTower, blockedCard, now - blockedAt)) blockedOn = false;
+                return true;
+            }
+            if (!blockedMoved && CardTapHook != null) CardTapHook(blockedTower, blockedCard);
+            blockedOn = false; return true;
+        }
         public void CardDown(bool tower, int index, Vector2 pos)
         {
             pressAt = Time.unscaledTime;
@@ -259,6 +291,7 @@ namespace StoneSignal
             if (p.Down || p.Held || p.Up) LastInputTime = now;
             bool touch = PointerInput.TouchMode;
             if (p.Count > 1 && Machine.State != PlacementState.Idle) return; // ignore multi-touch during placement (fade state kept)
+            if (Machine.State == PlacementState.Idle && UpdateBlocked(p, now)) { HandFade = GhostOverHand = false; return; } // v18.6 blocked card press
             var st = Machine.State;
             Vector2 aim = AimFor(p.Position); // cell is picked above the finger (ghost raised; lifted over the hand cards)
             // machine "over the hand" = cancel zone (lower half of a card) while dragging. Not in Direction: there the swipe is

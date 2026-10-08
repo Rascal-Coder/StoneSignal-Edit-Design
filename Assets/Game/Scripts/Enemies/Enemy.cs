@@ -72,7 +72,7 @@ namespace StoneSignal
                 var back = PrimitiveVisual.Create("HP background", PrimitiveType.Cube, owner.transform, transform.position + Vector3.up * BarHeight(), new Vector3(.65f,.055f,.08f), palette.invalid);
                 healthFill = PrimitiveVisual.Create("HP", PrimitiveType.Cube, back.transform, back.transform.position + Vector3.up * .005f, new Vector3(.65f,.055f,.08f), palette.valid).transform;
                 hpBar = back.transform; barScale = hpBar.localScale;
-                foreach (var r in back.GetComponentsInChildren<Renderer>()) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; }
+                foreach (var r in back.GetComponentsInChildren<Renderer>()) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; if (ScreenSpaceBars && Application.isPlaying) r.enabled = false; }
             }
             else { hpBar.gameObject.SetActive(true); hpBar.localScale = barScale; hpBar.position = transform.position + Vector3.up * BarHeight(); } // pooled reuse
             SetFill(1); // pooled reuse resets to full
@@ -116,6 +116,15 @@ namespace StoneSignal
             slowMultiplier=Mathf.Min(slowMultiplier,1-Mathf.Clamp01(fraction)); slowRemaining=Mathf.Max(slowRemaining,duration);
         }
         private Transform hpBar;
+        /// v18.6: the HP bar is drawn by EnemyHpBarsUI (screen-space canvas above every floating number); the 3D bar cubes stay as the
+        /// invisible anchor (position / spawn scale-in / fill), their renderers are off. Set by GameBootstrap from CombatHudStyle.
+        public static bool ScreenSpaceBars;
+        /// World anchor of the HP bar (centre), or null.
+        public Transform HpBarAnchor => hpBar;
+        /// 0..1 spawn scale-in of the bar (Enemy.BarFadeTime), 0 = hidden.
+        public float HpBarScale01 => hpBar != null && hpBar.gameObject.activeInHierarchy && barScale.x > 0f ? hpBar.localScale.x / barScale.x : 0f;
+        /// 0..1 health fraction shown by the bar.
+        public float HpFraction => maxHP > 0f ? Mathf.Clamp01(HP / maxHP) : 0f;
         // HP bar height follows the model (and a FlyingMotion lift if any; EnemyGroundFx.SetFlying adds it after Initialize).
         private StoneSignal.VFX.FlyingMotion fly; private bool flyChecked; private float modelTop;
         private float BarHeight()

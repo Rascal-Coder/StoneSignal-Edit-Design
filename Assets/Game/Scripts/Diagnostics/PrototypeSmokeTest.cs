@@ -129,14 +129,23 @@ namespace StoneSignal
                     var animator=live.GetComponentInChildren<Animator>();
                     Require(animator!=null && animator.runtimeAnimatorController!=null && animator.runtimeAnimatorController.animationClips.Length>=2,"Enemy prefab carries locomotion and death animation");
                     Require(session.Validator.ValidatePlacement(new[] { live.NavigationAnchor })!=null,"Live movement edge protected");
-                    bool placed=false;
+                    bool placed=false, prevAllow=session.config.allowCombatBlocks;
+                    if(!prevAllow)
+                    {   // v18.6 (玩法策划): walls are Build-only - a combat placement is rejected
+                        bool any=false;
+                        for(int x=0;x<grid.width && !any;x++) for(int y=0;y<grid.height && !any;y++) { var a=new Vector2Int(x,y); if(session.Blocks.CellsAt(a).TrueForAll(c=>grid.InBounds(c) && grid.CanPlace(c))) { any=true; placed=session.Blocks.CommitPlacement(a); } }
+                        Require(any && !placed && !session.Blocks.PhaseAllows,"Walls rejected during combat (allowCombatBlocks off)");
+                        session.config.allowCombatBlocks=true; // the live repath check below needs a combat wall: enabled for this check only
+                    }
+                    placed=false;
                     for(int x=0;x<grid.width && !placed;x++) for(int y=0;y<grid.height && !placed;y++)
                     {
                         var anchor=new Vector2Int(x,y); var cells=session.Blocks.CellsAt(anchor);
                         if(session.Blocks.ValidatePlacement(anchor)!=null || !cells.Exists(OnAnyRoute)) continue;
                         placed=session.Blocks.CommitPlacement(anchor);
                     }
-                    Require(placed && live.transform.position==before,"Live wall placement repaths without teleport");
+                    session.config.allowCombatBlocks=prevAllow;
+                    Require(placed && live.transform.position==before,"Live wall placement repaths without teleport (allowCombatBlocks on for this check)");
                     yield return new WaitForSecondsRealtime(1.3f);
                     yield return Capture("03-combat");
                 }
